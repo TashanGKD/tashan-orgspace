@@ -707,7 +707,7 @@ Run: `pnpm --filter @tashan/api test -- auth-service.test.ts && pnpm --filter @t
 
 Expected: all rejection and rotation tests pass.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add apps/api/src/auth apps/api/test/auth
@@ -721,11 +721,13 @@ git commit -m "feat(auth): add device-bound sessions"
 - Create: `apps/api/src/phone/verification-code-sender.ts`
 - Create: `apps/api/src/organizations/organization-service.ts`
 - Create: `apps/api/src/organizations/authorization.ts`
-- Test: `apps/api/test/organizations/organization-service.test.ts`
-- Test: `apps/api/test/organizations/organization-authorization.integration.test.ts`
+- Create: `apps/api/src/rate-limit/redis-fixed-window.ts`
+- Test: `apps/api/test/organizations/organization-service.integration.test.ts`
+- Test: `apps/api/test/organizations/phone-verification.integration.test.ts`
+- Test: `apps/api/test/organizations/redis-rate-limiter.integration.test.ts`
 - Create: `packages/testkit/src/fake-verification-code-sender.ts`
 
-- [ ] **Step 1: Write rejection-first membership tests**
+- [x] **Step 1: Write rejection-first membership tests**
 
 ```ts
 test("cannot activate membership without a verified phone", async () => {
@@ -744,21 +746,21 @@ test("ordinary member cannot add another member", async () => {
 });
 ```
 
-- [ ] **Step 2: Run and verify failure**
+- [x] **Step 2: Run and verify failure**
 
-Run: `pnpm --filter @tashan/api test -- organization-service.test.ts`
+Run: `pnpm --filter @tashan/api test:integration`
 
 Expected: FAIL because organization authorization is missing.
 
-- [ ] **Step 3: Implement phone and organization state machines**
+- [x] **Step 3: Implement phone and organization state machines**
 
 Phone start creates a hashed six-digit code, 10-minute expiry, maximum five attempts, and Redis rate limits by account, phone, and server-observed IP. `VerificationCodeSender` is an interface; Phase 0 production config has no provider and returns a stable unavailable error, while tests use `FakeVerificationCodeSender`. Confirmation atomically marks the phone verified and consumes the challenge.
 
 Organization creation requires a verified phone and creates `org_owner` membership in one transaction. `addMember` permits owner/admin only and checks the target account's current verification state. Authorization always scopes by both organization ID and active Membership.
 
-- [ ] **Step 4: Run domain and integration tests**
+- [x] **Step 4: Run domain and integration tests**
 
-Run: `pnpm --filter @tashan/api test -- organization-service.test.ts && pnpm --filter @tashan/api test:integration -- organization-authorization.integration.test.ts`
+Run: `TEST_DATABASE_URL=<loopback-test-url> TEST_REDIS_URL=<loopback-test-url> pnpm --filter @tashan/api test:integration`
 
 Expected: unverified phone, cross-org, and ordinary-member cases fail with stable codes; verified owner flow passes.
 
