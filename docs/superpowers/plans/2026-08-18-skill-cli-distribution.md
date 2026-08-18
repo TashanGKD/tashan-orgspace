@@ -235,7 +235,7 @@ Commit: `ci(release): verify fresh-user CLI installation`
 - External: `TashanGKD/tashan-orgspace`
 - External: GitHub prerelease `v0.1.0-alpha.1`
 
-- [ ] **Step 1: Perform the public-source safety audit**
+- [x] **Step 1: Perform the public-source safety audit**
 
 Run tracked-file secret scans, confirm `.env.example` contains only empty values/loopback defaults, inspect `git diff main...HEAD`, and run the complete verifier. Stop if any real credential, member phone, local volume or machine-specific path is tracked.
 

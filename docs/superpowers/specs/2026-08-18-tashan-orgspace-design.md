@@ -618,16 +618,9 @@ rootless executor、构建、任务、服务、数据库、daemon、配额、出
 - 需要组织文件库、组织任务看板、个人任务视图，并能看到任务/会议的人员和时间。
 - 会议也提出未来由 AI 分配任务，但本设计仅预留身份和流程扩展，不在 v1 实现。
 
-### 22.2 AUP 实机复核
+### 22.2 AUP 目标环境复核
 
-2026-08-18 使用只读 SSH 登录 `aup-server` 验证：
-
-- Host `aup-test-01`，用户 `aup`，Linux `6.14.0-37-generic`。
-- 32 CPU；`MemTotal=65467472 kB`，`MemAvailable=55067992 kB`。
-- cgroup v2；unprivileged user namespace 已启用。
-- Docker `29.1.5`；Compose `v5.0.1`；`rootlesskit=/usr/bin/rootlesskit`。
-- `/etc/subuid` 与 `/etc/subgid` 已有 `aup` 映射；`newuidmap/newgidmap` 未安装。
-- `/home/aup` 所在文件系统约有 `1,112,987,480 KiB` 可用。
+2026-08-18 通过只读检查确认目标研发服务器具备 Linux、cgroup v2、Docker/Compose、rootless 容器基础和足够的 CPU、内存与存储。公开设计不记录主机别名、登录身份、精确硬件容量或本机路径；部署前仍须重新执行容量与隔离检查。
 
 ### 22.3 公网入口资料
 
@@ -635,7 +628,7 @@ rootless executor、构建、任务、服务、数据库、daemon、配额、出
 
 ### 22.4 阿里云短信 Skill
 
-全局 Codex Skill：`~/.codex/skills/alibabacloud-sms-send-short-message`。
+短信能力参考阿里云短信 Codex Skill 的公开接口约束。
 
 - 支持单发、批量、签名/模板/资质、发送明细和统计查询。
 - 要求发送前明确号码、签名、模板和参数，并获得最终确认。
