@@ -1,6 +1,7 @@
 import { describe, expect, test } from "vitest";
 
-import { registerAndVerify, runCliScenario } from "./support/flows.js";
+import { createDatabaseClient } from "../../apps/api/src/db/client.js";
+import { e2eEnvironment, registerAndVerify, runCliScenario } from "./support/flows.js";
 
 describe("organization isolation", () => {
   test("rejects valid users presenting real object IDs from another organization", async () => {
@@ -22,6 +23,52 @@ describe("organization isolation", () => {
     ]) {
       expect(rejection.exitCode).toBe(4);
       expect(rejection.stderr).toContain("ORG_FORBIDDEN");
+    }
+
+    const sql = createDatabaseClient(e2eEnvironment().databaseUrl);
+    try {
+      const rejections = await sql<
+        {
+          account_id: string;
+          organization_id: string;
+          capability_id: string;
+          result: string;
+          error_code: string;
+        }[]
+      >`
+        select account_id, organization_id, capability_id, result, error_code
+        from audit_events
+        where result = 'rejected'
+          and error_code = 'ORG_FORBIDDEN'
+          and account_id in (${alice.accountId}, ${bob.accountId})
+      `;
+      expect(rejections).toEqual(
+        expect.arrayContaining([
+          {
+            account_id: bob.accountId,
+            organization_id: result.aliceOrganizationId,
+            capability_id: "organization.member.list",
+            result: "rejected",
+            error_code: "ORG_FORBIDDEN",
+          },
+          {
+            account_id: bob.accountId,
+            organization_id: result.aliceOrganizationId,
+            capability_id: "audit.list",
+            result: "rejected",
+            error_code: "ORG_FORBIDDEN",
+          },
+          {
+            account_id: alice.accountId,
+            organization_id: result.bobOrganizationId,
+            capability_id: "organization.member.list",
+            result: "rejected",
+            error_code: "ORG_FORBIDDEN",
+          },
+        ]),
+      );
+    } finally {
+      await sql.end();
     }
   });
 });
