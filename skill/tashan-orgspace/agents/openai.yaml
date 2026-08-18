@@ -1,0 +1,7 @@
+interface:
+  display_name: "Tashan OrgSpace"
+  short_description: "Install and use the secure OrgSpace CLI"
+  brand_color: "#2563EB"
+  default_prompt: "Use $tashan-orgspace to inspect my OrgSpace account and organizations safely."
+policy:
+  allow_implicit_invocation: true

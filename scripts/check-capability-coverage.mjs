@@ -91,7 +91,9 @@ export function checkRepositoryCoverage(repositoryRoot) {
   );
   const cli = readJson(resolve(repositoryRoot, "apps/cli/src/capability-bindings.json"));
   const web = readJson(resolve(repositoryRoot, "apps/web/src/capability-surfaces.json"));
-  const skillDocument = readJson(resolve(repositoryRoot, "skill/capability-references.json"));
+  const skillDocument = readJson(
+    resolve(repositoryRoot, "skill/tashan-orgspace/capability-references.json"),
+  );
   if (typeof skillDocument !== "object" || skillDocument === null || skillDocument.version !== 1) {
     throw new Error("invalid Skill capability reference document");
   }

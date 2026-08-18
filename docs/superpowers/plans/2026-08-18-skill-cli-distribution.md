@@ -170,17 +170,17 @@ Commit: `feat(skill): add safe CLI installer`
 - Modify: `scripts/check-capability-coverage.mjs`
 - Modify: `README.md`
 
-- [ ] **Step 1: Move the capability reference and make the coverage gate fail**
+- [x] **Step 1: Move the capability reference and make the coverage gate fail**
 
 Move the file without updating the gate, then run `node scripts/check-capability-coverage.mjs`.
 
 Expected: FAIL because the old path is absent.
 
-- [ ] **Step 2: Write concise Skill instructions and references**
+- [x] **Step 2: Write concise Skill instructions and references**
 
 The Skill must install/check `torg`, explain the next-turn discovery rule, use hidden password/code input, use machine-readable JSON, preserve CLI confirmations, dynamically inspect capabilities, and explicitly reject unsupported Windows installation. It must never ask an agent to inspect credential-store contents or echo secrets.
 
-- [ ] **Step 3: Update the gate and validate the Skill**
+- [x] **Step 3: Update the gate and validate the Skill**
 
 Update only the coverage reader path. Run the system Skill validator against `skill/tashan-orgspace`, then run capability coverage and release contract gates.
 
