@@ -1,0 +1,11 @@
+.DS_Store
+.env
+.env.*
+!.env.example
+.local-data/
+coverage/
+dist/
+node_modules/
+*.log
+*.pem
+*.key

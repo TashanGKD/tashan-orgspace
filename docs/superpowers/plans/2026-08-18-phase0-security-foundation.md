@@ -131,6 +131,7 @@ audit.list
 - Create: `tsconfig.base.json`
 - Create: `eslint.config.mjs`
 - Create: `.prettierrc.json`
+- Create: `.prettierignore`
 - Create: `.node-version`
 - Create: `.npmrc`
 - Create: `.gitignore`
@@ -138,7 +139,7 @@ audit.list
 - Create: `scripts/check-toolchain.mjs`
 - Test: `scripts/check-toolchain.self-test.mjs`
 
-- [ ] **Step 1: Write the failing toolchain self-test**
+- [x] **Step 1: Write the failing toolchain self-test**
 
 ```js
 // scripts/check-toolchain.self-test.mjs
@@ -153,13 +154,13 @@ assert.doesNotThrow(() => checkVersions({ node: "24.14.0", pnpm: "10.32.1" }));
 console.log("check-toolchain.self-test: PASS");
 ```
 
-- [ ] **Step 2: Run it and verify the module is missing**
+- [x] **Step 2: Run it and verify the module is missing**
 
 Run: `node scripts/check-toolchain.self-test.mjs`
 
 Expected: FAIL with `ERR_MODULE_NOT_FOUND` for `scripts/check-toolchain.mjs`.
 
-- [ ] **Step 3: Create the root manifests and minimal gate**
+- [x] **Step 3: Create the root manifests and minimal gate**
 
 ```json
 // package.json
@@ -177,12 +178,12 @@ Expected: FAIL with `ERR_MODULE_NOT_FOUND` for `scripts/check-toolchain.mjs`.
     "test": "pnpm -r test"
   },
   "devDependencies": {
-    "@eslint/js": "10.8.1",
+    "@eslint/js": "10.0.1",
     "@types/node": "26.2.0",
     "eslint": "10.8.1",
     "eslint-config-prettier": "10.1.8",
     "prettier": "3.9.6",
-    "typescript": "7.0.2",
+    "typescript": "6.0.3",
     "typescript-eslint": "8.67.0"
   }
 }
@@ -209,7 +210,7 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
 
 Set `pnpm-workspace.yaml` packages to `apps/*` and `packages/*`; set `tsconfig.base.json` to `strict`, `noUncheckedIndexedAccess`, `exactOptionalPropertyTypes`, `noImplicitOverride`, `useUnknownInCatchVariables`, `moduleResolution: Bundler`, and `target: ES2024`. `.env.example` contains names only and safe local URLs; it contains no credential values.
 
-- [ ] **Step 4: Install and verify**
+- [x] **Step 4: Install and verify**
 
 Run: `pnpm install && pnpm check:toolchain && node scripts/check-toolchain.self-test.mjs`
 
@@ -218,7 +219,7 @@ Expected: lockfile created; both checks print `PASS`.
 - [ ] **Step 5: Commit**
 
 ```bash
-git add package.json pnpm-lock.yaml pnpm-workspace.yaml tsconfig.base.json eslint.config.mjs .prettierrc.json .node-version .npmrc .gitignore .env.example scripts/check-toolchain.mjs scripts/check-toolchain.self-test.mjs
+git add package.json pnpm-lock.yaml pnpm-workspace.yaml tsconfig.base.json eslint.config.mjs .prettierrc.json .prettierignore .node-version .npmrc .gitignore .env.example scripts/check-toolchain.mjs scripts/check-toolchain.self-test.mjs README.md docs/superpowers/plans/2026-08-18-phase0-security-foundation.md
 git commit -m "build(toolchain): bootstrap strict monorepo"
 ```
 
