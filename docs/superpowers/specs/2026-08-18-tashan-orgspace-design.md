@@ -4,8 +4,7 @@
 > 产品名：Tashan OrgSpace / 他山组织空间
 > 仓库：`tashan-orgspace`
 > CLI：`torg`
-> Web：`https://org.tashan.chat`
-> API：`https://api-org.tashan.chat`
+> Web 与 API 公网入口：`https://orgspace.tashan.chat`（`/` 为 Web，`/v1/*` 为 API）
 > Codex Skill：`tashan-orgspace`
 > 状态：用户已于 2026-08-18 批准书面规格；实施须按分阶段计划执行
 
@@ -529,7 +528,7 @@ Codex Skill 不复制全部命令说明，而是优先调用 `torg capability li
 ### 18.1 管理与用户链路分离
 
 - 运维可通过本机 SSH alias `aup-server` 经 Tailscale 登录 AUP；该入口只用于部署和排障。
-- 最终用户和 AI 不获得 AUP SSH；只访问 `api-org.tashan.chat` 并使用用户 token。
+- 最终用户和 AI 不获得 AUP SSH；只访问 `orgspace.tashan.chat` 并使用用户 token。
 - 公网服务经 ECS wildcard TLS、平台级持久隧道和 AUP gateway。
 - `*.tashan.chat` 已有 wildcard DNS，但生产前仍要以 ECS 生效 Nginx、证书和公网请求为准。
 
