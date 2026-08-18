@@ -631,7 +631,7 @@ Run: `pnpm --filter @tashan/api test:integration -- transaction.integration.test
 
 Expected: rollback leaves all three tables empty; identical request returns cached response; different hash returns `IDEMPOTENCY_CONFLICT`.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add apps/api/src/db/transaction.ts apps/api/src/repositories apps/api/test/repositories
@@ -646,10 +646,13 @@ git commit -m "feat(database): add transactional repositories"
 - Create: `apps/api/src/auth/refresh-token.ts`
 - Create: `apps/api/src/auth/auth-service.ts`
 - Create: `apps/api/src/auth/auth-errors.ts`
+- Create: `apps/api/migrations/003_session_refresh_tokens.sql`
+- Modify: `apps/api/package.json`
+- Modify: `package.json`
 - Test: `apps/api/test/auth/auth-service.test.ts`
 - Test: `apps/api/test/auth/session-rotation.integration.test.ts`
 
-- [ ] **Step 1: Write adversarial tests before login success**
+- [x] **Step 1: Write adversarial tests before login success**
 
 ```ts
 test.each([
@@ -673,13 +676,13 @@ Also add a concurrent-refresh test proving exactly one compare-and-swap succeeds
 
 Add registration tests proving `Alice` and `alice` collide, weak passwords are rejected before database access, and registration creates exactly one human Principal but no Membership.
 
-- [ ] **Step 2: Run and verify failure**
+- [x] **Step 2: Run and verify failure**
 
 Run: `pnpm --filter @tashan/api test -- auth-service.test.ts && pnpm --filter @tashan/api test:integration -- session-rotation.integration.test.ts`
 
 Expected: FAIL because auth services are absent.
 
-- [ ] **Step 3: Implement minimal secure primitives**
+- [x] **Step 3: Implement minimal secure primitives**
 
 ```ts
 export const passwordOptions = {
@@ -698,7 +701,7 @@ Generate 32 random bytes for refresh tokens. Sign 15-minute EdDSA JWTs containin
 
 Registration validates username/password with the shared schema, hashes with Argon2id, creates Account and human Principal in one transaction, and maps case-insensitive uniqueness to `USERNAME_TAKEN`. Registration does not verify a phone and does not create an organization Membership.
 
-- [ ] **Step 4: Run auth tests**
+- [x] **Step 4: Run auth tests**
 
 Run: `pnpm --filter @tashan/api test -- auth-service.test.ts && pnpm --filter @tashan/api test:integration -- session-rotation.integration.test.ts`
 

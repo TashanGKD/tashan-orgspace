@@ -12,7 +12,10 @@
   },
   "dependencies": {
     "@tashan/contracts": "workspace:*",
-    "postgres": "3.4.9"
+    "argon2": "0.45.1",
+    "jose": "6.2.9",
+    "postgres": "3.4.9",
+    "zod": "4.4.3"
   },
   "devDependencies": {
     "tsx": "4.23.12",

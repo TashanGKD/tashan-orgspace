@@ -34,9 +34,18 @@ importers:
       "@tashan/contracts":
         specifier: workspace:*
         version: link:../../packages/contracts
+      argon2:
+        specifier: 0.45.1
+        version: 0.45.1
+      jose:
+        specifier: 6.2.9
+        version: 6.2.9
       postgres:
         specifier: 3.4.9
         version: 3.4.9
+      zod:
+        specifier: 4.4.3
+        version: 4.4.3
     devDependencies:
       tsx:
         specifier: 4.23.12
@@ -75,6 +84,12 @@ importers:
         version: 2.9.0
 
 packages:
+  "@epic-web/invariant@1.0.0":
+    resolution:
+      {
+        integrity: sha512-lrTPqgvfFQtR/eY/qkIzp98OGdNJu0m5ji3q/nJI8v3SXkRKEnWiOxMmbvcSoAIzv/cGiuvRy57k4suKQSAdwA==,
+      }
+
   "@esbuild/aix-ppc64@0.28.2":
     resolution:
       {
@@ -419,6 +434,13 @@ packages:
         integrity: sha512-nuhZIOLuI6TFQ32I/WnUx+SCPY7SdSKwgnFHydAuoS1+Z4BRcaP+RRJmGzl9lw+0OFF7UmaESf7KQRXaNLHypg==,
       }
 
+  "@phc/format@1.0.0":
+    resolution:
+      {
+        integrity: sha512-m7X9U6BG2+J+R1lSOdCiITLLrxm+cWlNI3HUFA92oLO77ObGNzaKdh8pMLqdZcshtkKuV84olNNXDfMc4FezBQ==,
+      }
+    engines: { node: ">=10" }
+
   "@rolldown/binding-android-arm64@1.2.4":
     resolution:
       {
@@ -760,6 +782,13 @@ packages:
         integrity: sha512-fgFx7Hfoq60ytK2c7DhnF8jIvzYgOMxfugjLOSMHjLIPgenqa7S7oaagATUq99mV6IYvN2tRmC0wnTYX6iPbMw==,
       }
 
+  argon2@0.45.1:
+    resolution:
+      {
+        integrity: sha512-skm+/WCjkGqCQxF7FG1LuZXM5yvbFjgbfiCGsud2oLgaDhh6b6dbH0b1EkghbM+xx4Bj8Ape+KKgixoIlWZicQ==,
+      }
+    engines: { node: ">=16.17.0" }
+
   assertion-error@2.0.1:
     resolution:
       {
@@ -793,6 +822,14 @@ packages:
       {
         integrity: sha512-Kvp459HrV2FEJ1CAsi1Ku+MY3kasH19TFykTz2xWmMeq6bk2NU3XXvfJ+Q61m0xktWwt+1HSYf3JZsTms3aRJg==,
       }
+
+  cross-env@10.1.0:
+    resolution:
+      {
+        integrity: sha512-GsYosgnACZTADcmEyJctkJIoqAhHjttw7RsFrVoJNXbsWWqaq6Ym+7kZjq6mS45O0jij6vtiReppKQEtqWy6Dw==,
+      }
+    engines: { node: ">=20" }
+    hasBin: true
 
   cross-spawn@7.0.6:
     resolution:
@@ -1051,6 +1088,12 @@ packages:
         integrity: sha512-RHxMLp9lnKHGHRng9QFhRCMbYAcVpn69smSGcq3f36xjgVVWThj4qqLbTLlq7Ssj8B+fIQ1EuCEGI2lKsyQeIw==,
       }
 
+  jose@6.2.9:
+    resolution:
+      {
+        integrity: sha512-XrchZOFZUl/T3vTwRe8XK+cJrGtMF4th1ARnDfwbBXFKThGhlsxEE4Zu03AD/bjJSt/9jT/mxrOCkJWOg77aPA==,
+      }
+
   json-buffer@3.0.1:
     resolution:
       {
@@ -1231,6 +1274,20 @@ packages:
       {
         integrity: sha512-OWND8ei3VtNC9h7V60qff3SVobHr996CTwgxubgyQYEpg290h9J0buyECNNJexkFm5sOajh5G116RYA1c8ZMSw==,
       }
+
+  node-addon-api@8.9.2:
+    resolution:
+      {
+        integrity: sha512-VijLXbi3UACN69I0JVXJsX4tjACjNoQDgv2gTF6sx2wWEi8tkSg2eX8p5gSIFi8z2+DL3oHmY6OyKce38SDolg==,
+      }
+    engines: { node: ^18 || ^20 || >= 21 }
+
+  node-gyp-build@4.8.4:
+    resolution:
+      {
+        integrity: sha512-LA4ZjwlnUblHVgq0oBF3Jl/6h/Nvs5fzBLwdEF4nuxnFdsfajde4WfxtJr3CaiH+F6ewcIB/q4jQ4UzPyid+CQ==,
+      }
+    hasBin: true
 
   obug@2.1.4:
     resolution:
@@ -1600,6 +1657,8 @@ packages:
       }
 
 snapshots:
+  "@epic-web/invariant@1.0.0": {}
+
   "@esbuild/aix-ppc64@0.28.2":
     optional: true
 
@@ -1731,6 +1790,8 @@ snapshots:
   "@jridgewell/sourcemap-codec@1.5.5": {}
 
   "@oxc-project/types@0.144.0": {}
+
+  "@phc/format@1.0.0": {}
 
   "@rolldown/binding-android-arm64@1.2.4":
     optional: true
@@ -1940,6 +2001,13 @@ snapshots:
       json-schema-traverse: 0.4.1
       uri-js: 4.4.1
 
+  argon2@0.45.1:
+    dependencies:
+      "@phc/format": 1.0.0
+      cross-env: 10.1.0
+      node-addon-api: 8.9.2
+      node-gyp-build: 4.8.4
+
   assertion-error@2.0.1: {}
 
   balanced-match@4.0.4: {}
@@ -1951,6 +2019,11 @@ snapshots:
   chai@6.2.2: {}
 
   convert-source-map@2.0.0: {}
+
+  cross-env@10.1.0:
+    dependencies:
+      "@epic-web/invariant": 1.0.0
+      cross-spawn: 7.0.6
 
   cross-spawn@7.0.6:
     dependencies:
@@ -2120,6 +2193,8 @@ snapshots:
 
   isexe@2.0.0: {}
 
+  jose@6.2.9: {}
+
   json-buffer@3.0.1: {}
 
   json-schema-traverse@0.4.1: {}
@@ -2201,6 +2276,10 @@ snapshots:
   nanoid@3.3.18: {}
 
   natural-compare@1.4.0: {}
+
+  node-addon-api@8.9.2: {}
+
+  node-gyp-build@4.8.4: {}
 
   obug@2.1.4: {}
 
