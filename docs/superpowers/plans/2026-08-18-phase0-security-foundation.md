@@ -919,7 +919,7 @@ Run: `pnpm --filter @tashan/api test && pnpm --filter @tashan/api test:integrati
 
 Expected: all route, auth, org, audit and idempotency tests pass.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add apps/api/src apps/api/test/http
@@ -933,9 +933,11 @@ git commit -m "feat(api): expose Phase 0 control plane"
 - Create: `apps/worker/src/config.ts`
 - Create: `apps/worker/src/outbox-loop.ts`
 - Create: `apps/worker/src/main.ts`
+- Create: `apps/worker/tsconfig.json`
+- Create: `apps/worker/vitest.integration.config.ts`
 - Test: `apps/worker/src/outbox-loop.integration.test.ts`
 
-- [ ] **Step 1: Write lease recovery tests**
+- [x] **Step 1: Write lease recovery tests**
 
 ```ts
 test("reclaims an expired lease after worker crash", async () => {
@@ -951,19 +953,19 @@ test("does not process an event twice while lease is live", async () => {
 });
 ```
 
-- [ ] **Step 2: Run and verify failure**
+- [x] **Step 2: Run and verify failure**
 
 Run: `pnpm --filter @tashan/worker test -- outbox-loop.integration.test.ts`
 
 Expected: FAIL because worker does not exist.
 
-- [ ] **Step 3: Implement `FOR UPDATE SKIP LOCKED` leasing**
+- [x] **Step 3: Implement `FOR UPDATE SKIP LOCKED` leasing**
 
 Claim pending or expired rows in a transaction, set `lease_owner` and `lease_expires_at`, then dispatch only registered Phase 0 handlers. Unknown event types move to dead-letter with a stable reason; they are not dropped. SIGTERM stops new claims, waits for the active handler, and releases its lease.
 
-- [ ] **Step 4: Run worker tests**
+- [x] **Step 4: Run worker tests**
 
-Run: `pnpm --filter @tashan/worker test`
+Run: `TEST_DATABASE_URL=<loopback-test-url> pnpm --filter @tashan/worker test:integration`
 
 Expected: crash recovery, live lease exclusion, dead-letter and SIGTERM tests pass.
 
