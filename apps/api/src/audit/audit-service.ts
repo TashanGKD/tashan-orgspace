@@ -3,6 +3,7 @@ import { createHash, randomUUID } from "node:crypto";
 import type { JSONValue } from "postgres";
 
 import type { DatabaseClient } from "../db/client.js";
+import type { TransactionClient } from "../db/transaction.js";
 import { normalizeIpAddress } from "../http/trusted-proxy.js";
 import { AuditRepository } from "../repositories/audit-repository.js";
 import { redact, type AuditJsonValue } from "./redaction.js";
@@ -178,8 +179,11 @@ export class AuditService {
     private readonly clock: () => Date = () => new Date(),
   ) {}
 
-  public async append(input: AppendAuditEventInput): Promise<{ id: string; eventHash: string }> {
-    return (await this.sql.begin(async (transaction) => {
+  public async append(
+    input: AppendAuditEventInput,
+    existingTransaction?: TransactionClient,
+  ): Promise<{ id: string; eventHash: string }> {
+    const operation = async (transaction: TransactionClient) => {
       await transaction`select pg_advisory_xact_lock(hashtextextended(${auditScope(input.organizationId)}, 0))`;
       const [previous] = await transaction<
         { event_hash: string; chain_position: string | number }[]
@@ -266,7 +270,9 @@ export class AuditService {
       });
 
       return { id, eventHash: hash };
-    })) as { id: string; eventHash: string };
+    };
+    if (existingTransaction !== undefined) return operation(existingTransaction);
+    return (await this.sql.begin(operation)) as { id: string; eventHash: string };
   }
 
   public async verifyChain(

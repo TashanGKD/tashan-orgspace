@@ -33,6 +33,10 @@ export interface ResolvedClientIp {
   proxyChain: string[];
 }
 
+export function validateTrustedProxyCidrs(cidrs: readonly string[]): void {
+  for (const cidr of cidrs) ipaddr.parseCIDR(cidr);
+}
+
 export function resolveClientIp(input: ResolveClientIpInput): ResolvedClientIp {
   const peer = parseAddress(input.peer);
   const peerText = peer.toString();

@@ -4,6 +4,7 @@ import { PhoneNumber } from "@tashan/contracts";
 
 import { AuthError } from "../auth/auth-errors.js";
 import type { DatabaseClient } from "../db/client.js";
+import type { TransactionClient } from "../db/transaction.js";
 import type { VerificationCodeSender } from "./verification-code-sender.js";
 
 export interface PhoneRateLimiter {
@@ -32,7 +33,12 @@ export class PhoneVerificationService {
       .digest("base64url");
   }
 
-  public async start(accountId: string, rawPhone: string, serverIp: string) {
+  public async start(
+    accountId: string,
+    rawPhone: string,
+    serverIp: string,
+    existingTransaction?: TransactionClient,
+  ) {
     const parsedPhone = PhoneNumber.safeParse(rawPhone);
     if (!parsedPhone.success)
       throw new AuthError("VALIDATION_FAILED", "phone must use E.164 format");
@@ -54,7 +60,7 @@ export class PhoneVerificationService {
 
     const code = String(randomInt(0, 1_000_000)).padStart(6, "0");
     const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
-    return this.options.sql.begin(async (transaction) => {
+    const operation = async (transaction: TransactionClient) => {
       const [account] = await transaction<{ id: string }[]>`
         select id from accounts where id = ${accountId} and status = 'active' for update
       `;
@@ -67,12 +73,20 @@ export class PhoneVerificationService {
       if (challenge === undefined) throw new Error("phone challenge insert returned no row");
       await this.options.sender.send({ phone, code, expiresAt });
       return { challengeId: challenge.id, expiresAt };
-    });
+    };
+    return existingTransaction === undefined
+      ? this.options.sql.begin(operation)
+      : operation(existingTransaction);
   }
 
-  public async confirm(accountId: string, challengeId: string, code: string) {
+  public async confirm(
+    accountId: string,
+    challengeId: string,
+    code: string,
+    existingTransaction?: TransactionClient,
+  ) {
     if (!/^\d{6}$/.test(code)) throw invalidChallenge();
-    const outcome = await this.options.sql.begin(async (transaction) => {
+    const operation = async (transaction: TransactionClient) => {
       const [challenge] = await transaction<
         {
           id: string;
@@ -116,7 +130,11 @@ export class PhoneVerificationService {
         where id = ${accountId}
       `;
       return { kind: "verified", phone: challenge.phone_e164, verifiedAt } as const;
-    });
+    };
+    const outcome =
+      existingTransaction === undefined
+        ? await this.options.sql.begin(operation)
+        : await operation(existingTransaction);
 
     if (outcome.kind !== "verified") throw invalidChallenge();
     return outcome;

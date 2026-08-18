@@ -1,14 +1,14 @@
 import { generateKeyPair } from "jose";
 import { beforeAll, describe, expect, test } from "vitest";
 
-import { AccessTokenService } from "../../src/auth/access-token.js";
+import { AccessTokenService, type TokenCryptoKey } from "../../src/auth/access-token.js";
 import { AuthService, type LoginRateLimiter } from "../../src/auth/auth-service.js";
 import { hashPassword, verifyPassword } from "../../src/auth/password.js";
 import type { DatabaseClient } from "../../src/db/client.js";
 
 let tokenService: AccessTokenService;
-let signingKey: CryptoKey;
-let verificationKey: CryptoKey;
+let signingKey: TokenCryptoKey;
+let verificationKey: TokenCryptoKey;
 
 beforeAll(async () => {
   const { privateKey, publicKey } = await generateKeyPair("EdDSA");
@@ -35,7 +35,12 @@ describe("access-token verification boundary", () => {
 
   test("rejects a token with a tampered signature", async () => {
     const token = await tokenService.sign(claims);
-    const tampered = `${token.slice(0, -1)}${token.endsWith("a") ? "b" : "a"}`;
+    const segments = token.split(".");
+    const signature = Buffer.from(segments[2] ?? "", "base64url");
+    const firstByte = signature[0];
+    if (firstByte === undefined) throw new Error("JWT signature fixture is empty");
+    signature[0] = firstByte ^ 1;
+    const tampered = `${segments[0]}.${segments[1]}.${signature.toString("base64url")}`;
 
     await expect(tokenService.verify(tampered)).rejects.toMatchObject({
       code: "AUTH_TOKEN_REVOKED",

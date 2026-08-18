@@ -1,6 +1,7 @@
 import { LoginRequest, RegisterRequest } from "@tashan/contracts";
 
 import type { DatabaseClient } from "../db/client.js";
+import type { TransactionClient } from "../db/transaction.js";
 import { AuthError, invalidCredentials } from "./auth-errors.js";
 import { type AccessTokenInput, AccessTokenService } from "./access-token.js";
 import { hashPassword, verifyPassword } from "./password.js";
@@ -52,14 +53,17 @@ export class AuthService {
     this.rateLimiter = options.rateLimiter;
   }
 
-  public async register(rawInput: unknown): Promise<{ accountId: string; principalId: string }> {
+  public async register(
+    rawInput: unknown,
+    existingTransaction?: TransactionClient,
+  ): Promise<{ accountId: string; principalId: string }> {
     const parsed = RegisterRequest.safeParse(rawInput);
     if (!parsed.success) throw validationError();
 
     const username = parsed.data.username.toLowerCase();
     const passwordHash = await hashPassword(parsed.data.password);
     try {
-      return await this.sql.begin(async (transaction) => {
+      const operation = async (transaction: TransactionClient) => {
         const [account] = await transaction<{ id: string }[]>`
           insert into accounts (username, password_hash)
           values (${username}, ${passwordHash})
@@ -73,7 +77,10 @@ export class AuthService {
         `;
         if (principal === undefined) throw new Error("Principal registration returned no row");
         return { accountId: account.id, principalId: principal.id };
-      });
+      };
+      return existingTransaction === undefined
+        ? ((await this.sql.begin(operation)) as { accountId: string; principalId: string })
+        : await operation(existingTransaction);
     } catch (error) {
       if (isUniqueViolation(error, "accounts_username_key")) {
         throw new AuthError("USERNAME_TAKEN", "username is already registered");
@@ -82,7 +89,11 @@ export class AuthService {
     }
   }
 
-  public async login(rawInput: unknown, context: { serverIp: string }): Promise<SessionResult> {
+  public async login(
+    rawInput: unknown,
+    context: { serverIp: string },
+    existingTransaction?: TransactionClient,
+  ): Promise<SessionResult> {
     const parsed = LoginRequest.safeParse(rawInput);
     if (!parsed.success) throw validationError();
     const input = parsed.data;
@@ -93,7 +104,8 @@ export class AuthService {
     ]);
     if (allowed.includes(false)) throw new AuthError("RATE_LIMITED", "login rate limit exceeded");
 
-    const [identity] = await this.sql<
+    const identityQuery = existingTransaction ?? this.sql;
+    const [identity] = await identityQuery<
       {
         account_id: string;
         password_hash: string;
@@ -117,7 +129,7 @@ export class AuthService {
     const passwordMatches = await verifyPassword(identity.password_hash, input.password);
     if (!passwordMatches || identity.account_status !== "active") throw invalidCredentials();
 
-    return this.sql.begin(async (transaction) => {
+    const operation = async (transaction: TransactionClient): Promise<SessionResult> => {
       const devices = await transaction<{ id: string }[]>`
         insert into devices (id, account_id, name, os, architecture, client_version)
         values (
@@ -171,7 +183,10 @@ export class AuthService {
         accessToken,
         refreshToken,
       };
-    });
+    };
+    return existingTransaction === undefined
+      ? ((await this.sql.begin(operation)) as SessionResult)
+      : operation(existingTransaction);
   }
 
   public async authenticate(accessToken: string) {
@@ -187,12 +202,18 @@ export class AuthService {
         device_revoked_at: Date | null;
         account_status: string;
         client_channel: "web" | "cli";
+        device_name: string;
+        device_os: string;
+        device_architecture: string;
+        device_client_version: string;
       }[]
     >`
       select
         s.account_id, s.principal_id, s.device_id, s.token_version,
         s.expires_at as session_expires_at, s.revoked_at as session_revoked_at,
         d.revoked_at as device_revoked_at, a.status as account_status,
+        d.name as device_name, d.os as device_os, d.architecture as device_architecture,
+        d.client_version as device_client_version,
         s.client_channel
       from sessions s
       join devices d on d.id = s.device_id
@@ -226,12 +247,21 @@ export class AuthService {
       deviceId: session.device_id,
       tokenVersion: session.token_version,
       actorSource: session.client_channel,
+      deviceMetadata: {
+        name: session.device_name,
+        os: session.device_os,
+        architecture: session.device_architecture,
+        clientVersion: session.device_client_version,
+      },
     };
   }
 
-  public async refresh(rawRefreshToken: string): Promise<SessionResult> {
+  public async refresh(
+    rawRefreshToken: string,
+    existingTransaction?: TransactionClient,
+  ): Promise<SessionResult> {
     const presentedHash = hashRefreshToken(rawRefreshToken);
-    const outcome = await this.sql.begin(async (transaction) => {
+    const operation = async (transaction: TransactionClient) => {
       const [history] = await transaction<
         { session_id: string; token_version: number; status: "active" | "rotated" | "revoked" }[]
       >`
@@ -332,7 +362,11 @@ export class AuthService {
           refreshToken: nextRefreshToken,
         },
       } as const;
-    });
+    };
+    const outcome =
+      existingTransaction === undefined
+        ? await this.sql.begin(operation)
+        : await operation(existingTransaction);
 
     if (outcome.kind !== "rotated") {
       throw new AuthError("AUTH_TOKEN_REVOKED", "refresh token is invalid or reused");
@@ -340,13 +374,20 @@ export class AuthService {
     return outcome.result;
   }
 
-  public async logout(rawRefreshToken: string): Promise<void> {
+  public async logout(
+    rawRefreshToken: string,
+    existingTransaction?: TransactionClient,
+    expectedSessionId?: string,
+  ): Promise<void> {
     const tokenHash = hashRefreshToken(rawRefreshToken);
-    await this.sql.begin(async (transaction) => {
+    const operation = async (transaction: TransactionClient) => {
       const [history] = await transaction<{ session_id: string }[]>`
         select session_id from session_refresh_tokens where token_hash = ${tokenHash} for update
       `;
       if (history === undefined) return;
+      if (expectedSessionId !== undefined && history.session_id !== expectedSessionId) {
+        throw new AuthError("AUTH_TOKEN_REVOKED", "refresh token does not belong to this session");
+      }
       await transaction`
         update sessions
         set revoked_at = coalesce(revoked_at, now()), token_version = token_version + 1, updated_at = now()
@@ -356,6 +397,26 @@ export class AuthService {
         update session_refresh_tokens set status = 'revoked'
         where session_id = ${history.session_id}
       `;
-    });
+    };
+    if (existingTransaction === undefined) await this.sql.begin(operation);
+    else await operation(existingTransaction);
+  }
+
+  public async logoutSession(
+    sessionId: string,
+    existingTransaction?: TransactionClient,
+  ): Promise<void> {
+    const operation = async (transaction: TransactionClient) => {
+      await transaction`
+        update sessions
+        set revoked_at = coalesce(revoked_at, now()), token_version = token_version + 1, updated_at = now()
+        where id = ${sessionId}
+      `;
+      await transaction`
+        update session_refresh_tokens set status = 'revoked' where session_id = ${sessionId}
+      `;
+    };
+    if (existingTransaction === undefined) await this.sql.begin(operation);
+    else await operation(existingTransaction);
   }
 }

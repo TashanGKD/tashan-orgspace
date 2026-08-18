@@ -826,7 +826,7 @@ Run: `pnpm --filter @tashan/api test -- audit-service.test.ts && pnpm --filter @
 
 Expected: spoofed headers ignored, PII redacted, valid chain verifies, fixture tampering is detected.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add apps/api/src/audit apps/api/src/http/trusted-proxy.ts apps/api/test/audit
@@ -836,20 +836,33 @@ git commit -m "security(audit): add tamper-evident events"
 ## Task 11: Expose Fastify API routes from the capability contracts
 
 **Files:**
+- Create: `apps/api/migrations/005_idempotency_actor_key.sql`
 - Create: `apps/api/src/config.ts`
 - Create: `apps/api/src/app.ts`
 - Create: `apps/api/src/server.ts`
 - Create: `apps/api/src/http/error-handler.ts`
 - Create: `apps/api/src/http/authenticate.ts`
 - Create: `apps/api/src/http/idempotency.ts`
+- Create: `apps/api/src/http/request-audit.ts`
+- Create: `apps/api/src/http/request-context.ts`
 - Create: `apps/api/src/routes/auth-routes.ts`
 - Create: `apps/api/src/routes/device-routes.ts`
 - Create: `apps/api/src/routes/organization-routes.ts`
 - Create: `apps/api/src/routes/capability-routes.ts`
 - Create: `apps/api/src/routes/audit-routes.ts`
+- Create: `apps/api/src/routes/phone-routes.ts`
+- Create: `apps/api/src/routes/route-helpers.ts`
+- Modify: `apps/api/src/auth/auth-service.ts`
+- Modify: `apps/api/src/organizations/organization-service.ts`
+- Modify: `apps/api/src/phone/phone-verification-service.ts`
+- Modify: `apps/api/src/repositories/idempotency-repository.ts`
+- Create: `packages/contracts/src/system.ts`
+- Modify: `packages/contracts/src/audit.ts`
+- Modify: `package.json`
 - Test: `apps/api/test/http/api.integration.test.ts`
+- Test: `apps/api/src/config.test.ts`
 
-- [ ] **Step 1: Write route-contract tests with real payloads**
+- [x] **Step 1: Write route-contract tests with real payloads**
 
 ```ts
 test("returns the stable error envelope", async () => {
@@ -868,13 +881,13 @@ test("revoking one device does not revoke another", async () => {
 
 Add route tests for all 17 capability IDs, including duplicate username, missing idempotency key on mutations, cross-org access, and malformed UUIDs.
 
-- [ ] **Step 2: Run and verify 404/failure**
+- [x] **Step 2: Run and verify 404/failure**
 
 Run: `pnpm --filter @tashan/api test:integration -- api.integration.test.ts`
 
 Expected: FAIL because `/v1` routes are not mounted.
 
-- [ ] **Step 3: Implement routes and middleware**
+- [x] **Step 3: Implement routes and middleware**
 
 Mount exactly:
 
@@ -900,7 +913,7 @@ GET    /v1/audit-events
 
 Each handler references one capability ID, parses request/response with shared schemas, and writes audit on success and rejection. Mutation routes require `Idempotency-Key`, except login/refresh/logout which use session-specific replay protection. Config validation refuses wildcard CORS, missing signing key, production mode with loopback secrets, or an enabled phone provider without credentials.
 
-- [ ] **Step 4: Run API tests**
+- [x] **Step 4: Run API tests**
 
 Run: `pnpm --filter @tashan/api test && pnpm --filter @tashan/api test:integration`
 

@@ -48,7 +48,8 @@ export function hashIdempotencyInput(input: unknown): string {
 }
 
 export interface IdempotencyClaimInput {
-  actorPrincipalId: string;
+  actorPrincipalId?: string;
+  actorKey?: string;
   capabilityId: string;
   idempotencyKey: string;
   input: unknown;
@@ -65,15 +66,21 @@ export class IdempotencyRepository {
     transaction: TransactionClient,
     input: IdempotencyClaimInput,
   ): Promise<IdempotencyClaim> {
+    const actorKey =
+      input.actorKey ??
+      (input.actorPrincipalId === undefined ? undefined : `principal:${input.actorPrincipalId}`);
+    if (actorKey === undefined || actorKey.length === 0 || actorKey.length > 512) {
+      throw new Error("idempotency actor key is invalid");
+    }
     const requestHash = hashIdempotencyInput(input.input);
     const inserted = await transaction<{ id: string }[]>`
       insert into idempotency_records (
-        actor_principal_id, capability_id, idempotency_key, request_hash, expires_at
+        actor_principal_id, actor_key, capability_id, idempotency_key, request_hash, expires_at
       ) values (
-        ${input.actorPrincipalId}, ${input.capabilityId}, ${input.idempotencyKey},
+        ${input.actorPrincipalId ?? null}, ${actorKey}, ${input.capabilityId}, ${input.idempotencyKey},
         ${requestHash}, ${input.expiresAt ?? new Date(Date.now() + 24 * 60 * 60 * 1000)}
       )
-      on conflict (actor_principal_id, capability_id, idempotency_key) do nothing
+      on conflict (actor_key, capability_id, idempotency_key) do nothing
       returning id
     `;
     if (inserted.length === 1) return { kind: "claimed" };
@@ -83,7 +90,7 @@ export class IdempotencyRepository {
     >`
       select request_hash, response_status, response_body
       from idempotency_records
-      where actor_principal_id = ${input.actorPrincipalId}
+      where actor_key = ${actorKey}
         and capability_id = ${input.capabilityId}
         and idempotency_key = ${input.idempotencyKey}
     `;
@@ -101,18 +108,25 @@ export class IdempotencyRepository {
   public async complete(
     transaction: TransactionClient,
     input: {
-      actorPrincipalId: string;
+      actorPrincipalId?: string;
+      actorKey?: string;
       capabilityId: string;
       idempotencyKey: string;
       responseStatus: number;
       responseBody: unknown;
     },
   ): Promise<void> {
+    const actorKey =
+      input.actorKey ??
+      (input.actorPrincipalId === undefined ? undefined : `principal:${input.actorPrincipalId}`);
+    if (actorKey === undefined || actorKey.length === 0 || actorKey.length > 512) {
+      throw new Error("idempotency actor key is invalid");
+    }
     const responseBody = canonicalize(input.responseBody, new WeakSet()) as JSONValue;
     const rows = await transaction<{ id: string }[]>`
       update idempotency_records
       set response_status = ${input.responseStatus}, response_body = ${transaction.json(responseBody)}
-      where actor_principal_id = ${input.actorPrincipalId}
+      where actor_key = ${actorKey}
         and capability_id = ${input.capabilityId}
         and idempotency_key = ${input.idempotencyKey}
         and response_status is null

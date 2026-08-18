@@ -1,4 +1,4 @@
-import { randomUUID } from "node:crypto";
+import { randomUUID, type webcrypto } from "node:crypto";
 
 import { errors, jwtVerify, SignJWT } from "jose";
 import { z } from "zod";
@@ -18,6 +18,7 @@ const AccessTokenClaims = z.object({
 });
 
 export type AccessTokenClaims = z.infer<typeof AccessTokenClaims>;
+export type TokenCryptoKey = webcrypto.CryptoKey;
 
 export interface AccessTokenInput {
   subject: string;
@@ -32,8 +33,8 @@ export interface AccessTokenServiceOptions {
   issuer: string;
   audience: string;
   activeKeyId: string;
-  privateKey: CryptoKey;
-  publicKeys: ReadonlyMap<string, CryptoKey>;
+  privateKey: TokenCryptoKey;
+  publicKeys: ReadonlyMap<string, TokenCryptoKey>;
   clock?: () => number;
 }
 

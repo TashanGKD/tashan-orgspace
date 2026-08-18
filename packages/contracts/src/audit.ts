@@ -23,6 +23,7 @@ export const AuditDeviceContext = z
     architecture: z.string().min(1),
     clientVersion: z.string().min(1),
     userAgent: z.string().optional(),
+    skillVersion: z.string().min(1).optional(),
   })
   .strict();
 export type AuditDeviceContext = z.infer<typeof AuditDeviceContext>;
