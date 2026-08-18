@@ -1,0 +1,21 @@
+{
+  "name": "@tashan/api",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "db:migrate": "tsx src/db/migrate.ts",
+    "db:reset:test": "tsx src/db/migrate.ts --reset-test",
+    "test": "vitest run --exclude '**/*.integration.test.ts' --passWithNoTests",
+    "test:integration": "vitest run --config vitest.integration.config.ts",
+    "typecheck": "tsc --noEmit -p tsconfig.json"
+  },
+  "dependencies": {
+    "@tashan/contracts": "workspace:*",
+    "postgres": "3.4.9"
+  },
+  "devDependencies": {
+    "tsx": "4.23.12",
+    "vitest": "4.1.10"
+  }
+}

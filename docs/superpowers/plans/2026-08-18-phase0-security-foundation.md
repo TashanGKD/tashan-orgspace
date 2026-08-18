@@ -498,7 +498,7 @@ node scripts/check-gate-self-tests.mjs
 
 Expected: every self-test prints `PASS`; production gates print zero violations. Temporarily remove one CLI binding, run coverage gate and observe non-zero exit, then restore it and rerun successfully.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add scripts .githooks .github package.json
@@ -509,13 +509,15 @@ git commit -m "build(gates): enforce capability consistency"
 
 **Files:**
 - Create: `apps/api/package.json`
+- Create: `apps/api/tsconfig.json`
+- Create: `apps/api/vitest.integration.config.ts`
 - Create: `apps/api/migrations/001_phase0.sql`
 - Create: `apps/api/migrations/002_app_roles.sql`
 - Create: `apps/api/src/db/client.ts`
 - Create: `apps/api/src/db/migrate.ts`
 - Test: `apps/api/test/db/schema.integration.test.ts`
 
-- [ ] **Step 1: Write failing schema invariants**
+- [x] **Step 1: Write failing schema invariants**
 
 The integration test connects to local PostgreSQL, migrates an empty database, then asserts:
 
@@ -529,13 +531,13 @@ await expect(sql`delete from audit_events`).rejects.toThrow(/audit_events are ap
 
 Also construct duplicate active Membership `(organization_id, account_id)`, duplicate refresh token hash, and invalid role values; each must be rejected by PostgreSQL, not only application code.
 
-- [ ] **Step 2: Run against a clean database and verify failure**
+- [x] **Step 2: Run against a clean database and verify failure**
 
 Run: `pnpm --filter @tashan/api test:integration -- schema.integration.test.ts`
 
 Expected: FAIL because migrations are absent.
 
-- [ ] **Step 3: Write complete migrations**
+- [x] **Step 3: Write complete migrations**
 
 `001_phase0.sql` creates:
 
@@ -568,7 +570,7 @@ Add `phone_verifications`, `organizations`, `memberships`, `devices`, `sessions`
 
 `002_app_roles.sql` adds an audit trigger that raises `audit_events are append-only` on UPDATE/DELETE and grants the application role INSERT/SELECT only. Migrations do not create or embed production passwords.
 
-- [ ] **Step 4: Recreate database and run integration tests**
+- [x] **Step 4: Recreate database and run integration tests**
 
 Run: `pnpm --filter @tashan/api db:reset:test && pnpm --filter @tashan/api test:integration -- schema.integration.test.ts`
 
