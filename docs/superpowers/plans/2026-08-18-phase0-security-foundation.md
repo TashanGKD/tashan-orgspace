@@ -1239,7 +1239,7 @@ git commit -m "feat(web): add Phase 0 account shell"
 - Create: `vitest.e2e.config.ts`
 - Modify: `package.json`
 
-- [ ] **Step 1: Write the full lifecycle before wiring the runner**
+- [x] **Step 1: Write the full lifecycle before wiring the runner**
 
 The test must perform real HTTP calls and CLI subprocesses:
 
@@ -1260,23 +1260,23 @@ test("Phase 0 lifecycle", async () => {
 
 Cross-org tests use a valid token and guessed real object IDs from another organization. Audit tests assert server IP, device ID/name, OS/arch, CLI version, actor source, request ID and result are present and secrets/whole phone numbers are absent.
 
-- [ ] **Step 2: Run and verify runner failure**
+- [x] **Step 2: Run and verify runner failure**
 
 Run: `pnpm test:e2e`
 
 Expected: FAIL because E2E config/startup wiring is missing.
 
-- [ ] **Step 3: Add deterministic E2E orchestration**
+- [x] **Step 3: Add deterministic E2E orchestration**
 
 The runner starts Compose with `--wait`, creates an isolated database, migrates, starts API and worker on loopback random ports, executes tests, then terminates processes and Compose in `finally`. It must refuse non-loopback database/Redis/API URLs. No arbitrary sleeps: poll health endpoints with a bounded deadline.
 
-- [ ] **Step 4: Run E2E twice**
+- [x] **Step 4: Run E2E twice**
 
 Run: `pnpm test:e2e && pnpm test:e2e`
 
 Expected: both runs pass; the second run proves cleanup and idempotent setup.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add tests vitest.e2e.config.ts package.json

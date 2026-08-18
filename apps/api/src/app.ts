@@ -56,6 +56,17 @@ export async function buildApp(options: BuildAppOptions): Promise<FastifyInstanc
     genReqId: () => randomUUID(),
     trustProxy: false,
   });
+  app.addHook("onRequest", async (request, reply) => {
+    initializeRequestContext(request, { clientIp: "127.0.0.1", proxyChain: [] });
+    const forwarded = request.headers["x-forwarded-for"];
+    const resolved = resolveClientIp({
+      peer: request.socket.remoteAddress ?? "127.0.0.1",
+      ...(typeof forwarded === "string" ? { forwardedFor: forwarded } : {}),
+      trustedProxies: options.trustedProxyCidrs,
+    });
+    initializeRequestContext(request, resolved);
+    reply.header("x-request-id", request.id);
+  });
   await app.register(cookie);
   await app.register(cors, { origin: [...options.corsOrigins], credentials: true });
 
@@ -74,17 +85,6 @@ export async function buildApp(options: BuildAppOptions): Promise<FastifyInstanc
   const organizations = new OrganizationService(options.sql);
   const mutations = new MutationCoordinator(options.sql, audit);
   const authenticate = authenticateWith(auth);
-
-  app.addHook("onRequest", async (request, reply) => {
-    const forwarded = request.headers["x-forwarded-for"];
-    const resolved = resolveClientIp({
-      peer: request.socket.remoteAddress ?? "127.0.0.1",
-      ...(typeof forwarded === "string" ? { forwardedFor: forwarded } : {}),
-      trustedProxies: options.trustedProxyCidrs,
-    });
-    initializeRequestContext(request, resolved);
-    reply.header("x-request-id", request.id);
-  });
 
   installErrorHandler(app);
 

@@ -1,4 +1,4 @@
-import * as ipaddr from "ipaddr.js";
+import ipaddr from "ipaddr.js";
 
 const MAX_FORWARDED_ADDRESSES = 20;
 
