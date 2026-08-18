@@ -4,6 +4,11 @@ import { resolveCliConfig } from "../src/config.js";
 import { runCli } from "../src/program.js";
 
 describe("safe CLI defaults", () => {
+  test("reports the release contract version", async () => {
+    const result = await runCli(["--version"]);
+    expect(result).toEqual({ stdout: "0.1.0-alpha.1\n", stderr: "", exitCode: 0 });
+  });
+
   test("no args prints help without credential or network access", async () => {
     const createClient = vi.fn();
     const credentialStore = {

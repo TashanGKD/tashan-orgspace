@@ -29,6 +29,7 @@ import { MemoryCredentialStore } from "./credentials/memory-store.js";
 import { CliSessionCredentials } from "./credentials/session-credentials.js";
 import { promptHidden as defaultPromptHidden, readSingleLine } from "./input.js";
 import { CliOutput, type CliRunResult } from "./output.js";
+import cliPackage from "../package.json" with { type: "json" };
 
 export const registeredCapabilityIds = new Set([
   ...authCapabilityIds,
@@ -67,7 +68,7 @@ export function buildProgram(output: CliOutput, dependencies: CliDependencies = 
   const program = new Command()
     .name("torg")
     .description("Tashan OrgSpace command line client")
-    .version("0.0.0")
+    .version(cliPackage.version)
     .option("--json", "emit one JSON value on stdout")
     .option("--api-url <url>", "explicit API origin")
     .option("--credential-file <absolute-path>", "explicit encrypted credential file")
@@ -160,7 +161,7 @@ async function createRuntime(program: Command, dependencies: CliDependencies): P
       name: dependencies.deviceMetadata?.name ?? hostname(),
       os: dependencies.deviceMetadata?.os ?? process.platform,
       architecture: dependencies.deviceMetadata?.architecture ?? process.arch,
-      clientVersion: "0.0.0",
+      clientVersion: cliPackage.version,
       channel: "cli",
     },
   };

@@ -29,33 +29,34 @@
 **Files:**
 
 - Create: `release/cli-release.json`
+- Create: `skill/tashan-orgspace/release.json`
 - Create: `scripts/check-release-contract.mjs`
 - Create: `scripts/check-release-contract.self-test.mjs`
 - Modify: `apps/cli/package.json`
 - Modify: `apps/cli/src/program.ts`
 - Modify: `scripts/check-gate-self-tests.mjs`
 
-- [ ] **Step 1: Write the negative gate self-test**
+- [x] **Step 1: Write the negative gate self-test**
 
 Create fixtures for: CLI version drift, Skill version drift, non-HTTPS production API URL, repository drift, duplicate platform, traversal in an asset name, and an unsupported platform identifier. Each fixture must fail with the specific mismatched field.
 
-- [ ] **Step 2: Run the self-test and observe the missing module failure**
+- [x] **Step 2: Run the self-test and observe the missing module failure**
 
 Run: `node scripts/check-release-contract.self-test.mjs`
 
 Expected: FAIL because `check-release-contract.mjs` does not exist.
 
-- [ ] **Step 3: Add the release source of truth**
+- [x] **Step 3: Add the release source of truth**
 
 Use version `0.1.0-alpha.1`, repository `TashanGKD/tashan-orgspace`, API origin `https://orgspace.tashan.chat`, Node version `24.14.0`, and exact platforms `darwin-arm64`, `darwin-x64`, `linux-x64`. Asset names are `torg-v0.1.0-alpha.1-<platform>.tar.gz`.
 
 Make `apps/cli/package.json` non-publishable but versioned at `0.1.0-alpha.1`. Read that package version in the CLI instead of hardcoding `0.0.0`; use it for Commander and device client metadata.
 
-- [ ] **Step 4: Implement and wire the gate**
+- [x] **Step 4: Implement and wire the gate**
 
 The gate accepts explicit fixture paths for its self-test and repository paths for normal execution. It rejects unknown keys, unsafe URLs, duplicates and asset names not derived from version/platform. Wire it into pre-commit, CI and `verify-phase0.sh`; the existing gate inventory must count it and require its self-test.
 
-- [ ] **Step 5: Verify and commit**
+- [x] **Step 5: Verify and commit**
 
 Run:
 
@@ -121,7 +122,6 @@ Commit: `build(cli): create self-contained release artifact`
 
 **Files:**
 
-- Create: `skill/tashan-orgspace/release.json`
 - Create: `skill/tashan-orgspace/scripts/install-cli.sh`
 - Create: `tests/distribution/install-cli.test.ts`
 
@@ -282,4 +282,3 @@ Commit: `docs(verify): record fresh-user distribution audit`
 - **Safe defaults:** all no-argument scripts are read-only; release is tag-triggered; stable release is production-health gated; tests cannot silently redirect production downloads.
 - **Drift prevention:** release metadata, CLI version, Skill version, platform assets and tag are machine-compared, not maintained by prose.
 - **Scope:** AUP production deployment and SMS-backed public registration remain separate from this distribution plan; the prerelease must state that production login is not yet accepted.
-

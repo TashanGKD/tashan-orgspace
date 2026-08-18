@@ -7,6 +7,7 @@ pnpm lint
 pnpm typecheck
 pnpm test
 node scripts/check-capability-coverage.mjs
+node scripts/check-release-contract.mjs
 node scripts/check-gate-self-tests.mjs
 
 for self_test in scripts/check-*.self-test.mjs; do
