@@ -101,16 +101,48 @@ export function checkReleaseContract(release, cliPackage, skillRelease) {
   return { version: release.version, platforms: release.platforms.length, violations: 0 };
 }
 
+export function checkDistributionContract(release, workflow, installer) {
+  validateRelease(release);
+  if (typeof workflow !== "string" || typeof installer !== "string") {
+    throw new Error("distribution sources must be strings");
+  }
+  const workflowPlatforms = [...workflow.matchAll(/^\s+platform: ([a-z0-9-]+)$/gm)].map(
+    (match) => match[1],
+  );
+  const expectedPlatforms = release.platforms.map(({ id }) => id);
+  if (JSON.stringify(workflowPlatforms.sort()) !== JSON.stringify([...expectedPlatforms].sort())) {
+    throw new Error("release workflow platform matrix mismatch");
+  }
+  for (const required of [
+    "node scripts/build-cli-release.mjs --output-dir dist",
+    `${release.apiUrl}/v1/health`,
+    "gh release create",
+  ]) {
+    if (!workflow.includes(required)) throw new Error(`release workflow missing: ${required}`);
+  }
+  const installerPattern = `  ${expectedPlatforms.join(" | ")}) ;;`;
+  if (!installer.includes(installerPattern)) {
+    throw new Error("installer platform allowlist mismatch");
+  }
+}
+
 function readJson(path) {
   return JSON.parse(readFileSync(path, "utf8"));
 }
 
 export function checkRepositoryReleaseContract(repositoryRoot) {
-  return checkReleaseContract(
-    readJson(resolve(repositoryRoot, "release/cli-release.json")),
+  const release = readJson(resolve(repositoryRoot, "release/cli-release.json"));
+  const result = checkReleaseContract(
+    release,
     readJson(resolve(repositoryRoot, "apps/cli/package.json")),
     readJson(resolve(repositoryRoot, "skill/tashan-orgspace/release.json")),
   );
+  checkDistributionContract(
+    release,
+    readFileSync(resolve(repositoryRoot, ".github/workflows/release-cli.yml"), "utf8"),
+    readFileSync(resolve(repositoryRoot, "skill/tashan-orgspace/scripts/install-cli.sh"), "utf8"),
+  );
+  return result;
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {

@@ -1,6 +1,6 @@
 import { strict as assert } from "node:assert";
 
-import { checkReleaseContract } from "./check-release-contract.mjs";
+import { checkDistributionContract, checkReleaseContract } from "./check-release-contract.mjs";
 
 const version = "0.1.0-alpha.1";
 const release = {
@@ -21,6 +21,15 @@ function clone(value) {
 }
 
 const skillRelease = clone(release);
+const workflow = `
+          platform: darwin-arm64
+          platform: darwin-x64
+          platform: linux-x64
+      - run: node scripts/build-cli-release.mjs --output-dir dist
+      - run: curl https://orgspace.tashan.chat/v1/health
+      - run: gh release create
+`;
+const installer = "case $platform in\n  darwin-arm64 | darwin-x64 | linux-x64) ;;\nesac\n";
 
 function changed(value, update) {
   return Object.assign(clone(value), update);
@@ -41,6 +50,20 @@ assert.deepEqual(checkReleaseContract(release, cliPackage, skillRelease), {
   platforms: 3,
   violations: 0,
 });
+assert.equal(checkDistributionContract(release, workflow, installer), undefined);
+assert.throws(
+  () =>
+    checkDistributionContract(
+      release,
+      workflow.replace("          platform: linux-x64\n", ""),
+      installer,
+    ),
+  /release workflow platform matrix mismatch/,
+);
+assert.throws(
+  () => checkDistributionContract(release, workflow, installer.replace(" | linux-x64", "")),
+  /installer platform allowlist mismatch/,
+);
 assert.throws(
   () => checkReleaseContract(release, { version: "0.1.0-alpha.2" }, skillRelease),
   /CLI version mismatch/,

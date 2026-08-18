@@ -13,6 +13,7 @@
     "lint": "eslint .",
     "typecheck": "pnpm -r typecheck && tsc --noEmit -p tsconfig.e2e.json",
     "test": "pnpm -r test",
+    "test:distribution": "vitest run tests/distribution && bash scripts/test-fresh-user-install.self-test.sh && bash scripts/test-fresh-user-install.sh --local-build",
     "test:e2e": "tsx tests/e2e/run.ts"
   },
   "devDependencies": {

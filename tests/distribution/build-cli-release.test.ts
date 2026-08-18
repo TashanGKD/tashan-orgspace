@@ -1,5 +1,5 @@
 import { execFileSync, spawnSync } from "node:child_process";
-import { mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { mkdtempSync, mkdirSync, readFileSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 
@@ -68,6 +68,15 @@ describe("CLI release builder", () => {
     expect(noArguments.status).toBe(0);
     expect(noArguments.stdout).toContain("Usage: torg");
     expect(noArguments.stderr).toBe("");
+
+    const linkedBin = temporaryDirectory("torg-release-linked-bin-");
+    const linkedLauncher = join(linkedBin, "torg");
+    symlinkSync(launcher, linkedLauncher);
+    const linkedVersion = spawnSync(linkedLauncher, ["--version"], {
+      encoding: "utf8",
+      env: environment,
+    });
+    expect(linkedVersion).toMatchObject({ status: 0, stdout: "0.1.0-alpha.1\n", stderr: "" });
   }, 30_000);
 
   test("refuses a non-empty output directory", () => {

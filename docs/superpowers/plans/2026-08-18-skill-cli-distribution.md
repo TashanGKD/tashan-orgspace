@@ -199,19 +199,19 @@ Commit: `feat(skill): publish OrgSpace agent interface`
 - Modify: `scripts/verify-phase0.sh`
 - Modify: `docs/architecture/phase0-security-foundation.md`
 
-- [ ] **Step 1: Write the fresh-user negative self-test**
+- [x] **Step 1: Write the fresh-user negative self-test**
 
 The self-test supplies a corrupt asset and expects the fresh-user runner to reject it while leaving HOME empty. It also checks that running the runner without an explicit local artifact is read-only and prints usage.
 
-- [ ] **Step 2: Implement the clean-user runner**
+- [x] **Step 2: Implement the clean-user runner**
 
 Build an artifact, create temporary HOME/XDG paths, install from fixture release assets, remove development Node/pnpm from PATH, run `torg --version`, no-argument help and `capability list --json` against a bounded loopback fixture API, then reinstall and confirm idempotency. Always clean temporary homes and processes.
 
-- [ ] **Step 3: Add the tag release workflow**
+- [x] **Step 3: Add the tag release workflow**
 
 On `v*` tags, require tag equals manifest version, run the full verifier, build each supported platform on its native GitHub runner, aggregate assets, generate `SHA256SUMS`, and publish through `gh release create`. Versions containing `-` are prereleases. Stable versions must first receive a valid success response from `https://orgspace.tashan.chat/v1/health`.
 
-- [ ] **Step 4: Wire and verify**
+- [x] **Step 4: Wire and verify**
 
 Run:
 

@@ -232,14 +232,14 @@ if [ ! -L "$target" ]; then
   mv "$next_target" "$target"
 fi
 
-active_version=$($target --version 2>/dev/null || true)
+active_version=$($target --version 2>&1 || true)
 if [ "$active_version" != "$version" ]; then
   if [ -n "$old_current" ]; then
     replace_symlink "$old_current" "$install_root/current"
   else
     rm -f -- "$install_root/current" "$target"
   fi
-  fail "installed CLI smoke test failed after activation"
+  fail "installed CLI smoke test failed after activation: $active_version"
 fi
 
 printf 'installed torg %s at %s\n' "$version" "$target"

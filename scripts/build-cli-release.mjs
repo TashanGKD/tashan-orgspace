@@ -53,7 +53,15 @@ function sha256(path) {
 function launcher(apiUrl) {
   return `#!/bin/sh
 set -eu
-self_dir="$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd)"
+launcher_path=$0
+if [ -L "$launcher_path" ]; then
+  launcher_target=$(readlink "$launcher_path")
+  case "$launcher_target" in
+    /*) launcher_path=$launcher_target ;;
+    *) launcher_path=\${launcher_path%/*}/$launcher_target ;;
+  esac
+fi
+self_dir="$(CDPATH='' cd -- "\${launcher_path%/*}" && pwd)"
 release_root="$(CDPATH='' cd -- "$self_dir/.." && pwd)"
 export TORG_ENV=production
 TORG_API_URL="\${TORG_API_URL:-${apiUrl}}"

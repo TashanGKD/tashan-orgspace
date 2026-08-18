@@ -76,8 +76,10 @@ Mutation Coordinator 在同一 PostgreSQL 事务中完成领域写入、成功�
 
 ## 验证层
 
-`bash scripts/verify-phase0.sh` 依次执行工具链、格式、lint、严格类型、单元测试、能力一致性、门禁清单、负向自测试和完整 E2E。E2E 使用 loopback Compose、隔离测试数据库、随机 API 端口、真实 HTTP、真实 CLI 子进程和 Worker；每次运行都在 `finally` 中停止子进程与容器，但不删除命名卷。
+`bash scripts/verify-phase0.sh` 依次执行工具链、格式、lint、严格类型、单元测试、分发测试、能力一致性、门禁清单、负向自测试和完整 E2E。分发测试使用临时 HOME、校验和篡改样本、原生自包含 Node 运行时和本机 HTTPS fixture，验证首次安装、重复安装、无系统 Node 启动以及 capability JSON。E2E 使用 loopback Compose、隔离测试数据库、随机 API 端口、真实 HTTP、真实 CLI 子进程和 Worker；每次运行都在 `finally` 中停止子进程与容器，但不删除命名卷。
+
+`skill/tashan-orgspace` 是可单独安装的 Codex Skill，内含用户级 fail-closed 安装器。无参数仅显示帮助；安装器只接受发布清单列出的 macOS arm64/x64 与 Linux x64 资产，下载后核对唯一 SHA-256、拒绝链接或额外归档项、候选版本 smoke 通过后再切换 `current`。CLI 发布物自带锁定版本的 Node.js，不使用 `sudo`，不修改 shell 配置。`v*` tag 的发布流水线在三个原生 runner 上分别构建并汇总校验和；预发布版可在生产 API 未上线时发布，稳定版必须先通过 `https://orgspace.tashan.chat/v1/health`。
 
 ## 明确不在 Phase 0
 
-文件上传下载、个人/组织文件系统、OKR、任务、审批、短信生产发送、聊天、代码执行、Docker 构建、常驻服务、数据库产品、动态 `tashan.chat` HTTPS 域名、AI 员工、独立 Skill 的完整命令说明和 AUP 生产部署均属于后续阶段。本阶段只提供它们所依赖的身份、授权、审计、能力与客户端基础。
+文件上传下载、个人/组织文件系统、OKR、任务、审批、短信生产发送、聊天、代码执行、Docker 构建、常驻服务、数据库产品、动态 `tashan.chat` HTTPS 域名、AI 员工和 AUP 生产部署均属于后续阶段。本阶段只提供它们所依赖的身份、授权、审计、能力、客户端与 Skill 分发基础。

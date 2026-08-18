@@ -1,6 +1,7 @@
 import { describe, expect, test } from "vitest";
 
 import { createDatabaseClient } from "../../apps/api/src/db/client.js";
+import cliPackage from "../../apps/cli/package.json" with { type: "json" };
 import { e2eEnvironment, registerAndVerify, runCliScenario } from "./support/flows.js";
 
 describe("audit evidence", () => {
@@ -28,7 +29,7 @@ describe("audit evidence", () => {
         name: "Alice Mac E2E",
         os: "e2e-os",
         architecture: "e2e-arch",
-        clientVersion: "0.0.0",
+        clientVersion: cliPackage.version,
       },
       actorSource: "ai_via_cli",
       reportedActorSource: "ai_via_cli",
