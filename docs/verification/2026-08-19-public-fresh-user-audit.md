@@ -9,7 +9,6 @@
 - 公开仓库：<https://github.com/TashanGKD/tashan-orgspace>
 - 预发布：<https://github.com/TashanGKD/tashan-orgspace/releases/tag/v0.1.0-alpha.1>
 - Release 流水线：<https://github.com/TashanGKD/tashan-orgspace/actions/runs/32156792526>
-- 最新 `main` CI：<https://github.com/TashanGKD/tashan-orgspace/actions/runs/32157427491>
 
 Release 流水线在 macOS arm64、macOS x64 和 Linux x64 原生 runner 上构建，汇总三个资产并验证 `SHA256SUMS` 后发布。独立测试员与主代理分别使用不同的临时 HOME 从公开 GitHub 重新安装，没有从本地工作区复制 Skill 或 CLI。
 
