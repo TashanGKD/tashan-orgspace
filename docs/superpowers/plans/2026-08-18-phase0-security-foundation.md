@@ -1024,7 +1024,7 @@ Run: `pnpm --filter @tashan/sdk test && pnpm --filter @tashan/sdk typecheck`
 
 Expected: headers, errors, timeout, one-refresh and schema rejection tests pass.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/sdk
@@ -1044,10 +1044,12 @@ git commit -m "feat(sdk): add typed Phase 0 client"
 - Create: `apps/cli/src/credentials/linux-secret-service-store.ts`
 - Create: `apps/cli/src/credentials/encrypted-file-store.ts`
 - Create: `apps/cli/src/credentials/memory-store.ts`
+- Create: `apps/cli/tsconfig.json`
+- Create: `apps/cli/vitest.integration.config.ts`
 - Test: `apps/cli/test/safe-defaults.test.ts`
 - Test: `apps/cli/test/credential-store.test.ts`
 
-- [ ] **Step 1: Write safe-default and injection tests first**
+- [x] **Step 1: Write safe-default and injection tests first**
 
 ```ts
 test("no args prints help without filesystem or network access", async () => {
@@ -1072,19 +1074,19 @@ test.each(["name;open /tmp/pwned", "$(touch /tmp/pwned)", "`id`"])('passes keych
 });
 ```
 
-- [ ] **Step 2: Run and verify failure**
+- [x] **Step 2: Run and verify failure**
 
 Run: `pnpm --filter @tashan/cli test -- safe-defaults.test.ts credential-store.test.ts`
 
 Expected: FAIL because program and stores are absent.
 
-- [ ] **Step 3: Implement safe CLI infrastructure**
+- [x] **Step 3: Implement safe CLI infrastructure**
 
 Commander program name is `torg`; no-argument action prints help. Source/development default is `http://127.0.0.1:4110`; a production URL must come from explicit config or release packaging. stdout carries data, stderr carries diagnostics. `--json` outputs one JSON value and stable exit codes.
 
 Keychain and Secret Service call `security`/`secret-tool` using `spawnFile(binary, argv, { shell: false })`. If unavailable, use memory only. Encrypted file storage requires both explicit `--credential-file` and a passphrase prompt, derives a key with scrypt, encrypts with AES-256-GCM, writes atomically with mode `0600`, and deletes the temp file on every failure branch.
 
-- [ ] **Step 4: Run safe-default tests**
+- [x] **Step 4: Run safe-default tests**
 
 Run: `pnpm --filter @tashan/cli test -- safe-defaults.test.ts credential-store.test.ts`
 
