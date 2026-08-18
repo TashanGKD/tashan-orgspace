@@ -969,7 +969,7 @@ Run: `TEST_DATABASE_URL=<loopback-test-url> pnpm --filter @tashan/worker test:in
 
 Expected: crash recovery, live lease exclusion, dead-letter and SIGTERM tests pass.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add apps/worker
@@ -983,9 +983,11 @@ git commit -m "feat(worker): add recoverable outbox loop"
 - Create: `packages/sdk/src/client.ts`
 - Create: `packages/sdk/src/transport.ts`
 - Create: `packages/sdk/src/index.ts`
+- Create: `packages/sdk/tsconfig.json`
+- Modify: `apps/api/src/http/request-audit.ts`
 - Test: `packages/sdk/src/client.test.ts`
 
-- [ ] **Step 1: Write transport and error-decoding tests**
+- [x] **Step 1: Write transport and error-decoding tests**
 
 ```ts
 test("adds bearer, request, device, channel and idempotency headers", async () => {
@@ -1006,17 +1008,17 @@ test("decodes stable API errors", async () => {
 });
 ```
 
-- [ ] **Step 2: Run and verify failure**
+- [x] **Step 2: Run and verify failure**
 
 Run: `pnpm --filter @tashan/sdk test`
 
 Expected: FAIL because SDK is absent.
 
-- [ ] **Step 3: Implement schema-validated methods**
+- [x] **Step 3: Implement schema-validated methods**
 
 Create one SDK method per Phase 0 capability. Parse every response with `@tashan/contracts`; never return raw `unknown`. The transport accepts `AbortSignal`, has a finite timeout, never retries mutations automatically, and refreshes access tokens only once per request chain.
 
-- [ ] **Step 4: Run SDK tests and typecheck**
+- [x] **Step 4: Run SDK tests and typecheck**
 
 Run: `pnpm --filter @tashan/sdk test && pnpm --filter @tashan/sdk typecheck`
 

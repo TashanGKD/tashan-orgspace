@@ -14,7 +14,7 @@ export function auditInputForRequest(
   afterState?: Record<string, unknown>,
 ): AppendAuditEventInput {
   const context = requestContext(request);
-  const reportedActorSource = singleHeader(request, "x-actor-source");
+  const reportedActorSource = singleHeader(request, "x-torg-invocation-source");
   const actor =
     context.identity === undefined
       ? { actorSource: "web" as const, reportedActorSource: reportedActorSource ?? null }

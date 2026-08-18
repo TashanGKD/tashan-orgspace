@@ -70,7 +70,7 @@ function authHeaders(token: string, mutate = false): Record<string, string> {
   return {
     authorization: `Bearer ${token}`,
     "user-agent": "torg-test/0.0.0",
-    "x-actor-source": "ai_via_cli",
+    "x-torg-invocation-source": "ai_via_cli",
     ...(mutate ? { "idempotency-key": nextIdempotencyKey() } : {}),
   };
 }
