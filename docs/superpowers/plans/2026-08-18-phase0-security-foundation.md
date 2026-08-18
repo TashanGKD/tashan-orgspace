@@ -1092,7 +1092,7 @@ Run: `pnpm --filter @tashan/cli test -- safe-defaults.test.ts credential-store.t
 
 Expected: no-arg test has zero effects; injection inputs remain one argv; failed encrypted writes leave no temp files.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add apps/cli
@@ -1110,7 +1110,7 @@ git commit -m "feat(cli): add safe torg foundation"
 - Test: `apps/cli/test/commands.test.ts`
 - Test: `apps/cli/test/cli-api.integration.test.ts`
 
-- [ ] **Step 1: Write command behavior tests**
+- [x] **Step 1: Write command behavior tests**
 
 ```ts
 test("login prompts securely and never prints tokens", async () => {
@@ -1127,13 +1127,13 @@ test("organization creation requires explicit idempotency key in non-interactive
 });
 ```
 
-- [ ] **Step 2: Run and verify failure**
+- [x] **Step 2: Run and verify failure**
 
 Run: `pnpm --filter @tashan/cli test -- commands.test.ts`
 
 Expected: FAIL because commands are absent.
 
-- [ ] **Step 3: Bind all Phase 0 capabilities**
+- [x] **Step 3: Bind all Phase 0 capabilities**
 
 Implement:
 
@@ -1158,19 +1158,19 @@ torg capability describe <capability-id> --json
 
 Mutations fail before network access when required confirmation, organization, input, or idempotency key is absent. `device revoke` refuses the current device unless `--allow-current-device` is also present.
 
-- [ ] **Step 4: Run mocked and real API integration tests**
+- [x] **Step 4: Run mocked and real API integration tests**
 
 Run: `pnpm --filter @tashan/cli test && pnpm --filter @tashan/cli test:integration`
 
 Expected: all commands have text and JSON snapshots; two-device integration and cross-org rejection pass.
 
-- [ ] **Step 5: Run the capability coverage gate**
+- [x] **Step 5: Run the capability coverage gate**
 
 Run: `node scripts/check-capability-coverage.mjs`
 
 Expected: `17 server capabilities, 17 CLI bindings, 0 missing`.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add apps/cli

@@ -28,6 +28,13 @@ describe("safe CLI defaults", () => {
     expect(result.stdout + result.stderr).not.toContain("secret");
   });
 
+  test("password equals syntax is rejected without echoing the value", async () => {
+    const result = await runCli(["auth", "login", "--password=secret"]);
+    expect(result.exitCode).toBe(2);
+    expect(result.stderr).toContain("unknown option '--password'");
+    expect(result.stdout + result.stderr).not.toContain("secret");
+  });
+
   test("json mode emits exactly one JSON value", async () => {
     const result = await runCli(["--json"]);
     expect(result.exitCode).toBe(0);

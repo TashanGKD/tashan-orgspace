@@ -19,6 +19,8 @@
     "zod": "4.4.3"
   },
   "devDependencies": {
+    "@tashan/testkit": "workspace:*",
+    "jose": "6.2.9",
     "tsx": "4.23.12",
     "vitest": "4.1.10"
   }

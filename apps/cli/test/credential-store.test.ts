@@ -8,6 +8,7 @@ import { EncryptedFileStore } from "../src/credentials/encrypted-file-store.js";
 import { LinuxSecretServiceStore } from "../src/credentials/linux-secret-service-store.js";
 import { MacOSKeychainStore } from "../src/credentials/macos-keychain-store.js";
 import { MemoryCredentialStore } from "../src/credentials/memory-store.js";
+import { CliSessionCredentials } from "../src/credentials/session-credentials.js";
 import {
   CredentialBackendUnavailableError,
   withMemoryFallback,
@@ -100,6 +101,29 @@ test("memory store is process-local and supports deletion", async () => {
   expect(await store.read("alice")).toBe("token");
   await store.delete("alice");
   expect(await store.read("alice")).toBeUndefined();
+});
+
+test("session persistence selects token secrets and drops extra API response fields", async () => {
+  const store = new MemoryCredentialStore();
+  const session = await CliSessionCredentials.load(
+    store,
+    "session:test",
+    "35f503c2-a5d7-4250-a337-4f4fd03cf8df",
+  );
+  await session.updateTokens({
+    accessToken: "access-secret",
+    refreshToken: "refresh-secret-that-is-long-enough",
+    tokenType: "Bearer",
+    accessTokenExpiresAt: "2026-08-18T12:15:00.000Z",
+  } as { accessToken: string; refreshToken: string });
+
+  const persisted = await store.read("session:test");
+  expect(persisted).toContain("access-secret");
+  expect(persisted).not.toContain("tokenType");
+  expect(persisted).not.toContain("accessTokenExpiresAt");
+  await expect(CliSessionCredentials.load(store, "session:test")).resolves.toBeInstanceOf(
+    CliSessionCredentials,
+  );
 });
 
 test("falls back to process memory only when the OS backend is unavailable", async () => {
