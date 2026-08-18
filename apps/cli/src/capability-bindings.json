@@ -1,0 +1,19 @@
+{
+  "system.health.read": "health",
+  "capability.list": "capability list",
+  "capability.describe": "capability describe",
+  "auth.phone.start": "auth phone-start",
+  "auth.phone.confirm": "auth phone-confirm",
+  "auth.register": "auth register",
+  "auth.login": "auth login",
+  "auth.refresh": "auth refresh",
+  "auth.logout": "auth logout",
+  "auth.whoami": "auth whoami",
+  "device.list": "device list",
+  "device.revoke": "device revoke",
+  "organization.list": "org list",
+  "organization.create": "org create",
+  "organization.member.list": "org member list",
+  "organization.member.add": "org member add",
+  "audit.list": "audit list"
+}

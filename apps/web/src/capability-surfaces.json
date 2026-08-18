@@ -1,0 +1,13 @@
+[
+  "auth.phone.start",
+  "auth.phone.confirm",
+  "auth.register",
+  "auth.login",
+  "auth.refresh",
+  "auth.logout",
+  "auth.whoami",
+  "device.list",
+  "device.revoke",
+  "organization.list",
+  "organization.create"
+]

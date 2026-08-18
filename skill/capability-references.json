@@ -1,0 +1,22 @@
+{
+  "version": 1,
+  "capabilities": [
+    "system.health.read",
+    "capability.list",
+    "capability.describe",
+    "auth.phone.start",
+    "auth.phone.confirm",
+    "auth.register",
+    "auth.login",
+    "auth.refresh",
+    "auth.logout",
+    "auth.whoami",
+    "device.list",
+    "device.revoke",
+    "organization.list",
+    "organization.create",
+    "organization.member.list",
+    "organization.member.add",
+    "audit.list"
+  ]
+}

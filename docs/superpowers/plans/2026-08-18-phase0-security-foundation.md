@@ -358,7 +358,7 @@ Run: `pnpm --filter @tashan/contracts test && pnpm --filter @tashan/contracts ty
 
 Expected: all tests pass with zero type errors.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/contracts
@@ -369,6 +369,8 @@ git commit -m "feat(contracts): define Phase 0 schemas"
 
 **Files:**
 - Create: `packages/capabilities/package.json`
+- Create: `packages/capabilities/tsconfig.json`
+- Create: `packages/capabilities/src/index.ts`
 - Create: `packages/capabilities/src/schema.ts`
 - Create: `packages/capabilities/src/registry.ts`
 - Create: `packages/capabilities/src/phase0.ts`
@@ -379,7 +381,7 @@ git commit -m "feat(contracts): define Phase 0 schemas"
 - Create: `apps/web/src/capability-surfaces.json`
 - Create: `skill/capability-references.json`
 
-- [ ] **Step 1: Write failing registry pathology tests**
+- [x] **Step 1: Write failing registry pathology tests**
 
 ```ts
 import { expect, test } from "vitest";
@@ -400,13 +402,13 @@ test("rejects a mutating capability marked side-effect free", () => {
 });
 ```
 
-- [ ] **Step 2: Run and verify failure**
+- [x] **Step 2: Run and verify failure**
 
 Run: `pnpm --filter @tashan/capabilities test`
 
 Expected: FAIL because the registry does not exist.
 
-- [ ] **Step 3: Implement registry validation and all 17 initial IDs**
+- [x] **Step 3: Implement registry validation and all 17 initial IDs**
 
 ```ts
 export const Capability = z.object({
@@ -426,7 +428,7 @@ export const Capability = z.object({
 
 `phase0.ts` declares exactly the 17 IDs in this plan. `apps/cli/src/capability-bindings.json` is the gate-readable command mapping and `bindings.ts` schema-validates it as `Record<CapabilityId, string>`. The Web pair follows the same pattern for required Web IDs. The Skill JSON lists capability IDs but no copied command syntax.
 
-- [ ] **Step 4: Run registry tests**
+- [x] **Step 4: Run registry tests**
 
 Run: `pnpm --filter @tashan/capabilities test && pnpm --filter @tashan/capabilities typecheck`
 
