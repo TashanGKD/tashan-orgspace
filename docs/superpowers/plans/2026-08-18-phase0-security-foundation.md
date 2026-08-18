@@ -216,7 +216,7 @@ Run: `pnpm install && pnpm check:toolchain && node scripts/check-toolchain.self-
 
 Expected: lockfile created; both checks print `PASS`.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add package.json pnpm-lock.yaml pnpm-workspace.yaml tsconfig.base.json eslint.config.mjs .prettierrc.json .prettierignore .node-version .npmrc .gitignore .env.example scripts/check-toolchain.mjs scripts/check-toolchain.self-test.mjs README.md docs/superpowers/plans/2026-08-18-phase0-security-foundation.md
@@ -228,11 +228,12 @@ git commit -m "build(toolchain): bootstrap strict monorepo"
 **Files:**
 - Create: `deploy/compose.local.yml`
 - Create: `packages/testkit/package.json`
+- Create: `packages/testkit/tsconfig.json`
 - Create: `packages/testkit/src/infra.ts`
 - Test: `packages/testkit/src/infra.test.ts`
 - Create: `docs/runbooks/local-development.md`
 
-- [ ] **Step 1: Write a failing infrastructure readiness test**
+- [x] **Step 1: Write a failing infrastructure readiness test**
 
 ```ts
 // packages/testkit/src/infra.test.ts
@@ -251,13 +252,13 @@ test("accepts loopback URLs", () => {
 });
 ```
 
-- [ ] **Step 2: Run the test and observe missing implementation**
+- [x] **Step 2: Run the test and observe missing implementation**
 
 Run: `pnpm --filter @tashan/testkit test -- infra.test.ts`
 
 Expected: FAIL because `assertLocalServiceUrl` is missing.
 
-- [ ] **Step 3: Implement loopback-only development checks and Compose**
+- [x] **Step 3: Implement loopback-only development checks and Compose**
 
 ```ts
 // packages/testkit/src/infra.ts
@@ -271,7 +272,7 @@ export function assertLocalServiceUrl(raw: string): void {
 
 `deploy/compose.local.yml` must bind PostgreSQL to `127.0.0.1:55432` and Redis to `127.0.0.1:56379`, define health checks, use named volumes, and contain no `restart: always`. The runbook must state that `docker compose -f deploy/compose.local.yml down` preserves data and `down -v` is destructive and requires explicit confirmation.
 
-- [ ] **Step 4: Verify clean startup and shutdown**
+- [x] **Step 4: Verify clean startup and shutdown**
 
 Run: `docker compose -f deploy/compose.local.yml up -d --wait && pnpm --filter @tashan/testkit test && docker compose -f deploy/compose.local.yml down`
 
