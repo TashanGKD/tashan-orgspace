@@ -257,19 +257,19 @@ Commit: `docs(plan): record distribution execution`
 
 - Create: `docs/verification/skill-cli-fresh-user-audit.md`
 
-- [ ] **Step 1: Dispatch a test-only subagent**
+- [x] **Step 1: Dispatch a test-only subagent**
 
 Give the subagent only the public Skill URL, a temporary installation destination, and the user scenario. It must not edit product code. It installs through the standard Skill installer, reads the installed Skill, lets the Skill install `torg`, starts its own bounded loopback capability fixture, and records commands/exit codes with secrets excluded.
 
-- [ ] **Step 2: Require realistic failure checks**
+- [x] **Step 2: Require realistic failure checks**
 
 The subagent must test clean install, repeat install, no-argument behavior, help, version, JSON capability call, unsupported platform, checksum corruption and unmanaged-target refusal.
 
-- [ ] **Step 3: Root-agent independent verification**
+- [x] **Step 3: Root-agent independent verification**
 
 Inspect the subagent's filesystem evidence rather than trusting its summary. Repeat the public download/install smoke in a separate temporary HOME. Compare the installed Skill version, release checksum and CLI version to the repository manifest.
 
-- [ ] **Step 4: Record and commit the audit**
+- [x] **Step 4: Record and commit the audit**
 
 Write exact public URLs, release/tag SHA, asset checksums, test results, any limitations, and the distinction between installation readiness and production-login readiness.
 
