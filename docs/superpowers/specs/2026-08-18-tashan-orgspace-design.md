@@ -7,7 +7,7 @@
 > Web：`https://org.tashan.chat`
 > API：`https://api-org.tashan.chat`
 > Codex Skill：`tashan-orgspace`
-> 状态：讨论设计已确认，书面规格等待用户终审；尚未授权实现
+> 状态：用户已于 2026-08-18 批准书面规格；实施须按分阶段计划执行
 
 ## 1. 一句话定义
 
