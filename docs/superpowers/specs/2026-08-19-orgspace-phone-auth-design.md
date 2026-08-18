@@ -1,8 +1,8 @@
 # OrgSpace 手机号账号与短信验证设计
 
-日期：2026-08-19  
-状态：待用户书面复核  
-适用仓库：`tashan-orgspace`  
+日期：2026-08-19
+状态：待用户书面复核
+适用仓库：`tashan-orgspace`
 实现分支：`codex/web-platform`
 
 ## 1. 决策摘要
