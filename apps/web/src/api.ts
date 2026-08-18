@@ -1,5 +1,7 @@
 import { createFetchTransport, createOrgSpaceClient, type SdkCredentialStore } from "@tashan/sdk";
 
+export { resolveWebApiOrigin } from "./api-origin.js";
+
 class WebMemoryCredentials implements SdkCredentialStore {
   private accessToken: string | undefined;
 

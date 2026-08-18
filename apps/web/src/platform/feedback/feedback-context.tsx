@@ -1,4 +1,12 @@
-import { createContext, useContext, useMemo, useState, type ReactNode } from "react";
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
 
 import { OrgSpaceApiError } from "@tashan/sdk";
 
@@ -40,4 +48,34 @@ export function useFeedback(): FeedbackContextValue {
   const value = useContext(FeedbackContext);
   if (value === undefined) throw new Error("useFeedback must be used inside FeedbackProvider");
   return value;
+}
+
+export function GlobalFeedback() {
+  const { feedback } = useFeedback();
+  const errorRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (feedback?.kind === "error") errorRef.current?.focus();
+  }, [feedback]);
+
+  if (feedback === undefined) return null;
+  if (feedback.kind === "notice") {
+    return (
+      <div aria-live="polite" className="global-message success-message" role="status">
+        {feedback.message}
+      </div>
+    );
+  }
+  return (
+    <div
+      aria-live="assertive"
+      className="global-message error-message"
+      ref={errorRef}
+      role="alert"
+      tabIndex={-1}
+    >
+      <span>{feedback.message}</span>
+      {feedback.requestId === undefined ? null : <code>{feedback.requestId}</code>}
+    </div>
+  );
 }
