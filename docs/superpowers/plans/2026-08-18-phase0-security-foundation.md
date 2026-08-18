@@ -576,7 +576,7 @@ Run: `pnpm --filter @tashan/api db:reset:test && pnpm --filter @tashan/api test:
 
 Expected: all constraints and append-only tests pass.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add apps/api/package.json apps/api/migrations apps/api/src/db apps/api/test/db
@@ -595,7 +595,7 @@ git commit -m "feat(database): add Phase 0 schema"
 - Create: `apps/api/src/repositories/outbox-repository.ts`
 - Test: `apps/api/test/repositories/transaction.integration.test.ts`
 
-- [ ] **Step 1: Write rollback and duplicate-idempotency tests**
+- [x] **Step 1: Write rollback and duplicate-idempotency tests**
 
 ```ts
 test("rolls back domain, audit, and outbox together", async () => {
@@ -615,17 +615,17 @@ test("same idempotency key with different request hash conflicts", async () => {
 });
 ```
 
-- [ ] **Step 2: Run and verify failure**
+- [x] **Step 2: Run and verify failure**
 
 Run: `pnpm --filter @tashan/api test:integration -- transaction.integration.test.ts`
 
 Expected: FAIL because repositories are missing.
 
-- [ ] **Step 3: Implement one transaction boundary**
+- [x] **Step 3: Implement one transaction boundary**
 
 `UnitOfWork.run` passes one `postgres.TransactionSql` to every repository. No repository may open an internal transaction. Idempotency stores SHA-256 of canonical JSON input and the completed response envelope. Outbox rows are inserted in the same transaction as the domain change.
 
-- [ ] **Step 4: Run repository tests**
+- [x] **Step 4: Run repository tests**
 
 Run: `pnpm --filter @tashan/api test:integration -- transaction.integration.test.ts`
 
