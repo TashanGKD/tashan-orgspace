@@ -2,12 +2,25 @@ import { readdirSync } from "node:fs";
 import { dirname, join, relative, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 
+function isGateFile(name) {
+  return (
+    (/^check-.*\.mjs$/.test(name) && !name.endsWith(".self-test.mjs")) ||
+    (/^verify-.*\.sh$/.test(name) && !name.endsWith(".self-test.sh"))
+  );
+}
+
+function selfTestFor(gate) {
+  if (gate.endsWith(".mjs")) return gate.replace(/\.mjs$/, ".self-test.mjs");
+  if (gate.endsWith(".sh")) return gate.replace(/\.sh$/, ".self-test.sh");
+  throw new Error(`unsupported gate extension: ${gate}`);
+}
+
 function discoverGateFiles(root, current = root) {
   const gates = [];
   for (const entry of readdirSync(current, { withFileTypes: true })) {
     const path = join(current, entry.name);
     if (entry.isSymbolicLink()) {
-      if (/^check-.*\.mjs$/.test(entry.name)) {
+      if (isGateFile(entry.name)) {
         throw new Error(`gate files must not be symlinks: ${relative(root, path)}`);
       }
       continue;
@@ -16,11 +29,7 @@ function discoverGateFiles(root, current = root) {
       gates.push(...discoverGateFiles(root, path));
       continue;
     }
-    if (
-      entry.isFile() &&
-      /^check-.*\.mjs$/.test(entry.name) &&
-      !entry.name.endsWith(".self-test.mjs")
-    ) {
+    if (entry.isFile() && isGateFile(entry.name)) {
       gates.push(path);
     }
   }
@@ -38,7 +47,7 @@ export function checkGateSelfTests(scriptsRoot) {
   if (gates.length === 0) throw new Error("no gate scripts discovered");
 
   for (const gate of gates) {
-    const selfTest = gate.replace(/\.mjs$/, ".self-test.mjs");
+    const selfTest = selfTestFor(gate);
     if (!fileSet.has(selfTest)) {
       throw new Error(`missing gate self-test: ${relative(root, selfTest).split(sep).join("/")}`);
     }

@@ -59,6 +59,11 @@ function dependencies(client: OrgSpaceClient, overrides: Record<string, unknown>
 
 describe("Phase 0 command behavior", () => {
   test("registers an executable command for every capability binding", () => {
+    for (const capabilityId of registeredCapabilityIds) {
+      if (!(capabilityId in capabilityBindings)) {
+        throw new Error(`missing CLI binding: ${capabilityId}`);
+      }
+    }
     expect([...registeredCapabilityIds].sort()).toEqual(Object.keys(capabilityBindings).sort());
 
     const program = buildProgram(new CliOutput());

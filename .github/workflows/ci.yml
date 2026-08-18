@@ -29,5 +29,5 @@ jobs:
           cache: pnpm
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
-      - name: Run commit-time verification
-        run: sh .githooks/pre-commit
+      - name: Run complete Phase 0 verification
+        run: bash scripts/verify-phase0.sh
