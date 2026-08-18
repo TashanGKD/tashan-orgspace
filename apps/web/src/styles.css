@@ -12,6 +12,112 @@
   --muted: #6d695f;
 }
 
+.application-shell {
+  min-height: 100vh;
+  display: grid;
+  grid-template: auto 1fr / 17rem minmax(0, 1fr);
+}
+
+.application-header {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  min-height: 4.5rem;
+  padding: 0 1.5rem;
+  border-bottom: 1px solid var(--line);
+  background: var(--paper);
+}
+
+.application-header .member-mark {
+  margin-left: auto;
+}
+
+.application-shell > aside {
+  border-right: 1px solid var(--line);
+  background: var(--paper);
+}
+
+.workspace-navigation {
+  position: sticky;
+  top: 0;
+  display: grid;
+  gap: 1.25rem;
+  padding: 1.5rem 1rem;
+}
+
+.workspace-navigation section {
+  display: grid;
+  gap: 0.3rem;
+}
+
+.workspace-navigation section > p {
+  margin: 0 0 0.25rem;
+  color: var(--muted);
+  font-size: 0.72rem;
+  letter-spacing: 0.12em;
+}
+
+.workspace-navigation a {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.55rem 0.7rem;
+  border-radius: 0.3rem;
+  color: inherit;
+  text-decoration: none;
+}
+
+.workspace-navigation a.active {
+  background: var(--ink);
+  color: var(--paper);
+}
+
+.workspace-navigation small {
+  color: var(--muted);
+  font-size: 0.68rem;
+}
+
+.application-content,
+.roadmap-page {
+  min-width: 0;
+  padding: clamp(1.25rem, 4vw, 3rem);
+}
+
+.status-badge {
+  display: inline-block;
+  margin-bottom: 1rem;
+  padding: 0.2rem 0.5rem;
+  border: 1px solid currentColor;
+}
+
+.navigation-toggle {
+  display: none;
+}
+
+@media (max-width: 760px) {
+  .application-shell {
+    display: block;
+  }
+
+  .navigation-toggle {
+    display: inline-flex;
+  }
+
+  .application-header > strong {
+    display: none;
+  }
+
+  .application-shell > aside[data-open="false"] {
+    display: none;
+  }
+
+  .application-shell > aside[data-open="true"] {
+    border-right: 0;
+    border-bottom: 1px solid var(--line);
+  }
+}
+
 * {
   box-sizing: border-box;
 }
