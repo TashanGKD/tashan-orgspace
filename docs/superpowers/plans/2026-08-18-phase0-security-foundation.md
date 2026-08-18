@@ -6,7 +6,7 @@
 
 **Architecture:** TypeScript services share Zod contracts and a server-owned capability registry. Fastify handles the control-plane API, PostgreSQL is the transactional source of truth, Redis is used only for ephemeral rate limiting, and every mutation writes an audit/outbox record in the same transaction. The CLI and minimal Web shell consume the same SDK; CI fails if a server capability lacks a CLI binding or if any gate lacks a same-named negative self-test.
 
-**Tech Stack:** Node.js 24, pnpm 10, TypeScript 7, Fastify 5, Zod 4, PostgreSQL 17, Redis 8, `postgres` 3, `node-pg-migrate` 9, Argon2id, JOSE 6, Commander 15, React 19, Vite 8, Vitest 4, Testing Library 16, Docker Compose.
+**Tech Stack:** Node.js 24, pnpm 10, TypeScript 6.0.3, Fastify 5, Zod 4, PostgreSQL 17, Redis 8, `postgres` 3, `node-pg-migrate` 9, Argon2id, JOSE 6, Commander 15, React 19, Vite 8, Vitest 4, Testing Library 16, Docker Compose.
 
 ---
 
@@ -278,7 +278,7 @@ Run: `docker compose -f deploy/compose.local.yml up -d --wait && pnpm --filter @
 
 Expected: PostgreSQL and Redis healthy; tests pass; containers stop without deleting volumes.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add deploy packages/testkit docs/runbooks/local-development.md
@@ -289,6 +289,8 @@ git commit -m "build(local-infra): add loopback data services"
 
 **Files:**
 - Create: `packages/contracts/package.json`
+- Create: `packages/contracts/tsconfig.json`
+- Create: `packages/contracts/src/common.ts`
 - Create: `packages/contracts/src/error.ts`
 - Create: `packages/contracts/src/auth.ts`
 - Create: `packages/contracts/src/organization.ts`
@@ -296,7 +298,7 @@ git commit -m "build(local-infra): add loopback data services"
 - Create: `packages/contracts/src/index.ts`
 - Test: `packages/contracts/src/contracts.test.ts`
 
-- [ ] **Step 1: Write rejection-first schema tests**
+- [x] **Step 1: Write rejection-first schema tests**
 
 ```ts
 import { describe, expect, test } from "vitest";
@@ -319,13 +321,13 @@ describe("security discriminants", () => {
 });
 ```
 
-- [ ] **Step 2: Run and verify failure**
+- [x] **Step 2: Run and verify failure**
 
 Run: `pnpm --filter @tashan/contracts test`
 
 Expected: FAIL because schemas are not exported.
 
-- [ ] **Step 3: Implement exact enums and error envelope**
+- [x] **Step 3: Implement exact enums and error envelope**
 
 ```ts
 // packages/contracts/src/error.ts
@@ -350,7 +352,7 @@ export const ErrorEnvelope = z.object({
 
 Define `PrincipalType = z.enum(["human", "system", "ai_employee", "service_account"])`, `Phase0CreatablePrincipalType = z.enum(["human", "system"])`, the five exact roles, four actor sources, branded UUID schemas, E.164 phone, registration/login/refresh/device/org/audit request and response schemas. Export only from `src/index.ts`.
 
-- [ ] **Step 4: Run contract tests and typecheck**
+- [x] **Step 4: Run contract tests and typecheck**
 
 Run: `pnpm --filter @tashan/contracts test && pnpm --filter @tashan/contracts typecheck`
 
