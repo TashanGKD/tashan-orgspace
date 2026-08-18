@@ -374,6 +374,7 @@ git commit -m "feat(contracts): define Phase 0 schemas"
 - Create: `packages/capabilities/src/schema.ts`
 - Create: `packages/capabilities/src/registry.ts`
 - Create: `packages/capabilities/src/phase0.ts`
+- Create: `packages/capabilities/src/phase0-capabilities.json`
 - Test: `packages/capabilities/src/registry.test.ts`
 - Create: `apps/cli/src/bindings.ts`
 - Create: `apps/cli/src/capability-bindings.json`
@@ -434,7 +435,7 @@ Run: `pnpm --filter @tashan/capabilities test && pnpm --filter @tashan/capabilit
 
 Expected: duplicate and mutation-metadata negative tests pass; registry contains 17 unique IDs.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/capabilities apps/cli/src/bindings.ts apps/cli/src/capability-bindings.json apps/web/src/capability-surfaces.ts apps/web/src/capability-surfaces.json skill/capability-references.json
@@ -455,7 +456,7 @@ git commit -m "feat(capabilities): add Phase 0 registry"
 - Create: `scripts/install-hooks.sh`
 - Create: `.github/workflows/ci.yml`
 
-- [ ] **Step 1: Write real-shape negative fixtures in each self-test**
+- [x] **Step 1: Write real-shape negative fixtures in each self-test**
 
 ```js
 // scripts/check-capability-coverage.self-test.mjs
@@ -471,19 +472,19 @@ console.log("check-capability-coverage.self-test: PASS");
 
 The gate inventory self-test creates a temporary `check-orphan.mjs` without `check-orphan.self-test.mjs` and asserts rejection. The commit-evidence self-test uses the actual strings `all green`, `0 violations`, and `fully covered` without `file:line`, then verifies rejection; it also verifies a real in-range citation succeeds.
 
-- [ ] **Step 2: Run self-tests and verify missing gate modules**
+- [x] **Step 2: Run self-tests and verify missing gate modules**
 
 Run: `node scripts/check-capability-coverage.self-test.mjs`
 
 Expected: FAIL with `ERR_MODULE_NOT_FOUND`.
 
-- [ ] **Step 3: Implement gates and fail-closed hooks**
+- [x] **Step 3: Implement gates and fail-closed hooks**
 
 `check-capability-coverage.mjs` compares server IDs, CLI keys, required Web IDs, and Skill IDs; duplicate or extra entries fail. `check-gate-self-tests.mjs` discovers every `scripts/check-*.mjs` except `*.self-test.mjs` and requires the same basename plus `.self-test.mjs`. `check-commit-evidence.mjs` validates each cited path exists and the cited line is in range.
 
 `.githooks/pre-commit` runs formatting, lint, typecheck, unit tests, all gates, and all self-tests with `set -eu`. `.githooks/commit-msg` runs the evidence checker. `scripts/install-hooks.sh` only sets `git config core.hooksPath .githooks` after an explicit invocation; no package install script mutates Git config.
 
-- [ ] **Step 4: Prove positive and negative behavior**
+- [x] **Step 4: Prove positive and negative behavior**
 
 Run:
 

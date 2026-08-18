@@ -1,0 +1,14 @@
+#!/bin/sh
+set -eu
+
+pnpm check:toolchain
+pnpm format:check
+pnpm lint
+pnpm typecheck
+pnpm test
+node scripts/check-capability-coverage.mjs
+node scripts/check-gate-self-tests.mjs
+
+for self_test in scripts/check-*.self-test.mjs; do
+  node "$self_test"
+done
