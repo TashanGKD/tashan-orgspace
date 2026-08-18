@@ -239,15 +239,15 @@ Commit: `ci(release): verify fresh-user CLI installation`
 
 Run tracked-file secret scans, confirm `.env.example` contains only empty values/loopback defaults, inspect `git diff main...HEAD`, and run the complete verifier. Stop if any real credential, member phone, local volume or machine-specific path is tracked.
 
-- [ ] **Step 2: Create the public GitHub repository and push**
+- [x] **Step 2: Create the public GitHub repository and push**
 
 Create `TashanGKD/tashan-orgspace` as public with no generated README, set it as `origin`, fast-forward local `main` to the verified implementation branch, and push `main`. Verify the Skill URL returns its actual `SKILL.md` through GitHub.
 
-- [ ] **Step 3: Tag and monitor the prerelease**
+- [x] **Step 3: Tag and monitor the prerelease**
 
 Create annotated tag `v0.1.0-alpha.1`, push it, wait for the release workflow, inspect every job, and verify all three assets plus `SHA256SUMS` are publicly downloadable. Do not mark it stable because production health has not been proven.
 
-- [ ] **Step 4: Commit any evidence-only plan updates**
+- [x] **Step 4: Commit any evidence-only plan updates**
 
 Commit: `docs(plan): record distribution execution`
 
