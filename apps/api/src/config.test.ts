@@ -51,6 +51,31 @@ describe("API configuration safety", () => {
     );
   });
 
+  test("loads a complete independent Aliyun verification configuration", () => {
+    expect(
+      loadConfig({
+        ...validEnvironment,
+        PHONE_PROVIDER: "aliyun",
+        ALIYUN_SMS_ACCESS_KEY_ID: "access-key-id",
+        ALIYUN_SMS_ACCESS_KEY_SECRET: "access-key-secret",
+        ALIYUN_SMS_SIGN_NAME: "他山组织空间",
+        ALIYUN_SMS_TEMPLATE_CODE: "SMS_TEST",
+        ALIYUN_SMS_TEMPLATE_PARAM_KEY: "code",
+        ALIYUN_SMS_ENDPOINT: "dysmsapi.aliyuncs.com",
+        ALIYUN_SMS_REGION_ID: "cn-hangzhou",
+      }).phone,
+    ).toEqual({
+      provider: "aliyun",
+      accessKeyId: "access-key-id",
+      accessKeySecret: "access-key-secret",
+      signName: "他山组织空间",
+      templateCode: "SMS_TEST",
+      templateParamKey: "code",
+      endpoint: "dysmsapi.aliyuncs.com",
+      regionId: "cn-hangzhou",
+    });
+  });
+
   test("defaults the listener to loopback and parses explicit lists", () => {
     expect(
       loadConfig({

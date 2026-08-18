@@ -17,11 +17,24 @@ type SessionState =
   | { status: "authenticated"; account: AccountSummary };
 
 interface SessionActions {
-  login(username: string, password: string): Promise<void>;
-  register(username: string, password: string): ReturnType<OrgSpaceClient["register"]>;
+  login(phone: string, password: string): Promise<void>;
+  register(input: {
+    phone: string;
+    challengeId: string;
+    code: string;
+    password: string;
+  }): Promise<void>;
+  sendVerificationCode(
+    phone: string,
+    purpose: "register" | "password_reset",
+  ): ReturnType<OrgSpaceClient["sendVerificationCode"]>;
+  resetPassword(input: {
+    phone: string;
+    challengeId: string;
+    code: string;
+    newPassword: string;
+  }): Promise<void>;
   logout(): Promise<void>;
-  startPhoneVerification(phone: string): ReturnType<OrgSpaceClient["startPhoneVerification"]>;
-  confirmPhoneVerification(challengeId: string, code: string): Promise<void>;
 }
 
 export type SessionContextValue = SessionState & SessionActions;
@@ -66,47 +79,40 @@ export function SessionProvider({
   }, [sdk]);
 
   const login = useCallback(
-    async (username: string, password: string) => {
-      const result = await sdk.login({ username, password, device });
+    async (phone: string, password: string) => {
+      const result = await sdk.login({ phone, password, device });
       setState({ status: "authenticated", account: result.account });
     },
     [device, sdk],
   );
   const register = useCallback(
-    (username: string, password: string) =>
-      sdk.register({ username, password }, { idempotencyKey: mutationKey("register") }),
-    [sdk],
+    async (input: { phone: string; challengeId: string; code: string; password: string }) => {
+      const result = await sdk.register(
+        { ...input, device },
+        { idempotencyKey: mutationKey("register") },
+      );
+      setState({ status: "authenticated", account: result.account });
+    },
+    [device, sdk],
   );
   const logout = useCallback(async () => {
     await sdk.logout();
     setState({ status: "anonymous" });
   }, [sdk]);
-  const startPhoneVerification = useCallback(
-    (phone: string) =>
-      sdk.startPhoneVerification(
-        { phone },
-        { idempotencyKey: mutationKey("phone-verification-start") },
+  const sendVerificationCode = useCallback(
+    (phone: string, purpose: "register" | "password_reset") =>
+      sdk.sendVerificationCode(
+        { phone, purpose },
+        { idempotencyKey: mutationKey("verification-send") },
       ),
     [sdk],
   );
-  const confirmPhoneVerification = useCallback(
-    async (challengeId: string, code: string) => {
-      const result = await sdk.confirmPhoneVerification(
-        { challengeId, code },
-        { idempotencyKey: mutationKey("phone-verification-confirm") },
-      );
-      setState((current) =>
-        current.status === "authenticated"
-          ? {
-              status: "authenticated",
-              account: {
-                ...current.account,
-                phone: result.phone,
-                phoneVerifiedAt: result.verifiedAt,
-              },
-            }
-          : current,
-      );
+  const resetPassword = useCallback(
+    async (input: { phone: string; challengeId: string; code: string; newPassword: string }) => {
+      await sdk.resetPassword(input, {
+        idempotencyKey: mutationKey("password-reset"),
+      });
+      setState({ status: "anonymous" });
     },
     [sdk],
   );
@@ -116,11 +122,11 @@ export function SessionProvider({
       ...state,
       login,
       register,
+      sendVerificationCode,
+      resetPassword,
       logout,
-      startPhoneVerification,
-      confirmPhoneVerification,
     }),
-    [confirmPhoneVerification, login, logout, register, startPhoneVerification, state],
+    [login, logout, register, resetPassword, sendVerificationCode, state],
   );
   return <SessionContext.Provider value={value}>{children}</SessionContext.Provider>;
 }

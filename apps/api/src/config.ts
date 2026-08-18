@@ -80,6 +80,9 @@ export function loadConfig(environment: NodeJS.ProcessEnv = process.env) {
           accessKeySecret: required(environment, "ALIYUN_SMS_ACCESS_KEY_SECRET"),
           signName: required(environment, "ALIYUN_SMS_SIGN_NAME"),
           templateCode: required(environment, "ALIYUN_SMS_TEMPLATE_CODE"),
+          templateParamKey: required(environment, "ALIYUN_SMS_TEMPLATE_PARAM_KEY"),
+          endpoint: required(environment, "ALIYUN_SMS_ENDPOINT"),
+          regionId: required(environment, "ALIYUN_SMS_REGION_ID"),
         } as const);
 
   const port = z.coerce

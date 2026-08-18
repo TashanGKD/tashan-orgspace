@@ -39,30 +39,30 @@
     "auditAction": "capability.describe"
   },
   {
-    "id": "auth.phone.start",
+    "id": "auth.verification.send",
     "version": 1,
-    "inputSchema": "PhoneVerificationStartRequest",
-    "outputSchema": "PhoneVerificationStartResponse",
-    "permissions": ["account.self"],
+    "inputSchema": "VerificationSendRequest",
+    "outputSchema": "VerificationSendResponse",
+    "permissions": [],
     "sideEffect": "write",
     "idempotent": true,
     "confirmation": "none",
-    "cli": "auth phone-start",
+    "cli": "auth code-send",
     "web": "required",
-    "auditAction": "auth.phone.start"
+    "auditAction": "auth.verification.send"
   },
   {
-    "id": "auth.phone.confirm",
+    "id": "auth.password.reset",
     "version": 1,
-    "inputSchema": "PhoneVerificationConfirmRequest",
-    "outputSchema": "PhoneVerificationConfirmResponse",
-    "permissions": ["account.self"],
+    "inputSchema": "PasswordResetRequest",
+    "outputSchema": "PasswordResetResponse",
+    "permissions": [],
     "sideEffect": "write",
     "idempotent": true,
-    "confirmation": "none",
-    "cli": "auth phone-confirm",
+    "confirmation": "required",
+    "cli": "auth password-reset",
     "web": "required",
-    "auditAction": "auth.phone.confirm"
+    "auditAction": "auth.password.reset"
   },
   {
     "id": "auth.register",

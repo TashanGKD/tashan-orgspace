@@ -48,7 +48,7 @@ export function MembersPage({
       <ul className="device-list">
         {members.data?.items.map((membership) => (
           <li key={membership.id ?? membership.accountId}>
-            <strong>{membership.username}</strong>
+            <strong>{membership.displayName}</strong>
             <span>{membership.role}</span>
           </li>
         ))}

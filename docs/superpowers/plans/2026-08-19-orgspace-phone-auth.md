@@ -21,7 +21,7 @@ packages/contracts/src/auth.ts                  phone-first request/response sch
 packages/contracts/src/common.ts                display-name and verification-purpose schemas
 packages/contracts/src/error.ts                 stable verification/reset errors
 packages/capabilities/src/phase0*.{ts,json}      authoritative capability registry
-apps/api/migrations/002_phone_identity.sql       fail-closed account/challenge migration
+apps/api/migrations/006_phone_identity.sql       fail-closed account/challenge migration
 apps/api/src/phone/verification-code-sender.ts   sender boundary
 apps/api/src/phone/phone-verification-service.ts anonymous purpose-bound challenges
 apps/api/src/phone/aliyun-verification-code-sender.ts OrgSpace Aliyun adapter
@@ -135,7 +135,7 @@ Expected: only the named OrgSpace files are dirty. Continue to Task 2; the parit
 ### Task 2: Add the fail-closed phone identity migration
 
 **Files:**
-- Create: `apps/api/migrations/002_phone_identity.sql`
+- Create: `apps/api/migrations/006_phone_identity.sql`
 - Modify: `apps/api/src/db/migrate.test.ts`
 - Modify: `apps/api/test/db/schema.integration.test.ts`
 - Modify: `apps/api/src/routes/route-helpers.ts`
@@ -156,7 +156,7 @@ pnpm --filter @tashan/api exec vitest run src/db/migrate.test.ts
 pnpm --filter @tashan/api exec vitest run --config vitest.integration.config.ts test/db/schema.integration.test.ts
 ```
 
-Expected: FAIL because migration `002_phone_identity.sql` is absent.
+Expected: FAIL because migration `006_phone_identity.sql` is absent.
 
 - [ ] **Step 3: Implement the forward migration**
 

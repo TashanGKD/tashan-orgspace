@@ -8,6 +8,31 @@ import { createFetchTransport, type Transport, type TransportRequest } from "./t
 const deviceId = "35f503c2-a5d7-4250-a337-4f4fd03cf8df";
 const accountId = "b228e557-2214-4f95-b49d-d4ff7d9759d4";
 const organizationId = "95d5579d-a32d-4650-aec4-318ff3a55df1";
+const principalId = "af4ec631-8335-4c2b-9a02-df7033d45c55";
+const sessionId = "3c5442ea-00e2-483b-9e81-2271e34120f1";
+
+function loginBody() {
+  return {
+    account: {
+      id: accountId,
+      displayName: "用户8000",
+      phone: "+8613800138000",
+      phoneVerifiedAt: "2026-08-18T12:00:00.000Z",
+      status: "active",
+      createdAt: "2026-08-18T12:00:00.000Z",
+    },
+    principal: { id: principalId, type: "human", accountId },
+    sessionId,
+    deviceId,
+    tokens: {
+      tokenType: "Bearer",
+      accessToken: "registered-access-token",
+      accessTokenExpiresAt: "2026-08-18T12:15:00.000Z",
+      refreshToken: "registered-refresh-token-that-is-long-enough",
+      refreshTokenExpiresAt: "2026-09-17T12:00:00.000Z",
+    },
+  };
+}
 
 function response(status: number, body: unknown) {
   return { status, headers: new Headers(), body };
@@ -56,8 +81,8 @@ describe("typed SDK request boundary", () => {
       "system.health.read": "health",
       "capability.list": "listCapabilities",
       "capability.describe": "describeCapability",
-      "auth.phone.start": "startPhoneVerification",
-      "auth.phone.confirm": "confirmPhoneVerification",
+      "auth.verification.send": "sendVerificationCode",
+      "auth.password.reset": "resetPassword",
       "auth.register": "register",
       "auth.login": "login",
       "auth.refresh": "refresh",
@@ -90,7 +115,7 @@ describe("typed SDK request boundary", () => {
           id: "26c86c8e-7284-4051-b4aa-919b7540bb65",
           organizationId,
           accountId,
-          username: "alice",
+          displayName: "用户8000",
           role: "org_owner",
           status: "active",
           createdAt: "2026-08-18T12:00:00.000Z",
@@ -110,6 +135,70 @@ describe("typed SDK request boundary", () => {
     expect(requests[0]?.headers["x-torg-request-id"]).toMatch(
       /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/,
     );
+  });
+
+  test("uses exact phone auth paths and updates or clears credentials", async () => {
+    const store = credentials();
+    const requests: TransportRequest[] = [];
+    const transport: Transport = async (request) => {
+      requests.push(request);
+      if (request.path === "/v1/auth/verification/send") {
+        return response(202, {
+          challengeId: "746fb70b-a27e-4a78-a231-aa55ef8c343e",
+          expiresAt: "2026-08-18T12:10:00.000Z",
+        });
+      }
+      if (request.path === "/v1/auth/register") return response(201, loginBody());
+      if (request.path === "/v1/auth/password/reset") return response(200, { reset: true });
+      throw new Error(`unexpected path ${request.path}`);
+    };
+    const sdk = client(transport, store);
+
+    await sdk.sendVerificationCode(
+      { phone: "13800138000", purpose: "register" },
+      { idempotencyKey: "send-1" },
+    );
+    await sdk.register(
+      {
+        phone: "13800138000",
+        challengeId: "746fb70b-a27e-4a78-a231-aa55ef8c343e",
+        code: "123456",
+        password: "CorrectHorseBattery9",
+        device: {
+          id: deviceId,
+          name: "Test device",
+          os: "test",
+          architecture: "test",
+          clientVersion: "0.0.0",
+          channel: "cli",
+        },
+      },
+      { idempotencyKey: "register-1" },
+    );
+    expect(store.updateTokens).toHaveBeenCalledWith({
+      accessToken: "registered-access-token",
+      refreshToken: "registered-refresh-token-that-is-long-enough",
+    });
+    await sdk.resetPassword(
+      {
+        phone: "+8613800138000",
+        challengeId: "746fb70b-a27e-4a78-a231-aa55ef8c343e",
+        code: "123456",
+        newPassword: "AnotherStrongPassword9",
+      },
+      { idempotencyKey: "reset-1" },
+    );
+    expect(store.clearTokens).toHaveBeenCalledTimes(1);
+    expect(requests.map(({ path }) => path)).toEqual([
+      "/v1/auth/verification/send",
+      "/v1/auth/register",
+      "/v1/auth/password/reset",
+    ]);
+    expect(requests.map(({ headers }) => headers["idempotency-key"])).toEqual([
+      "send-1",
+      "register-1",
+      "reset-1",
+    ]);
   });
 
   test("decodes stable API errors", async () => {
@@ -211,9 +300,9 @@ describe("typed SDK request boundary", () => {
       return response(200, {
         account: {
           id: accountId,
-          username: "alice",
-          phone: null,
-          phoneVerifiedAt: null,
+          displayName: "用户8000",
+          phone: "+8613800138000",
+          phoneVerifiedAt: "2026-08-18T12:00:00.000Z",
           status: "active",
           createdAt: "2026-08-18T12:00:00.000Z",
         },

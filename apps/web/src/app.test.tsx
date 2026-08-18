@@ -21,7 +21,14 @@ function rejectedAuth() {
 }
 
 function client(overrides: Record<string, unknown> = {}): OrgSpaceClient {
-  const account = { id: accountId, username: "alice", phone: null, phoneVerifiedAt: null };
+  const account = {
+    id: accountId,
+    displayName: "用户8000",
+    phone: "+8613800138000",
+    phoneVerifiedAt: "2026-08-18T12:00:00.000Z",
+    status: "active",
+    createdAt: "2026-08-18T12:00:00.000Z",
+  };
   return {
     login: vi.fn().mockResolvedValue({ account }),
     refresh: vi.fn().mockRejectedValue(rejectedAuth()),
@@ -35,7 +42,7 @@ function client(overrides: Record<string, unknown> = {}): OrgSpaceClient {
           id: "membership-1",
           accountId,
           organizationId,
-          username: "alice",
+          displayName: "用户8000",
           role: "org_admin",
           status: "active",
         },
@@ -51,12 +58,11 @@ function client(overrides: Record<string, unknown> = {}): OrgSpaceClient {
       .fn()
       .mockResolvedValue({ deviceId: otherDeviceId, revokedAt: "2026-08-18T12:00:00.000Z" }),
     register: vi.fn().mockResolvedValue({ account }),
-    startPhoneVerification: vi
-      .fn()
-      .mockResolvedValue({ challengeId: "f27afaa3-858f-46f5-b01a-4c702b5ce1c6" }),
-    confirmPhoneVerification: vi
-      .fn()
-      .mockResolvedValue({ phone: "+8613800138001", verifiedAt: "2026-08-18T12:01:00.000Z" }),
+    sendVerificationCode: vi.fn().mockResolvedValue({
+      challengeId: "f27afaa3-858f-46f5-b01a-4c702b5ce1c6",
+      expiresAt: "2026-08-18T12:10:00.000Z",
+    }),
+    resetPassword: vi.fn().mockResolvedValue({ reset: true }),
     createOrganization: vi.fn(),
     addMember: vi.fn(),
     listAuditEvents: vi.fn().mockResolvedValue({ items: [], nextCursor: null }),
@@ -86,8 +92,8 @@ async function login(sdk: OrgSpaceClient): Promise<void> {
   const user = userEvent.setup();
   renderApp(sdk);
   await screen.findByRole("heading", { name: "登录组织空间" });
-  await user.type(screen.getByLabelText("用户名"), "alice");
-  await user.type(screen.getByLabelText("密码"), "secret123");
+  await user.type(screen.getByLabelText("手机号"), "13800138000");
+  await user.type(screen.getByLabelText("密码"), "CorrectHorseBattery9");
   await user.click(screen.getByRole("button", { name: "登录" }));
   await screen.findByRole("heading", { name: "组织首页" });
 }
@@ -107,17 +113,17 @@ describe("routed Phase 0 Web", () => {
       login: vi
         .fn()
         .mockRejectedValue(
-          new OrgSpaceApiError("AUTH_INVALID_CREDENTIALS", 401, "用户名或密码不正确", requestId),
+          new OrgSpaceApiError("AUTH_INVALID_CREDENTIALS", 401, "手机号或密码不正确", requestId),
         ),
     });
     renderApp(sdk);
     const user = userEvent.setup();
     await screen.findByRole("heading", { name: "登录组织空间" });
-    await user.type(screen.getByLabelText("用户名"), "alice");
-    await user.type(screen.getByLabelText("密码"), "wrongpass");
+    await user.type(screen.getByLabelText("手机号"), "13800138000");
+    await user.type(screen.getByLabelText("密码"), "IncorrectPassword9");
     await user.click(screen.getByRole("button", { name: "登录" }));
     const alert = await screen.findByRole("alert");
-    expect(alert).toHaveTextContent("用户名或密码不正确");
+    expect(alert).toHaveTextContent("手机号或密码不正确");
     expect(alert).toHaveTextContent(requestId);
     expect(alert).toHaveFocus();
   });
@@ -136,16 +142,26 @@ describe("routed Phase 0 Web", () => {
     );
   });
 
-  test("registers an account and returns to login", async () => {
+  test("registers a verified phone account and enters the organization area", async () => {
     const sdk = client();
     renderApp(sdk);
     const user = userEvent.setup();
     await screen.findByRole("heading", { name: "登录组织空间" });
-    await user.click(screen.getByRole("button", { name: "还没有账号？创建账号" }));
-    await user.type(screen.getByLabelText("用户名"), "alice");
-    await user.type(screen.getByLabelText("密码"), "CorrectHorseBattery9");
-    await user.click(screen.getByRole("button", { name: "注册" }));
-    expect(await screen.findByText("账号已创建，请登录后验证手机号。")).toBeVisible();
+    await user.click(screen.getByRole("tab", { name: "创建账号" }));
+    await user.type(screen.getByLabelText("手机号"), "13800138000");
+    await user.click(screen.getByRole("button", { name: "发送验证码" }));
+    await user.type(screen.getByLabelText("验证码"), "123456");
+    await user.type(screen.getByLabelText("设置密码"), "CorrectHorseBattery9");
+    await user.click(screen.getByRole("button", { name: "注册并进入空间" }));
+    expect(await screen.findByRole("heading", { name: "组织首页" })).toBeVisible();
+    expect(sdk.register).toHaveBeenCalledWith(
+      expect.objectContaining({
+        phone: "13800138000",
+        challengeId: "f27afaa3-858f-46f5-b01a-4c702b5ce1c6",
+        code: "123456",
+      }),
+      expect.objectContaining({ idempotencyKey: expect.stringMatching(/^web-register-/) }),
+    );
   });
 
   test("shows the API reason when organization creation is rejected", async () => {
@@ -153,13 +169,13 @@ describe("routed Phase 0 Web", () => {
       createOrganization: vi
         .fn()
         .mockRejectedValue(
-          new OrgSpaceApiError("PHONE_NOT_VERIFIED", 403, "创建组织前需要先验证手机号", requestId),
+          new OrgSpaceApiError("ORG_FORBIDDEN", 403, "当前账号不能创建组织", requestId),
         ),
     });
     await login(sdk);
     const user = userEvent.setup();
     await user.type(screen.getByLabelText("新组织名称"), "研究组");
     await user.click(screen.getByRole("button", { name: "创建组织" }));
-    expect(await screen.findByRole("alert")).toHaveTextContent("创建组织前需要先验证手机号");
+    expect(await screen.findByRole("alert")).toHaveTextContent("当前账号不能创建组织");
   });
 });

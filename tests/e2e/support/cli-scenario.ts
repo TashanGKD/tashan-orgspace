@@ -6,8 +6,8 @@ import { runCli, type CliDependencies } from "../../../apps/cli/src/program.js";
 interface ScenarioInput {
   type: "lifecycle" | "cross-org" | "audit";
   apiUrl: string;
-  alice: { username: string; password: string };
-  bob?: { accountId: string; username: string; password: string };
+  alice: { phone: string; password: string };
+  bob?: { accountId: string; phone: string; password: string };
 }
 
 let serializedInput = "";
@@ -56,8 +56,8 @@ async function rejected(args: string[], effects: CliDependencies) {
   return { exitCode: result.exitCode, stderr: result.stderr };
 }
 
-async function login(effects: CliDependencies, username: string): Promise<void> {
-  await command(["auth", "login", "--username", username], effects);
+async function login(effects: CliDependencies, phone: string): Promise<void> {
+  await command(["auth", "login", "--phone", phone], effects);
 }
 
 const aliceStoreA = new MemoryCredentialStore();
@@ -66,11 +66,11 @@ const aliceDeviceA = crypto.randomUUID();
 const aliceDeviceB = crypto.randomUUID();
 const aliceA = dependencies(aliceStoreA, aliceDeviceA, input.alice.password, "Alice Mac E2E");
 const aliceB = dependencies(aliceStoreB, aliceDeviceB, input.alice.password, "Alice Linux E2E");
-await login(aliceA, input.alice.username);
+await login(aliceA, input.alice.phone);
 
 if (input.type === "lifecycle") {
   if (input.bob === undefined) throw new Error("lifecycle requires Bob");
-  await login(aliceB, input.alice.username);
+  await login(aliceB, input.alice.phone);
   const organization = await command<{ organization: { id: string } }>(
     ["org", "create", "--name", "Lifecycle Org", "--yes", "--idempotency-key", "life-org"],
     aliceA,
@@ -97,7 +97,7 @@ if (input.type === "lifecycle") {
     aliceB,
   );
   const revoked = await rejected(["auth", "whoami"], aliceA);
-  const surviving = await command<{ account: { username: string }; deviceId: string }>(
+  const surviving = await command<{ account: { displayName: string }; deviceId: string }>(
     ["auth", "whoami"],
     aliceB,
   );
@@ -119,7 +119,7 @@ if (input.type === "lifecycle") {
   if (input.bob === undefined) throw new Error("cross-org requires Bob");
   const bobStore = new MemoryCredentialStore();
   const bob = dependencies(bobStore, crypto.randomUUID(), input.bob.password, "Bob E2E Device");
-  await login(bob, input.bob.username);
+  await login(bob, input.bob.phone);
   const aliceOrg = await command<{ organization: { id: string } }>(
     ["org", "create", "--name", "Alice Private", "--yes", "--idempotency-key", "cross-a"],
     aliceA,

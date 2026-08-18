@@ -31,7 +31,14 @@ function client(overrides: Partial<OrgSpaceClient> = {}): OrgSpaceClient {
   return {
     refresh: vi.fn().mockRejectedValue(authRequired()),
     whoami: vi.fn().mockResolvedValue({
-      account: { id: "account-1", username: "alice", phone: null, phoneVerifiedAt: null },
+      account: {
+        id: "b228e557-2214-4f95-b49d-d4ff7d9759d4",
+        displayName: "用户8000",
+        phone: "+8613800138000",
+        phoneVerifiedAt: "2026-08-18T12:00:00.000Z",
+        status: "active",
+        createdAt: "2026-08-18T12:00:00.000Z",
+      },
     }),
     ...overrides,
   } as unknown as OrgSpaceClient;
@@ -50,7 +57,7 @@ function Probe() {
   const session = useSession();
   if (session.status === "restoring") return <p>正在恢复安全会话…</p>;
   if (session.status === "anonymous") return <h1>登录组织空间</h1>;
-  return <strong>{session.account.username}</strong>;
+  return <strong>{session.account.displayName}</strong>;
 }
 
 describe("SessionProvider", () => {

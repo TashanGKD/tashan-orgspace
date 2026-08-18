@@ -2,11 +2,15 @@ import type { Command } from "commander";
 
 import type { CapabilityId } from "@tashan/capabilities";
 
-import { requireIdempotency, type CommandContext } from "./context.js";
+import {
+  requireConfirmationAndIdempotency,
+  requireIdempotency,
+  type CommandContext,
+} from "./context.js";
 
 export const authCapabilityIds = [
-  "auth.phone.start",
-  "auth.phone.confirm",
+  "auth.verification.send",
+  "auth.password.reset",
   "auth.register",
   "auth.login",
   "auth.refresh",
@@ -24,86 +28,143 @@ async function secretInput(
   return value;
 }
 
-export function registerAuthCommands(program: Command, context: CommandContext): void {
-  const auth = program.command("auth").description("Account, phone and session commands");
+async function codeAndPassword(
+  context: CommandContext,
+  options: { codeStdin?: boolean; passwordStdin?: boolean },
+  passwordPrompt: string,
+): Promise<{ code: string; password: string }> {
+  if (options.codeStdin === true && options.passwordStdin === true) {
+    const values = (await context.readStdin()).split(/\r?\n/);
+    if (values.length !== 2 || values.some((value) => value.length === 0)) {
+      context.usage("combined stdin must contain exactly two non-empty lines: code then password");
+    }
+    return { code: values[0] as string, password: values[1] as string };
+  }
+  return {
+    code: await secretInput(context, options.codeStdin, "Verification code: "),
+    password: await secretInput(context, options.passwordStdin, passwordPrompt),
+  };
+}
 
-  const phoneStart = auth
-    .command("phone-start")
-    .requiredOption("--phone <e164>")
+export function registerAuthCommands(program: Command, context: CommandContext): void {
+  const auth = program.command("auth").description("Phone account and session commands");
+
+  const codeSend = auth
+    .command("code-send")
+    .requiredOption("--phone <phone>")
+    .requiredOption("--purpose <register|password-reset>")
     .option("--idempotency-key <key>");
-  phoneStart.action(async (options: { phone: string; idempotencyKey?: string }) => {
+  codeSend.action(async (options: { phone: string; purpose: string; idempotencyKey?: string }) => {
+    const purpose =
+      options.purpose === "register"
+        ? "register"
+        : options.purpose === "password-reset"
+          ? "password_reset"
+          : context.usage("--purpose must be register or password-reset");
     const idempotencyKey = requireIdempotency(context, options.idempotencyKey);
     const { client } = await context.runtime();
-    const result = await client.startPhoneVerification(
-      { phone: options.phone },
+    const result = await client.sendVerificationCode(
+      { phone: options.phone, purpose },
       { idempotencyKey },
     );
-    context.emit(phoneStart, result, `Verification challenge ${result.challengeId} created`);
+    context.emit(codeSend, result, `Verification challenge ${result.challengeId} created`);
   });
-
-  const phoneConfirm = auth
-    .command("phone-confirm")
-    .requiredOption("--challenge <uuid>")
-    .option("--code-stdin")
-    .option("--idempotency-key <key>");
-  phoneConfirm.action(
-    async (options: { challenge: string; codeStdin?: boolean; idempotencyKey?: string }) => {
-      const idempotencyKey = requireIdempotency(context, options.idempotencyKey);
-      const code = await secretInput(context, options.codeStdin, "Verification code: ");
-      const { client } = await context.runtime();
-      const result = await client.confirmPhoneVerification(
-        { challengeId: options.challenge, code },
-        { idempotencyKey },
-      );
-      context.emit(phoneConfirm, result, `Phone ${result.phone} verified`);
-    },
-  );
 
   const register = auth
     .command("register")
-    .requiredOption("--username <name>")
+    .requiredOption("--phone <phone>")
+    .requiredOption("--challenge <uuid>")
+    .option("--code-stdin")
     .option("--password-stdin")
     .option("--idempotency-key <key>");
   register.action(
-    async (options: { username: string; passwordStdin?: boolean; idempotencyKey?: string }) => {
+    async (options: {
+      phone: string;
+      challenge: string;
+      codeStdin?: boolean;
+      passwordStdin?: boolean;
+      idempotencyKey?: string;
+    }) => {
       const idempotencyKey = requireIdempotency(context, options.idempotencyKey);
-      const password = await secretInput(context, options.passwordStdin, "Password: ");
+      const secrets = await codeAndPassword(context, options, "Password: ");
       const runtime = await context.runtime();
       const result = await runtime.client.register(
-        { username: options.username, password },
+        {
+          phone: options.phone,
+          challengeId: options.challenge,
+          code: secrets.code,
+          password: secrets.password,
+          device: runtime.device,
+        },
         { idempotencyKey },
       );
       await runtime.credentials.updateIdentity({
         accountId: result.account.id,
-        username: result.account.username,
+        displayName: result.account.displayName,
+        phone: result.account.phone,
       });
-      context.emit(register, result, `Registered ${result.account.username}`);
+      context.emit(
+        register,
+        { account: result.account, deviceId: result.deviceId },
+        `Registered ${result.account.displayName}`,
+      );
     },
   );
 
-  const login = auth
-    .command("login")
-    .requiredOption("--username <name>")
-    .option("--password-stdin");
-  login.action(async (options: { username: string; passwordStdin?: boolean }) => {
+  const login = auth.command("login").requiredOption("--phone <phone>").option("--password-stdin");
+  login.action(async (options: { phone: string; passwordStdin?: boolean }) => {
     const password = await secretInput(context, options.passwordStdin, "Password: ");
     const runtime = await context.runtime();
     const result = await runtime.client.login({
-      username: options.username,
+      phone: options.phone,
       password,
       device: runtime.device,
     });
-    await runtime.credentials.updateTokens(result.tokens);
     await runtime.credentials.updateIdentity({
       accountId: result.account.id,
-      username: result.account.username,
+      displayName: result.account.displayName,
+      phone: result.account.phone,
     });
     context.emit(
       login,
       { account: result.account, deviceId: result.deviceId },
-      `Logged in as ${result.account.username}`,
+      `Logged in as ${result.account.displayName}`,
     );
   });
+
+  const passwordReset = auth
+    .command("password-reset")
+    .requiredOption("--phone <phone>")
+    .requiredOption("--challenge <uuid>")
+    .option("--code-stdin")
+    .option("--password-stdin")
+    .option("--yes")
+    .option("--idempotency-key <key>");
+  passwordReset.action(
+    async (options: {
+      phone: string;
+      challenge: string;
+      codeStdin?: boolean;
+      passwordStdin?: boolean;
+      yes?: boolean;
+      idempotencyKey?: string;
+    }) => {
+      const idempotencyKey = requireConfirmationAndIdempotency(context, options);
+      const secrets = await codeAndPassword(context, options, "New password: ");
+      const runtime = await context.runtime();
+      const result = await runtime.client.resetPassword(
+        {
+          phone: options.phone,
+          challengeId: options.challenge,
+          code: secrets.code,
+          newPassword: secrets.password,
+        },
+        { idempotencyKey },
+      );
+      await runtime.credentials.clearTokens();
+      context.emit(passwordReset, result, "Password reset complete; log in again");
+    },
+  );
 
   const refresh = auth.command("refresh");
   refresh.action(async () => {
@@ -131,6 +192,6 @@ export function registerAuthCommands(program: Command, context: CommandContext):
   whoami.action(async () => {
     const { client } = await context.runtime();
     const result = await client.whoami();
-    context.emit(whoami, result, `${result.account.username} (${result.account.id})`);
+    context.emit(whoami, result, `${result.account.displayName} (${result.account.id})`);
   });
 }

@@ -1,15 +1,15 @@
 [
   {
-    "capabilityId": "auth.phone.start",
-    "route": "/account",
-    "action": "phone-verification-start",
-    "test": "apps/web/src/app.test.tsx"
+    "capabilityId": "auth.verification.send",
+    "route": "/",
+    "action": "verification-send",
+    "test": "apps/web/src/auth/access-panel.test.tsx"
   },
   {
-    "capabilityId": "auth.phone.confirm",
-    "route": "/account",
-    "action": "phone-verification-confirm",
-    "test": "apps/web/src/app.test.tsx"
+    "capabilityId": "auth.password.reset",
+    "route": "/",
+    "action": "password-reset",
+    "test": "apps/web/src/auth/access-panel.test.tsx"
   },
   {
     "capabilityId": "auth.register",

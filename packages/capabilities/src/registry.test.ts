@@ -30,7 +30,7 @@ describe("capability registry invariants", () => {
     "device.revoke",
     "organization.create",
     "organization.member.add",
-    "auth.phone.start",
+    "auth.verification.send",
   ])("rejects mutating capability %s marked side-effect free", (id) => {
     expect(() => buildRegistry([{ ...base, id }])).toThrow(/mutation metadata/);
   });
@@ -56,8 +56,8 @@ describe("Phase 0 capability source", () => {
         "system.health.read",
         "capability.list",
         "capability.describe",
-        "auth.phone.start",
-        "auth.phone.confirm",
+        "auth.verification.send",
+        "auth.password.reset",
         "auth.register",
         "auth.login",
         "auth.refresh",

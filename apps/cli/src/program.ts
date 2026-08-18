@@ -169,7 +169,7 @@ async function createRuntime(program: Command, dependencies: CliDependencies): P
 
 function exitCodeForApiError(error: OrgSpaceApiError): number {
   if (error.code.startsWith("AUTH_") || error.code === "DEVICE_REVOKED") return 3;
-  if (error.code === "ORG_FORBIDDEN" || error.code === "PHONE_NOT_VERIFIED") return 4;
+  if (error.code === "ORG_FORBIDDEN") return 4;
   if (error.status >= 500) return 5;
   return 1;
 }
@@ -179,8 +179,21 @@ export async function runCli(
   dependencies: CliDependencies = {},
 ): Promise<CliRunResult> {
   const output = new CliOutput();
-  if (argv.some((argument) => argument === "--password" || argument.startsWith("--password="))) {
-    output.stderr("error: unknown option '--password'; use the hidden prompt or --password-stdin");
+  const forbiddenSecretOption = argv.find(
+    (argument) =>
+      argument === "--username" ||
+      argument.startsWith("--username=") ||
+      argument === "--password" ||
+      argument.startsWith("--password=") ||
+      argument === "--new-password" ||
+      argument.startsWith("--new-password=") ||
+      argument === "--code" ||
+      argument.startsWith("--code="),
+  );
+  if (forbiddenSecretOption !== undefined) {
+    output.stderr(
+      `error: unknown option '${forbiddenSecretOption.split("=")[0]}'; use phone auth and hidden prompts or --*-stdin`,
+    );
     return output.result(2);
   }
   const program = buildProgram(output, dependencies);

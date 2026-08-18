@@ -1,7 +1,13 @@
-import { LoginRequest, RegisterRequest } from "@tashan/contracts";
+import {
+  LoginRequest,
+  PasswordResetRequest,
+  RegisterRequest,
+  type DeviceLoginMetadata as DeviceLoginInput,
+} from "@tashan/contracts";
 
 import type { DatabaseClient } from "../db/client.js";
 import type { TransactionClient } from "../db/transaction.js";
+import type { PhoneVerificationService } from "../phone/phone-verification-service.js";
 import { AuthError, invalidCredentials } from "./auth-errors.js";
 import { type AccessTokenInput, AccessTokenService } from "./access-token.js";
 import { hashPassword, verifyPassword } from "./password.js";
@@ -15,6 +21,7 @@ export interface AuthServiceOptions {
   sql: DatabaseClient;
   tokenService: AccessTokenService;
   rateLimiter: LoginRateLimiter;
+  phones: PhoneVerificationService;
 }
 
 interface SessionResult {
@@ -46,27 +53,99 @@ export class AuthService {
   private readonly sql: DatabaseClient;
   private readonly tokenService: AccessTokenService;
   private readonly rateLimiter: LoginRateLimiter;
+  private readonly phones: PhoneVerificationService;
 
   public constructor(options: AuthServiceOptions) {
     this.sql = options.sql;
     this.tokenService = options.tokenService;
     this.rateLimiter = options.rateLimiter;
+    this.phones = options.phones;
+  }
+
+  private async createSession(
+    transaction: TransactionClient,
+    identity: { accountId: string; principalId: string },
+    device: DeviceLoginInput,
+  ): Promise<SessionResult> {
+    const devices = await transaction<{ id: string }[]>`
+      insert into devices (id, account_id, name, os, architecture, client_version)
+      values (
+        ${device.id}, ${identity.accountId}, ${device.name}, ${device.os},
+        ${device.architecture}, ${device.clientVersion}
+      )
+      on conflict (id) do update set
+        name = excluded.name,
+        os = excluded.os,
+        architecture = excluded.architecture,
+        client_version = excluded.client_version,
+        last_seen_at = now(),
+        updated_at = now()
+      where devices.account_id = excluded.account_id and devices.revoked_at is null
+      returning id
+    `;
+    if (devices.length !== 1) throw new AuthError("DEVICE_REVOKED", "device is unavailable");
+
+    const refreshToken = generateRefreshToken();
+    const refreshTokenHash = hashRefreshToken(refreshToken);
+    const [session] = await transaction<{ id: string; token_version: number }[]>`
+      insert into sessions (
+        account_id, principal_id, device_id, refresh_token_hash,
+        token_version, client_channel, expires_at
+      ) values (
+        ${identity.accountId}, ${identity.principalId}, ${device.id}, ${refreshTokenHash},
+        1, ${device.channel}, now() + interval '30 days'
+      )
+      returning id, token_version
+    `;
+    if (session === undefined) throw new Error("session creation returned no row");
+    await transaction`
+      insert into session_refresh_tokens (token_hash, session_id, token_version)
+      values (${refreshTokenHash}, ${session.id}, ${session.token_version})
+    `;
+
+    const accessToken = await this.tokenService.sign({
+      subject: identity.accountId,
+      principalId: identity.principalId,
+      sessionId: session.id,
+      deviceId: device.id,
+      tokenVersion: session.token_version,
+      actorSource: device.channel,
+    });
+    return {
+      accountId: identity.accountId,
+      principalId: identity.principalId,
+      sessionId: session.id,
+      deviceId: device.id,
+      tokenVersion: session.token_version,
+      accessToken,
+      refreshToken,
+    };
   }
 
   public async register(
     rawInput: unknown,
     existingTransaction?: TransactionClient,
-  ): Promise<{ accountId: string; principalId: string }> {
+  ): Promise<SessionResult> {
     const parsed = RegisterRequest.safeParse(rawInput);
     if (!parsed.success) throw validationError();
 
-    const username = parsed.data.username.toLowerCase();
-    const passwordHash = await hashPassword(parsed.data.password);
+    const input = parsed.data;
+    const passwordHash = await hashPassword(input.password);
     try {
       const operation = async (transaction: TransactionClient) => {
+        await this.phones.consume(
+          {
+            phone: input.phone,
+            purpose: "register",
+            challengeId: input.challengeId,
+            code: input.code,
+          },
+          transaction,
+        );
+        const verifiedAt = new Date();
         const [account] = await transaction<{ id: string }[]>`
-          insert into accounts (username, password_hash)
-          values (${username}, ${passwordHash})
+          insert into accounts (display_name, password_hash, phone_e164, phone_verified_at)
+          values (${`用户${input.phone.slice(-4)}`}, ${passwordHash}, ${input.phone}, ${verifiedAt})
           returning id
         `;
         if (account === undefined) throw new Error("account registration returned no row");
@@ -76,14 +155,21 @@ export class AuthService {
           returning id
         `;
         if (principal === undefined) throw new Error("Principal registration returned no row");
-        return { accountId: account.id, principalId: principal.id };
+        await transaction`
+          update phone_verifications set account_id = ${account.id} where id = ${input.challengeId}
+        `;
+        return this.createSession(
+          transaction,
+          { accountId: account.id, principalId: principal.id },
+          input.device,
+        );
       };
       return existingTransaction === undefined
-        ? ((await this.sql.begin(operation)) as { accountId: string; principalId: string })
+        ? ((await this.sql.begin(operation)) as SessionResult)
         : await operation(existingTransaction);
     } catch (error) {
-      if (isUniqueViolation(error, "accounts_username_key")) {
-        throw new AuthError("USERNAME_TAKEN", "username is already registered");
+      if (isUniqueViolation(error, "accounts_phone_e164_key")) {
+        throw new AuthError("ACCOUNT_EXISTS", "an account already exists for this phone");
       }
       throw error;
     }
@@ -97,9 +183,9 @@ export class AuthService {
     const parsed = LoginRequest.safeParse(rawInput);
     if (!parsed.success) throw validationError();
     const input = parsed.data;
-    const normalizedUsername = input.username.toLowerCase();
+    const phone = input.phone;
     const allowed = await Promise.all([
-      this.rateLimiter.consume(`login:username:${normalizedUsername}`),
+      this.rateLimiter.consume(`login:phone:${phone}`),
       this.rateLimiter.consume(`login:ip:${context.serverIp}`),
     ]);
     if (allowed.includes(false)) throw new AuthError("RATE_LIMITED", "login rate limit exceeded");
@@ -120,7 +206,7 @@ export class AuthService {
         p.id as principal_id
       from accounts a
       join principals p on p.account_id = a.id and p.type = 'human'
-      where a.username = ${normalizedUsername}
+      where a.phone_e164 = ${phone}
     `;
     if (identity === undefined) {
       await hashPassword(input.password);
@@ -129,64 +215,59 @@ export class AuthService {
     const passwordMatches = await verifyPassword(identity.password_hash, input.password);
     if (!passwordMatches || identity.account_status !== "active") throw invalidCredentials();
 
-    const operation = async (transaction: TransactionClient): Promise<SessionResult> => {
-      const devices = await transaction<{ id: string }[]>`
-        insert into devices (id, account_id, name, os, architecture, client_version)
-        values (
-          ${input.device.id}, ${identity.account_id}, ${input.device.name}, ${input.device.os},
-          ${input.device.architecture}, ${input.device.clientVersion}
-        )
-        on conflict (id) do update set
-          name = excluded.name,
-          os = excluded.os,
-          architecture = excluded.architecture,
-          client_version = excluded.client_version,
-          last_seen_at = now(),
-          updated_at = now()
-        where devices.account_id = excluded.account_id and devices.revoked_at is null
-        returning id
-      `;
-      if (devices.length !== 1) throw new AuthError("DEVICE_REVOKED", "device is unavailable");
-
-      const refreshToken = generateRefreshToken();
-      const refreshTokenHash = hashRefreshToken(refreshToken);
-      const [session] = await transaction<{ id: string; token_version: number }[]>`
-        insert into sessions (
-          account_id, principal_id, device_id, refresh_token_hash,
-          token_version, client_channel, expires_at
-        ) values (
-          ${identity.account_id}, ${identity.principal_id}, ${input.device.id}, ${refreshTokenHash},
-          1, ${input.device.channel}, now() + interval '30 days'
-        )
-        returning id, token_version
-      `;
-      if (session === undefined) throw new Error("session creation returned no row");
-      await transaction`
-        insert into session_refresh_tokens (token_hash, session_id, token_version)
-        values (${refreshTokenHash}, ${session.id}, ${session.token_version})
-      `;
-
-      const accessToken = await this.tokenService.sign({
-        subject: identity.account_id,
-        principalId: identity.principal_id,
-        sessionId: session.id,
-        deviceId: input.device.id,
-        tokenVersion: session.token_version,
-        actorSource: input.device.channel,
-      });
-      return {
-        accountId: identity.account_id,
-        principalId: identity.principal_id,
-        sessionId: session.id,
-        deviceId: input.device.id,
-        tokenVersion: session.token_version,
-        accessToken,
-        refreshToken,
-      };
-    };
+    const operation = (transaction: TransactionClient): Promise<SessionResult> =>
+      this.createSession(
+        transaction,
+        { accountId: identity.account_id, principalId: identity.principal_id },
+        input.device,
+      );
     return existingTransaction === undefined
       ? ((await this.sql.begin(operation)) as SessionResult)
       : operation(existingTransaction);
+  }
+
+  public async resetPassword(
+    rawInput: unknown,
+    existingTransaction?: TransactionClient,
+  ): Promise<void> {
+    const parsed = PasswordResetRequest.safeParse(rawInput);
+    if (!parsed.success) throw validationError();
+    const input = parsed.data;
+    const passwordHash = await hashPassword(input.newPassword);
+    const operation = async (transaction: TransactionClient) => {
+      await this.phones.consume(
+        {
+          phone: input.phone,
+          purpose: "password_reset",
+          challengeId: input.challengeId,
+          code: input.code,
+        },
+        transaction,
+      );
+      const [account] = await transaction<{ id: string }[]>`
+        select id from accounts where phone_e164 = ${input.phone} and status = 'active' for update
+      `;
+      if (account === undefined) {
+        throw new AuthError("PASSWORD_RESET_FAILED", "password reset could not be completed");
+      }
+      await transaction`
+        update accounts set password_hash = ${passwordHash}, updated_at = now() where id = ${account.id}
+      `;
+      await transaction`
+        update sessions
+        set revoked_at = coalesce(revoked_at, now()), token_version = token_version + 1, updated_at = now()
+        where account_id = ${account.id} and revoked_at is null
+      `;
+      await transaction`
+        update session_refresh_tokens set status = 'revoked'
+        where session_id in (select id from sessions where account_id = ${account.id})
+      `;
+      await transaction`
+        update phone_verifications set account_id = ${account.id} where id = ${input.challengeId}
+      `;
+    };
+    if (existingTransaction === undefined) await this.sql.begin(operation);
+    else await operation(existingTransaction);
   }
 
   public async authenticate(accessToken: string) {

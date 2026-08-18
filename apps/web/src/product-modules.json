@@ -17,7 +17,12 @@
     "status": "available",
     "route": "/account",
     "roles": [],
-    "capabilities": ["auth.phone.start", "auth.phone.confirm", "device.list", "device.revoke"]
+    "capabilities": [
+      "auth.verification.send",
+      "auth.password.reset",
+      "device.list",
+      "device.revoke"
+    ]
   },
   {
     "id": "personal.overview",

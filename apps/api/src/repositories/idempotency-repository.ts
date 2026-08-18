@@ -3,6 +3,7 @@ import { createHash } from "node:crypto";
 import type { JSONValue } from "postgres";
 
 import type { TransactionClient } from "../db/transaction.js";
+import type { IdempotencyResponseProtector } from "../http/idempotency-response-protector.js";
 
 export class IdempotencyConflictError extends Error {
   public readonly code = "IDEMPOTENCY_CONFLICT";
@@ -62,6 +63,8 @@ export type IdempotencyClaim =
   | { kind: "cached"; responseStatus: number; responseBody: unknown };
 
 export class IdempotencyRepository {
+  public constructor(private readonly responseProtector?: IdempotencyResponseProtector) {}
+
   public async claim(
     transaction: TransactionClient,
     input: IdempotencyClaimInput,
@@ -98,10 +101,14 @@ export class IdempotencyRepository {
     if (existing.request_hash !== requestHash) throw new IdempotencyConflictError();
     if (existing.response_status === null) return { kind: "in_progress" };
 
+    const responseBody =
+      this.responseProtector?.isEnvelope(existing.response_body) === true
+        ? this.responseProtector.open(existing.response_body)
+        : existing.response_body;
     return {
       kind: "cached",
       responseStatus: existing.response_status,
-      responseBody: existing.response_body,
+      responseBody,
     };
   }
 
@@ -114,6 +121,7 @@ export class IdempotencyRepository {
       idempotencyKey: string;
       responseStatus: number;
       responseBody: unknown;
+      protectResponse?: boolean;
     },
   ): Promise<void> {
     const actorKey =
@@ -122,7 +130,14 @@ export class IdempotencyRepository {
     if (actorKey === undefined || actorKey.length === 0 || actorKey.length > 512) {
       throw new Error("idempotency actor key is invalid");
     }
-    const responseBody = canonicalize(input.responseBody, new WeakSet()) as JSONValue;
+    if (input.protectResponse === true && this.responseProtector === undefined) {
+      throw new Error("idempotency response protection is unavailable");
+    }
+    const storedBody =
+      input.protectResponse === true
+        ? this.responseProtector?.seal(input.responseBody)
+        : input.responseBody;
+    const responseBody = canonicalize(storedBody, new WeakSet()) as JSONValue;
     const rows = await transaction<{ id: string }[]>`
       update idempotency_records
       set response_status = ${input.responseStatus}, response_body = ${transaction.json(responseBody)}

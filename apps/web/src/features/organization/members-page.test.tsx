@@ -26,19 +26,19 @@ describe("MembersPage", () => {
   test("lists members and adds one with an idempotency key", async () => {
     const sdk = {
       listMembers: vi.fn().mockResolvedValue({
-        items: [{ accountId, username: "alice", role: "org_admin", status: "active" }],
+        items: [{ accountId, displayName: "用户8000", role: "org_admin", status: "active" }],
       }),
       addMember: vi.fn().mockResolvedValue({
         membership: {
           accountId: targetAccountId,
-          username: "bob",
+          displayName: "用户8001",
           role: "member",
           status: "active",
         },
       }),
     } as unknown as OrgSpaceClient;
     renderPage(sdk);
-    expect(await screen.findByText("alice")).toBeVisible();
+    expect(await screen.findByText("用户8000")).toBeVisible();
     const user = userEvent.setup();
     await user.type(screen.getByLabelText("账号 ID"), targetAccountId);
     await user.selectOptions(screen.getByLabelText("组织角色"), "member");

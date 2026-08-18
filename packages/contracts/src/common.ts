@@ -54,16 +54,17 @@ export type ActorSource = z.infer<typeof ActorSource>;
 export const ClientChannel = z.enum(["web", "cli"]);
 export type ClientChannel = z.infer<typeof ClientChannel>;
 
-export const PhoneNumber = z.string().regex(/^\+[1-9]\d{7,14}$/, "phone must use E.164 format");
+export const PhoneNumber = z
+  .string()
+  .transform((value) => (/^1[3-9]\d{9}$/.test(value) ? `+86${value}` : value))
+  .pipe(z.string().regex(/^\+[1-9]\d{7,14}$/, "phone must use E.164 format"));
 export type PhoneNumber = z.infer<typeof PhoneNumber>;
 
-export const Username = z
-  .string()
-  .trim()
-  .min(3)
-  .max(64)
-  .regex(/^[A-Za-z0-9][A-Za-z0-9._-]*$/, "username contains unsupported characters");
-export type Username = z.infer<typeof Username>;
+export const DisplayName = z.string().trim().min(1).max(128);
+export type DisplayName = z.infer<typeof DisplayName>;
+
+export const VerificationPurpose = z.enum(["register", "password_reset"]);
+export type VerificationPurpose = z.infer<typeof VerificationPurpose>;
 
 export const Password = z
   .string()

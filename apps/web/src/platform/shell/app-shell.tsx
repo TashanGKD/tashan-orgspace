@@ -6,11 +6,11 @@ import { Navigation } from "./navigation.js";
 export function AppShell({
   children,
   onLogout,
-  username,
+  displayName,
 }: {
   children: ReactNode;
   onLogout(): Promise<void>;
-  username: string;
+  displayName: string;
 }) {
   const [navigationOpen, setNavigationOpen] = useState(false);
   const organization = useOrganization();
@@ -35,7 +35,7 @@ export function AppShell({
         </a>
         <strong>{organization.organization.name}</strong>
         <div className="member-mark">
-          <strong>{username}</strong>
+          <strong>{displayName}</strong>
           <button className="text-action" type="button" onClick={() => void onLogout()}>
             退出
           </button>

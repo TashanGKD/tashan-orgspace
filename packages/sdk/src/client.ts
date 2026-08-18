@@ -21,14 +21,14 @@ import {
   OrganizationMemberAddRequest,
   OrganizationMemberAddResponse,
   OrganizationMemberListResponse,
-  PhoneVerificationConfirmRequest,
-  PhoneVerificationConfirmResponse,
-  PhoneVerificationStartRequest,
-  PhoneVerificationStartResponse,
+  PasswordResetRequest,
+  PasswordResetResponse,
   RefreshRequest,
   RefreshResponse,
   RegisterRequest,
   RegisterResponse,
+  VerificationSendRequest,
+  VerificationSendResponse,
   WhoAmIResponse,
   type ErrorCode,
 } from "@tashan/contracts";
@@ -206,34 +206,57 @@ export function createOrgSpaceClient(options: OrgSpaceClientOptions) {
       );
     },
 
-    register: (input: unknown, mutation: { idempotencyKey: string; signal?: AbortSignal }) => {
+    register: async (
+      input: unknown,
+      mutation: { idempotencyKey: string; signal?: AbortSignal },
+    ) => {
       const body = RegisterRequest.parse(input);
-      return request("POST", "/v1/auth/register", RegisterResponse, body, mutation);
+      const registered = await request(
+        "POST",
+        "/v1/auth/register",
+        RegisterResponse,
+        body,
+        mutation,
+      );
+      await options.credentials.updateTokens(
+        options.refreshMode === "cookie"
+          ? { accessToken: registered.tokens.accessToken }
+          : {
+              accessToken: registered.tokens.accessToken,
+              refreshToken: registered.tokens.refreshToken,
+            },
+      );
+      return registered;
     },
 
-    startPhoneVerification: (
+    sendVerificationCode: (
       input: unknown,
       mutation: { idempotencyKey: string; signal?: AbortSignal },
     ) => {
-      const body = PhoneVerificationStartRequest.parse(input);
-      return request("POST", "/v1/phone-verifications", PhoneVerificationStartResponse, body, {
-        ...mutation,
-        authenticated: true,
-      });
-    },
-
-    confirmPhoneVerification: (
-      input: unknown,
-      mutation: { idempotencyKey: string; signal?: AbortSignal },
-    ) => {
-      const body = PhoneVerificationConfirmRequest.parse(input);
+      const body = VerificationSendRequest.parse(input);
       return request(
         "POST",
-        "/v1/phone-verifications/confirm",
-        PhoneVerificationConfirmResponse,
+        "/v1/auth/verification/send",
+        VerificationSendResponse,
         body,
-        { ...mutation, authenticated: true },
+        mutation,
       );
+    },
+
+    resetPassword: async (
+      input: unknown,
+      mutation: { idempotencyKey: string; signal?: AbortSignal },
+    ) => {
+      const body = PasswordResetRequest.parse(input);
+      const reset = await request(
+        "POST",
+        "/v1/auth/password/reset",
+        PasswordResetResponse,
+        body,
+        mutation,
+      );
+      await options.credentials.clearTokens();
+      return reset;
     },
 
     login: async (input: unknown, signal?: AbortSignal) => {

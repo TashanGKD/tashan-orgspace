@@ -11,5 +11,5 @@ export class AuthError extends Error {
 }
 
 export function invalidCredentials(): AuthError {
-  return new AuthError("AUTH_INVALID_CREDENTIALS", "username or password is invalid");
+  return new AuthError("AUTH_INVALID_CREDENTIALS", "phone or password is invalid");
 }

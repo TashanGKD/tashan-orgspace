@@ -97,11 +97,36 @@ describe("auth input boundary", () => {
       },
     }) as unknown as DatabaseClient;
     const rateLimiter: LoginRateLimiter = { consume: async () => true };
-    const auth = new AuthService({ sql, tokenService, rateLimiter });
-
-    await expect(auth.register({ username: "alice", password: "password" })).rejects.toMatchObject({
-      code: "VALIDATION_FAILED",
+    const auth = new AuthService({
+      sql,
+      tokenService,
+      rateLimiter,
+      phones: new Proxy(
+        {},
+        {
+          get() {
+            throw new Error("phone verification must not be called");
+          },
+        },
+      ) as never,
     });
+
+    await expect(
+      auth.register({
+        phone: "+8613800138000",
+        challengeId: "746fb70b-a27e-4a78-a231-aa55ef8c343e",
+        code: "123456",
+        password: "password",
+        device: {
+          id: "35f503c2-a5d7-4250-a337-4f4fd03cf8df",
+          name: "Test device",
+          os: "test",
+          architecture: "test",
+          clientVersion: "0.0.0",
+          channel: "cli",
+        },
+      }),
+    ).rejects.toMatchObject({ code: "VALIDATION_FAILED" });
     expect(databaseCalls).toBe(0);
   });
 });

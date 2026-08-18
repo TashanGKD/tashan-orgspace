@@ -5,7 +5,7 @@ import { Navigate, Route, Routes, useParams } from "react-router";
 import type { DeviceLoginMetadata } from "@tashan/contracts";
 import type { OrgSpaceClient } from "@tashan/sdk";
 
-import { LoginPage } from "./auth/login-page.js";
+import { AccessPanel } from "./auth/access-panel.js";
 import { AccountPage } from "./features/account/account-page.js";
 import { AuditPage } from "./features/audit/audit-page.js";
 import { OrganizationHomePage } from "./features/organization/home-page.js";
@@ -45,13 +45,13 @@ function LoginFlow() {
   }
 
   return (
-    <LoginPage
+    <AccessPanel
       busy={busy}
-      onLogin={(username, password) => perform(() => session.login(username, password))}
-      onRegister={(username, password) =>
-        perform(async () => {
-          await session.register(username, password);
-        }, "账号已创建，请登录后验证手机号。")
+      onLogin={(phone, password) => perform(() => session.login(phone, password))}
+      onSendVerificationCode={(phone, purpose) => session.sendVerificationCode(phone, purpose)}
+      onRegister={(input) => perform(() => session.register(input))}
+      onResetPassword={(input) =>
+        perform(() => session.resetPassword(input), "密码已重置，请使用新密码登录。")
       }
     />
   );
@@ -77,12 +77,12 @@ function OrganizationArea({ sdk }: { sdk: OrgSpaceClient }) {
   if (session.status !== "authenticated") return null;
   return (
     <OrganizationProvider accountId={session.account.id} sdk={sdk}>
-      <OrganizationRoutes sdk={sdk} username={session.account.username} />
+      <OrganizationRoutes sdk={sdk} displayName={session.account.displayName} />
     </OrganizationProvider>
   );
 }
 
-function OrganizationRoutes({ sdk, username }: { sdk: OrgSpaceClient; username: string }) {
+function OrganizationRoutes({ sdk, displayName }: { sdk: OrgSpaceClient; displayName: string }) {
   const session = useSession();
   const feedback = useFeedback();
   const { organizationId = "" } = useParams<{ organizationId: string }>();
@@ -100,7 +100,7 @@ function OrganizationRoutes({ sdk, username }: { sdk: OrgSpaceClient; username: 
   }
 
   return (
-    <AppShell onLogout={logout} username={username}>
+    <AppShell displayName={displayName} onLogout={logout}>
       <Routes>
         <Route index element={<Navigate replace to="home" />} />
         <Route

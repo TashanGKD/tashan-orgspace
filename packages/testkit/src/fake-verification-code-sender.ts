@@ -2,6 +2,7 @@ export interface SentVerificationCode {
   phone: string;
   code: string;
   expiresAt: Date;
+  purpose: "register" | "password_reset";
 }
 
 export class FakeVerificationCodeSender {

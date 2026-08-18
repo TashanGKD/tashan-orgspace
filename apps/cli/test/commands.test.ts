@@ -16,9 +16,9 @@ function loginResponse() {
   return {
     account: {
       id: accountId,
-      username: "alice",
-      phone: null,
-      phoneVerifiedAt: null,
+      displayName: "用户8000",
+      phone: "+8613800138000",
+      phoneVerifiedAt: "2026-08-18T12:00:00.000Z",
       status: "active" as const,
       createdAt: "2026-08-18T12:00:00.000Z",
     },
@@ -38,6 +38,12 @@ function loginResponse() {
 function fakeClient(overrides: Partial<Record<keyof OrgSpaceClient, unknown>> = {}) {
   return {
     login: vi.fn().mockResolvedValue(loginResponse()),
+    register: vi.fn().mockResolvedValue(loginResponse()),
+    sendVerificationCode: vi.fn().mockResolvedValue({
+      challengeId: "746fb70b-a27e-4a78-a231-aa55ef8c343e",
+      expiresAt: "2026-08-18T12:10:00.000Z",
+    }),
+    resetPassword: vi.fn().mockResolvedValue({ reset: true }),
     createOrganization: vi.fn(),
     revokeDevice: vi.fn(),
     listCapabilities: vi.fn().mockResolvedValue({ items: [] }),
@@ -79,19 +85,93 @@ describe("Phase 0 command behavior", () => {
   test("login prompts securely and never prints tokens", async () => {
     const sdk = fakeClient();
     const effects = dependencies(sdk);
-    const result = await runCli(["auth", "login", "--username", "alice"], effects);
+    const result = await runCli(["auth", "login", "--phone", "13800138000"], effects);
 
     expect(result.exitCode).toBe(0);
-    expect(result.stdout).toContain("Logged in as alice");
+    expect(result.stdout).toContain("Logged in as 用户8000");
     expect(result.stdout + result.stderr).not.toContain("access-token-must-not-print");
     expect(result.stdout + result.stderr).not.toContain("refresh-token-must-not-print");
     expect(sdk.login).toHaveBeenCalledWith(
       expect.objectContaining({
-        username: "alice",
+        phone: "13800138000",
         password: "CorrectHorseBattery9",
         device: expect.objectContaining({ id: deviceId, channel: "cli" }),
       }),
     );
+  });
+
+  test("register and password reset read secrets outside argv and never print them", async () => {
+    const sdk = fakeClient();
+    const promptHidden = vi
+      .fn<() => Promise<string>>()
+      .mockResolvedValueOnce("123456")
+      .mockResolvedValueOnce("CorrectHorseBattery9")
+      .mockResolvedValueOnce("123456")
+      .mockResolvedValueOnce("AnotherStrongPassword9");
+    const effects = dependencies(sdk, { promptHidden });
+    const challengeId = "746fb70b-a27e-4a78-a231-aa55ef8c343e";
+
+    const registered = await runCli(
+      [
+        "auth",
+        "register",
+        "--phone",
+        "13800138000",
+        "--challenge",
+        challengeId,
+        "--idempotency-key",
+        "register-1",
+      ],
+      effects,
+    );
+    expect(registered.exitCode).toBe(0);
+    expect(registered.stdout).toContain("Registered 用户8000");
+    expect(registered.stdout).not.toContain("access-token-must-not-print");
+    expect(registered.stdout).not.toContain("refresh-token-must-not-print");
+    expect(sdk.register).toHaveBeenCalledWith(
+      expect.objectContaining({
+        phone: "13800138000",
+        challengeId,
+        code: "123456",
+        password: "CorrectHorseBattery9",
+      }),
+      { idempotencyKey: "register-1" },
+    );
+
+    const reset = await runCli(
+      [
+        "auth",
+        "password-reset",
+        "--phone",
+        "13800138000",
+        "--challenge",
+        challengeId,
+        "--idempotency-key",
+        "reset-1",
+        "--yes",
+      ],
+      effects,
+    );
+    expect(reset.exitCode).toBe(0);
+    expect(reset.stdout).toContain("Password reset complete");
+    expect(sdk.resetPassword).toHaveBeenCalledWith(
+      expect.objectContaining({ code: "123456", newPassword: "AnotherStrongPassword9" }),
+      { idempotencyKey: "reset-1" },
+    );
+  });
+
+  test.each([
+    ["--username", "alice"],
+    ["--password", "CorrectHorseBattery9"],
+    ["--code", "123456"],
+  ])("rejects secret or legacy argv option %s before runtime access", async (option, value) => {
+    const effects = dependencies(fakeClient());
+    const result = await runCli(
+      ["auth", "login", "--phone", "13800138000", option, value],
+      effects,
+    );
+    expect(result.exitCode).toBe(2);
+    expect(effects.createClient).not.toHaveBeenCalled();
   });
 
   test("organization creation requires explicit idempotency key before network access", async () => {

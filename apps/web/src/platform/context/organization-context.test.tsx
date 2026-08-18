@@ -33,7 +33,7 @@ function sdk(role: "org_owner" | "org_admin" | "member" = "member") {
       items: [{ id: organizationId, name: "他山协会", status: "active" }],
     }),
     listMembers: vi.fn().mockResolvedValue({
-      items: [{ accountId, organizationId, role, status: "active", username: "alice" }],
+      items: [{ accountId, organizationId, role, status: "active", displayName: "用户8000" }],
     }),
     listAuditEvents: vi.fn(),
   } as unknown as OrgSpaceClient;

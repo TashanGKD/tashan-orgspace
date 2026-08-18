@@ -71,26 +71,27 @@ export async function buildApp(options: BuildAppOptions): Promise<FastifyInstanc
   await app.register(cors, { origin: [...options.corsOrigins], credentials: true });
 
   const audit = new AuditService(options.sql);
-  const auth: AuthService = new ConcreteAuthService({
-    sql: options.sql,
-    tokenService: options.tokenService,
-    rateLimiter: options.loginRateLimiter,
-  });
   const phones = new PhoneVerificationService({
     sql: options.sql,
     sender: options.phoneSender,
     rateLimiter: options.phoneRateLimiter,
     codePepper: options.phoneCodePepper,
   });
+  const auth: AuthService = new ConcreteAuthService({
+    sql: options.sql,
+    tokenService: options.tokenService,
+    rateLimiter: options.loginRateLimiter,
+    phones,
+  });
   const organizations = new OrganizationService(options.sql);
-  const mutations = new MutationCoordinator(options.sql, audit);
+  const mutations = new MutationCoordinator(options.sql, audit, options.phoneCodePepper);
   const authenticate = authenticateWith(auth);
 
   installErrorHandler(app);
 
   await registerCapabilityRoutes(app);
   await registerAuthRoutes(app, { sql: options.sql, auth, mutations, authenticate });
-  await registerPhoneRoutes(app, { phones, mutations, authenticate });
+  await registerPhoneRoutes(app, { phones, mutations });
   await registerDeviceRoutes(app, { sql: options.sql, mutations, authenticate });
   await registerOrganizationRoutes(app, {
     sql: options.sql,

@@ -109,7 +109,7 @@ export async function registerOrganizationRoutes(
           id: row.id,
           organizationId: row.organization_id,
           accountId: row.account_id,
-          username: row.username,
+          displayName: row.display_name,
           role: row.role,
           status: row.status,
           createdAt: row.created_at.toISOString(),

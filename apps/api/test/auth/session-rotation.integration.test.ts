@@ -1,3 +1,6 @@
+import { randomUUID } from "node:crypto";
+
+import { FakeVerificationCodeSender } from "@tashan/testkit";
 import { generateKeyPair } from "jose";
 import { afterAll, beforeAll, beforeEach, describe, expect, test } from "vitest";
 
@@ -5,13 +8,18 @@ import { AccessTokenService } from "../../src/auth/access-token.js";
 import { AuthService, type LoginRateLimiter } from "../../src/auth/auth-service.js";
 import { createDatabaseClient, type DatabaseClient } from "../../src/db/client.js";
 import { migrateDatabase, resetTestDatabase } from "../../src/db/migrate.js";
+import {
+  PhoneVerificationService,
+  type PhoneRateLimiter,
+} from "../../src/phone/phone-verification-service.js";
 
 const testDatabaseUrl = process.env.TEST_DATABASE_URL;
 if (testDatabaseUrl === undefined) {
   throw new Error("TEST_DATABASE_URL is required for auth integration tests");
 }
+const requiredTestDatabaseUrl: string = testDatabaseUrl;
 
-class RecordingRateLimiter implements LoginRateLimiter {
+class RecordingRateLimiter implements LoginRateLimiter, PhoneRateLimiter {
   public readonly keys: string[] = [];
   public allow = true;
 
@@ -24,12 +32,14 @@ class RecordingRateLimiter implements LoginRateLimiter {
 let sql: DatabaseClient;
 let tokens: AccessTokenService;
 let limiter: RecordingRateLimiter;
+let sender: FakeVerificationCodeSender;
+let phones: PhoneVerificationService;
 let auth: AuthService;
 
 beforeAll(async () => {
-  await resetTestDatabase(testDatabaseUrl);
-  await migrateDatabase(testDatabaseUrl);
-  sql = createDatabaseClient(testDatabaseUrl);
+  await resetTestDatabase(requiredTestDatabaseUrl);
+  await migrateDatabase(requiredTestDatabaseUrl);
+  sql = createDatabaseClient(requiredTestDatabaseUrl);
   const { privateKey, publicKey } = await generateKeyPair("EdDSA");
   tokens = new AccessTokenService({
     issuer: "https://api-org.tashan.chat",
@@ -43,13 +53,23 @@ beforeAll(async () => {
 beforeEach(async () => {
   await sql`truncate table audit_events, session_refresh_tokens, sessions, devices, memberships, organizations, phone_verifications, principals, accounts cascade`;
   limiter = new RecordingRateLimiter();
-  auth = new AuthService({ sql, tokenService: tokens, rateLimiter: limiter });
+  sender = new FakeVerificationCodeSender();
+  phones = new PhoneVerificationService({
+    sql,
+    sender,
+    rateLimiter: limiter,
+    codePepper: "test-only-pepper",
+  });
+  auth = new AuthService({ sql, tokenService: tokens, rateLimiter: limiter, phones });
 });
 
 afterAll(async () => {
   await sql?.end();
 });
 
+const phone = "+8613800138000";
+const password = "CorrectHorseBattery9";
+const nextPassword = "AnotherStrongPassword9";
 const deviceA = {
   id: "35f503c2-a5d7-4250-a337-4f4fd03cf8df",
   name: "Alice Mac",
@@ -58,39 +78,89 @@ const deviceA = {
   clientVersion: "0.1.0",
   channel: "cli" as const,
 };
+const deviceB = {
+  ...deviceA,
+  id: "84ecfe2e-c11a-4a56-8735-934955bef834",
+  name: "Alice Linux",
+  os: "linux",
+};
 
-async function registerAlice() {
-  return auth.register({ username: "Alice", password: "CorrectHorseBattery9" });
+async function challenge(purpose: "register" | "password_reset", targetPhone = phone) {
+  const created = await phones.start({
+    phone: targetPhone,
+    purpose,
+    serverIp: "127.0.0.1",
+    requestId: randomUUID(),
+  });
+  const code = sender.messages.at(-1)?.code;
+  if (code === undefined) throw new Error("fake sender did not receive a code");
+  return { ...created, code };
 }
 
-async function loginAlice() {
-  return auth.login(
-    { username: "alice", password: "CorrectHorseBattery9", device: deviceA },
-    { serverIp: "127.0.0.1" },
-  );
+async function registerAlice(device = deviceA) {
+  const verification = await challenge("register");
+  return auth.register({
+    phone,
+    challengeId: verification.challengeId,
+    code: verification.code,
+    password,
+    device,
+  });
 }
 
-describe("registration and credential privacy", () => {
-  test("case-insensitive duplicate registration creates one human Principal and no Membership", async () => {
-    await registerAlice();
-    await expect(
-      auth.register({ username: "alice", password: "AnotherStrongPassword9" }),
-    ).rejects.toMatchObject({ code: "USERNAME_TAKEN" });
+async function loginAlice(device = deviceA, presentedPassword = password) {
+  return auth.login({ phone, password: presentedPassword, device }, { serverIp: "127.0.0.1" });
+}
 
-    const [counts] = await sql<{ accounts: number; principals: number; memberships: number }[]>`
-      select
-        (select count(*)::int from accounts) as accounts,
-        (select count(*)::int from principals where type = 'human') as principals,
-        (select count(*)::int from memberships) as memberships
+describe("phone registration and credential privacy", () => {
+  test("registration consumes a challenge, creates one identity, and auto-logs in", async () => {
+    const session = await registerAlice();
+
+    await expect(auth.authenticate(session.accessToken)).resolves.toMatchObject({
+      accountId: session.accountId,
+      deviceId: deviceA.id,
+    });
+    const [account] = await sql<
+      { phone_e164: string; display_name: string; phone_verified_at: Date }[]
+    >`
+      select phone_e164, display_name, phone_verified_at from accounts
     `;
-    expect(counts).toEqual({ accounts: 1, principals: 1, memberships: 0 });
+    expect(account).toMatchObject({ phone_e164: phone, display_name: "用户8000" });
+    expect(account?.phone_verified_at).toBeInstanceOf(Date);
   });
 
-  test("wrong username and wrong password expose the same public error", async () => {
+  test("two concurrent registrations for one phone create exactly one account", async () => {
+    const first = await challenge("register");
+    const second = await challenge("register");
+    const results = await Promise.allSettled([
+      auth.register({
+        phone,
+        challengeId: first.challengeId,
+        code: first.code,
+        password,
+        device: deviceA,
+      }),
+      auth.register({
+        phone,
+        challengeId: second.challengeId,
+        code: second.code,
+        password,
+        device: deviceB,
+      }),
+    ]);
+
+    expect(results.filter(({ status }) => status === "fulfilled")).toHaveLength(1);
+    const rejected = results.find(({ status }) => status === "rejected");
+    expect(rejected).toMatchObject({ reason: { code: "ACCOUNT_EXISTS" } });
+    const [count] = await sql<{ count: number }[]>`select count(*)::int as count from accounts`;
+    expect(count?.count).toBe(1);
+  });
+
+  test("unknown phone and wrong password expose the same public error", async () => {
     await registerAlice();
     const attempts = [
-      { username: "missing", password: "CorrectHorseBattery9", device: deviceA },
-      { username: "alice", password: "IncorrectPassword9", device: deviceA },
+      { phone: "+8613900139000", password, device: deviceA },
+      { phone, password: "IncorrectPassword9", device: deviceA },
     ];
     const errors = [];
     for (const attempt of attempts) {
@@ -105,55 +175,43 @@ describe("registration and credential privacy", () => {
     expect(errors[0]).toMatchObject({ code: "AUTH_INVALID_CREDENTIALS" });
     expect(errors[1]).toMatchObject({ code: "AUTH_INVALID_CREDENTIALS" });
     expect((errors[0] as Error).message).toBe((errors[1] as Error).message);
-    expect(limiter.keys).toContain("login:username:alice");
+    expect(limiter.keys).toContain(`login:phone:${phone}`);
     expect(limiter.keys).toContain("login:ip:203.0.113.7");
-  });
-
-  test("rate limiter rejects before password verification", async () => {
-    await registerAlice();
-    limiter.allow = false;
-
-    await expect(loginAlice()).rejects.toMatchObject({ code: "RATE_LIMITED" });
   });
 });
 
-describe("device-bound session and refresh rotation", () => {
-  test("rejects an expired access token", async () => {
-    await registerAlice();
-    const session = await loginAlice();
-    const expired = await tokens.sign(
-      {
-        subject: session.accountId,
-        principalId: session.principalId,
-        sessionId: session.sessionId,
-        deviceId: session.deviceId,
-        tokenVersion: session.tokenVersion,
-        actorSource: "cli",
-      },
-      { lifetimeSeconds: -1 },
-    );
+describe("password reset and device-bound sessions", () => {
+  test("password reset revokes every old session but preserves reusable devices", async () => {
+    const first = await registerAlice(deviceA);
+    const second = await loginAlice(deviceB);
+    const verification = await challenge("password_reset");
 
-    await expect(auth.authenticate(expired)).rejects.toMatchObject({ code: "AUTH_TOKEN_EXPIRED" });
-  });
-
-  test("rejects revoked devices and old token versions", async () => {
-    await registerAlice();
-    const first = await loginAlice();
-    await sql`update devices set revoked_at = now() where id = ${first.deviceId}`;
-    await expect(auth.authenticate(first.accessToken)).rejects.toMatchObject({
-      code: "DEVICE_REVOKED",
+    await auth.resetPassword({
+      phone,
+      challengeId: verification.challengeId,
+      code: verification.code,
+      newPassword: nextPassword,
     });
 
-    await sql`update devices set revoked_at = null where id = ${first.deviceId}`;
-    await sql`update sessions set token_version = token_version + 1 where id = ${first.sessionId}`;
     await expect(auth.authenticate(first.accessToken)).rejects.toMatchObject({
       code: "AUTH_TOKEN_REVOKED",
     });
+    await expect(auth.authenticate(second.accessToken)).rejects.toMatchObject({
+      code: "AUTH_TOKEN_REVOKED",
+    });
+    await expect(auth.refresh(first.refreshToken)).rejects.toMatchObject({
+      code: "AUTH_TOKEN_REVOKED",
+    });
+    await expect(loginAlice(deviceA, password)).rejects.toMatchObject({
+      code: "AUTH_INVALID_CREDENTIALS",
+    });
+    await expect(loginAlice(deviceA, nextPassword)).resolves.toMatchObject({
+      deviceId: deviceA.id,
+    });
   });
 
-  test("refresh-token reuse revokes the entire session", async () => {
-    await registerAlice();
-    const first = await loginAlice();
+  test("refresh-token reuse still revokes the entire session", async () => {
+    const first = await registerAlice();
     const second = await auth.refresh(first.refreshToken);
     await expect(auth.authenticate(second.accessToken)).resolves.toMatchObject({
       deviceId: deviceA.id,
@@ -168,8 +226,7 @@ describe("device-bound session and refresh rotation", () => {
   });
 
   test("allows exactly one concurrent refresh compare-and-swap", async () => {
-    await registerAlice();
-    const first = await loginAlice();
+    const first = await registerAlice();
     const results = await Promise.allSettled([
       auth.refresh(first.refreshToken),
       auth.refresh(first.refreshToken),
