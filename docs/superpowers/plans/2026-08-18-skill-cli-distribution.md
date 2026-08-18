@@ -125,7 +125,7 @@ Commit: `build(cli): create self-contained release artifact`
 - Create: `skill/tashan-orgspace/scripts/install-cli.sh`
 - Create: `tests/distribution/install-cli.test.ts`
 
-- [ ] **Step 1: Write adversarial installer tests before the happy path**
+- [x] **Step 1: Write adversarial installer tests before the happy path**
 
 Use an isolated HOME and local fixture release source. Encode at least these failures:
 
@@ -138,17 +138,17 @@ Use an isolated HOME and local fixture release source. Encode at least these fai
 
 Every allocating failure must remove its temp directory and keep the previous installed version executable.
 
-- [ ] **Step 2: Run and observe the missing installer failure**
+- [x] **Step 2: Run and observe the missing installer failure**
 
 Run: `pnpm vitest run tests/distribution/install-cli.test.ts`
 
 Expected: FAIL because the installer does not exist.
 
-- [ ] **Step 3: Implement safe install, check and upgrade modes**
+- [x] **Step 3: Implement safe install, check and upgrade modes**
 
 No arguments prints usage and performs no network or writes. `--check` is read-only. `--install` downloads the pinned asset and checksums, validates exact archive entries before extraction, stages in the install root, smoke-tests, then atomically activates it. Test-only release URL/platform overrides require `TORG_INSTALL_TESTING=1`; without that guard they are ignored. Never use sudo or edit shell configuration.
 
-- [ ] **Step 4: Run the adversarial and idempotency suite**
+- [x] **Step 4: Run the adversarial and idempotency suite**
 
 Run: `pnpm vitest run tests/distribution/install-cli.test.ts`
 
