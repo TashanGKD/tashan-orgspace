@@ -78,6 +78,7 @@ describe("transactional repositories", () => {
           result: "success",
           requestId: "b6065a41-55a1-4475-ad31-b5e93be7cee0",
           eventHash: "rollback-event-hash",
+          chainPosition: 1,
         });
         await outbox.append(transaction, {
           eventType: "account.registered",
@@ -105,6 +106,7 @@ describe("transactional repositories", () => {
         result: "success",
         requestId: "4efc86c7-f0cf-4ce1-b742-09f5e9b42a39",
         eventHash: "commit-event-hash",
+        chainPosition: 1,
       });
       await outbox.append(transaction, {
         eventType: "account.registered",

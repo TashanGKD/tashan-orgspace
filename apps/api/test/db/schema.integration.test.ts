@@ -131,11 +131,11 @@ describe("Phase 0 database schema", () => {
     await sql`
       insert into audit_events (
         organization_id, account_id, principal_id, server_ip, proxy_chain,
-        actor_source, capability_id, action, result, request_id, event_hash
+        actor_source, capability_id, action, result, request_id, event_hash, chain_position
       ) values (
         ${organization.id}, ${account.id}, ${principal.id}, '127.0.0.1', '[]'::jsonb,
         'cli', 'organization.list', 'organization.list', 'success',
-        '746fb70b-a27e-4a78-a231-aa55ef8c343e', 'fixture-hash'
+        '746fb70b-a27e-4a78-a231-aa55ef8c343e', 'fixture-hash', 1
       )
     `;
 

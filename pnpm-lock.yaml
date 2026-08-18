@@ -37,6 +37,9 @@ importers:
       argon2:
         specifier: 0.45.1
         version: 0.45.1
+      ipaddr.js:
+        specifier: 2.5.0
+        version: 2.5.0
       jose:
         specifier: 6.2.9
         version: 6.2.9
@@ -1131,6 +1134,13 @@ packages:
         integrity: sha512-JmXMZ6wuvDmLiHEml9ykzqO6lwFbof0GG4IkcGaENdCRDDmMVnny7s5HsIgHCbaq0w2MyPhDqkhTUgS2LU2PHA==,
       }
     engines: { node: ">=0.8.19" }
+
+  ipaddr.js@2.5.0:
+    resolution:
+      {
+        integrity: sha512-aq+t5NAc+cS6rZQQVWC2x98CPqGtKKTMDd4Gaodv0wShnItdKg/51djkGJ1hqH+Oy0ivDftCbSLCQob8zso01w==,
+      }
+    engines: { node: ">= 10" }
 
   is-extglob@2.1.1:
     resolution:
@@ -2277,6 +2287,8 @@ snapshots:
   ignore@7.0.6: {}
 
   imurmurhash@0.1.4: {}
+
+  ipaddr.js@2.5.0: {}
 
   is-extglob@2.1.1: {}
 

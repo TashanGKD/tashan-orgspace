@@ -39,6 +39,7 @@ export const AuditEvent = z
     proxyChain: z.array(z.string().min(1)),
     device: AuditDeviceContext.nullable(),
     actorSource: ActorSource,
+    reportedActorSource: z.string().min(1).nullable(),
     capabilityId: z.string().min(1),
     action: z.string().min(1),
     objectType: z.string().min(1).nullable(),

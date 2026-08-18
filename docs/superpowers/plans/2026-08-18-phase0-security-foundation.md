@@ -764,7 +764,7 @@ Run: `TEST_DATABASE_URL=<loopback-test-url> TEST_REDIS_URL=<loopback-test-url> p
 
 Expected: unverified phone, cross-org, and ordinary-member cases fail with stable codes; verified owner flow passes.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add apps/api/src/phone apps/api/src/organizations apps/api/test/organizations packages/testkit/src/fake-verification-code-sender.ts
@@ -774,14 +774,17 @@ git commit -m "feat(organizations): require verified membership"
 ## Task 10: Build tamper-evident audit capture
 
 **Files:**
+- Create: `apps/api/migrations/004_audit_chain_position.sql`
 - Create: `apps/api/src/audit/audit-service.ts`
 - Create: `apps/api/src/audit/audit-context.ts`
 - Create: `apps/api/src/audit/redaction.ts`
 - Create: `apps/api/src/http/trusted-proxy.ts`
+- Modify: `apps/api/src/repositories/audit-repository.ts`
+- Modify: `packages/contracts/src/audit.ts`
 - Test: `apps/api/test/audit/audit-service.test.ts`
 - Test: `apps/api/test/audit/audit-chain.integration.test.ts`
 
-- [ ] **Step 1: Write spoofing and PII rejection tests**
+- [x] **Step 1: Write spoofing and PII rejection tests**
 
 ```ts
 test("ignores x-forwarded-for from an untrusted peer", () => {
@@ -801,13 +804,13 @@ test("detects a broken hash chain", async () => {
 });
 ```
 
-- [ ] **Step 2: Run and verify failure**
+- [x] **Step 2: Run and verify failure**
 
 Run: `pnpm --filter @tashan/api test -- audit-service.test.ts`
 
 Expected: FAIL because audit capture is absent.
 
-- [ ] **Step 3: Implement canonical hashing and trusted context**
+- [x] **Step 3: Implement canonical hashing and trusted context**
 
 Use canonical JSON with sorted keys. Under an organization-scoped advisory transaction lock, load the previous hash and calculate:
 
@@ -817,7 +820,7 @@ eventHash = sha256(`${previousHash}.${canonicalJson(redactedEventWithoutHashes)}
 
 Only configured ECS/gateway proxy CIDRs may contribute forwarded IPs. Device name, OS, architecture, CLI/Web/Skill version, request ID, idempotency key, actor source, capability, result and error code must be present when available. The API derives `web`/`cli` from the authenticated session. It accepts `ai_via_cli` only as an audit annotation on an authenticated CLI session, stores the original reported value separately, and never uses it for authorization.
 
-- [ ] **Step 4: Run audit unit and integration tests**
+- [x] **Step 4: Run audit unit and integration tests**
 
 Run: `pnpm --filter @tashan/api test -- audit-service.test.ts && pnpm --filter @tashan/api test:integration -- audit-chain.integration.test.ts`
 
