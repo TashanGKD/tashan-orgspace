@@ -1291,7 +1291,7 @@ git commit -m "test(e2e): prove Phase 0 lifecycle"
 - Create: `docs/architecture/phase0-security-foundation.md`
 - Modify: `README.md`
 
-- [ ] **Step 1: Write the verifier self-test first**
+- [x] **Step 1: Write the verifier self-test first**
 
 ```bash
 #!/usr/bin/env bash
@@ -1317,13 +1317,13 @@ echo "verify-phase0.self-test: PASS"
 
 The verifier itself must be included in its dirty/self-coverage list.
 
-- [ ] **Step 2: Run and verify missing verifier**
+- [x] **Step 2: Run and verify missing verifier**
 
 Run: `bash scripts/verify-phase0.self-test.sh`
 
 Expected: FAIL because `verify-phase0.sh` does not exist.
 
-- [ ] **Step 3: Implement the complete verifier**
+- [x] **Step 3: Implement the complete verifier**
 
 `verify-phase0.sh` runs, in order:
 
@@ -1343,19 +1343,19 @@ pnpm test:e2e
 
 It fails closed, prints each command, and records no secret-bearing environment values. Documentation lists the exact routes, tables, capability IDs, actor/role enums, token lifecycle, trusted proxy behavior and non-goals. README links the approved design, this plan, architecture doc and local runbook.
 
-- [ ] **Step 4: Prove the verifier catches the business drift**
+- [x] **Step 4: Prove the verifier catches the business drift**
 
 Run: `bash scripts/verify-phase0.self-test.sh`
 
 Expected: inner verifier fails specifically with `missing CLI binding: device.revoke`; outer self-test prints `PASS`.
 
-- [ ] **Step 5: Run the full verifier on the real tree**
+- [x] **Step 5: Run the full verifier on the real tree**
 
 Run: `bash scripts/verify-phase0.sh`
 
 Expected: all static, unit, integration, gate, negative-self-test and E2E layers pass.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add scripts/verify-phase0.sh scripts/verify-phase0.self-test.sh docs/architecture/phase0-security-foundation.md README.md
@@ -1364,15 +1364,15 @@ git commit -m "docs(phase0): add verification contract"
 
 ## Final Phase 0 review
 
-- [ ] Run `git status --short` and confirm only intended plan-tracking changes remain.
-- [ ] Run `bash scripts/verify-phase0.sh` fresh and save its output summary with the candidate commit SHA.
-- [ ] Inspect `git diff main...HEAD` and confirm no Phase 1+ functionality entered the branch.
-- [ ] Confirm every `scripts/check-*.mjs` and `scripts/verify-*.sh` has a same-named self-test.
-- [ ] Confirm no access key, signing private key, password, refresh token, full phone number, `.env`, database volume, or local credential file is tracked.
-- [ ] Confirm removing `device.revoke` CLI binding makes the coverage gate fail, then restore it and rerun successfully.
-- [ ] Confirm current-device revocation needs explicit override, while revoking another device works.
-- [ ] Confirm a valid user from another organization receives `ORG_FORBIDDEN` and the rejection is audited.
-- [ ] Commit any plan-tracking checkbox updates separately with `docs(plan): record Phase 0 execution`.
+- [x] Run `git status --short` and confirm only intended plan-tracking changes remain.
+- [x] Run `bash scripts/verify-phase0.sh` fresh and save its output summary with the candidate commit SHA.
+- [x] Inspect `git diff main...HEAD` and confirm no Phase 1+ functionality entered the branch.
+- [x] Confirm every `scripts/check-*.mjs` and `scripts/verify-*.sh` has a same-named self-test.
+- [x] Confirm no access key, signing private key, password, refresh token, full phone number, `.env`, database volume, or local credential file is tracked.
+- [x] Confirm removing `device.revoke` CLI binding makes the coverage gate fail, then restore it and rerun successfully.
+- [x] Confirm current-device revocation needs explicit override, while revoking another device works.
+- [x] Confirm a valid user from another organization receives `ORG_FORBIDDEN` and the rejection is audited.
+- [x] Commit any plan-tracking checkbox updates separately with `docs(plan): record Phase 0 execution`.
 
 ## Plan self-review result
 
