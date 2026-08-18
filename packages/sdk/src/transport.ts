@@ -19,6 +19,7 @@ export type Transport = (request: TransportRequest) => Promise<TransportResponse
 export interface FetchTransportOptions {
   baseUrl: string;
   timeoutMilliseconds: number;
+  credentials?: "omit" | "same-origin" | "include";
   fetchImplementation?: typeof fetch;
 }
 
@@ -58,6 +59,7 @@ export function createFetchTransport(options: FetchTransportOptions): Transport 
       const response = await fetchImplementation(new URL(request.path, baseUrl), {
         method: request.method,
         headers: request.headers,
+        credentials: options.credentials ?? "omit",
         ...(request.body === undefined ? {} : { body: JSON.stringify(request.body) }),
         signal: controller.signal,
       });

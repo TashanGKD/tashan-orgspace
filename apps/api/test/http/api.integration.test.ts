@@ -227,6 +227,33 @@ describe("Phase 0 HTTP capability surface", () => {
     expect(auditRow).toEqual({ server_ip: "203.0.113.7", proxy_chain: [] });
   });
 
+  test("rotates a Web refresh token through an HttpOnly cookie", async () => {
+    expect((await register("web-alice")).statusCode).toBe(201);
+    const webDevice = { ...aliceDeviceA, channel: "web" as const };
+    const loggedIn = await app.inject({
+      method: "POST",
+      url: "/v1/auth/login",
+      payload: { username: "web-alice", password: "CorrectHorseBattery9", device: webDevice },
+    });
+    expect(loggedIn.statusCode).toBe(200);
+    const loginCookie = loggedIn.headers["set-cookie"];
+    expect(loginCookie).toContain("__Host-torg_refresh=");
+    expect(loginCookie).toContain("HttpOnly");
+    expect(loginCookie).toContain("Secure");
+    expect(loginCookie).toContain("SameSite=Strict");
+    expect(loginCookie).toContain("Path=/");
+
+    const refreshed = await app.inject({
+      method: "POST",
+      url: "/v1/auth/refresh",
+      headers: { cookie: String(loginCookie).split(";")[0] ?? "" },
+      payload: {},
+    });
+    expect(refreshed.statusCode).toBe(200);
+    expect(refreshed.headers["set-cookie"]).toContain("__Host-torg_refresh=");
+    expect(refreshed.headers["set-cookie"]).not.toBe(loginCookie);
+  });
+
   test("exposes all 17 capabilities through real route payloads and audits each one", async () => {
     expect((await app.inject({ method: "GET", url: "/v1/health" })).statusCode).toBe(200);
     const capabilities = await app.inject({ method: "GET", url: "/v1/capabilities" });

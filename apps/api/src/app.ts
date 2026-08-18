@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 
 import cors from "@fastify/cors";
+import cookie from "@fastify/cookie";
 import Fastify, { type FastifyInstance, type FastifyRequest } from "fastify";
 
 import type { CapabilityId } from "@tashan/capabilities";
@@ -55,6 +56,7 @@ export async function buildApp(options: BuildAppOptions): Promise<FastifyInstanc
     genReqId: () => randomUUID(),
     trustProxy: false,
   });
+  await app.register(cookie);
   await app.register(cors, { origin: [...options.corsOrigins], credentials: true });
 
   const audit = new AuditService(options.sql);

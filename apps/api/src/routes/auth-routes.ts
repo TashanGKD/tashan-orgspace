@@ -13,11 +13,21 @@ import {
 } from "@tashan/contracts";
 
 import type { AuthService } from "../auth/auth-service.js";
+import { AuthError } from "../auth/auth-errors.js";
 import type { DatabaseClient } from "../db/client.js";
 import type { TransactionClient } from "../db/transaction.js";
 import type { MutationCoordinator } from "../http/idempotency.js";
 import { requestContext } from "../http/request-context.js";
 import { accountAndPrincipalSummary } from "./route-helpers.js";
+
+const WEB_REFRESH_COOKIE = "__Host-torg_refresh";
+const WEB_REFRESH_COOKIE_OPTIONS = {
+  httpOnly: true,
+  secure: true,
+  sameSite: "strict" as const,
+  path: "/",
+  maxAge: 30 * 24 * 60 * 60,
+};
 
 interface AuthRouteDependencies {
   sql: DatabaseClient;
@@ -147,6 +157,13 @@ export async function registerAuthRoutes(
         };
       },
     );
+    if (body.device.channel === "web") {
+      reply.setCookie(
+        WEB_REFRESH_COOKIE,
+        result.body.tokens.refreshToken,
+        WEB_REFRESH_COOKIE_OPTIONS,
+      );
+    }
     return reply.code(result.statusCode).send(result.body);
   });
 
@@ -154,12 +171,17 @@ export async function registerAuthRoutes(
     "/v1/auth/refresh",
     { config: { capabilityId: "auth.refresh" } },
     async (request, reply) => {
-      const body = RefreshRequest.parse(request.body);
+      const body = RefreshRequest.parse(request.body ?? {});
+      const cookieRefreshToken = request.cookies[WEB_REFRESH_COOKIE];
+      const refreshToken = body.refreshToken ?? cookieRefreshToken;
+      if (refreshToken === undefined) {
+        throw new AuthError("AUTH_REQUIRED", "refresh token is unavailable");
+      }
       const result = await dependencies.mutations.executeSessionMutation(
         request,
         "auth.refresh",
         async (transaction) => {
-          const session = await dependencies.auth.refresh(body.refreshToken, transaction);
+          const session = await dependencies.auth.refresh(refreshToken, transaction);
           requestContext(request).identity = await authenticatedDevice(
             transaction,
             session.sessionId,
@@ -181,6 +203,13 @@ export async function registerAuthRoutes(
           };
         },
       );
+      if (body.refreshToken === undefined) {
+        reply.setCookie(
+          WEB_REFRESH_COOKIE,
+          result.body.tokens.refreshToken,
+          WEB_REFRESH_COOKIE_OPTIONS,
+        );
+      }
       return reply.code(result.statusCode).send(result.body);
     },
   );
@@ -204,6 +233,12 @@ export async function registerAuthRoutes(
           return { statusCode: 200, body: LogoutResponse.parse({ loggedOut: true }) };
         },
       );
+      reply.clearCookie(WEB_REFRESH_COOKIE, {
+        httpOnly: true,
+        secure: true,
+        sameSite: "strict",
+        path: "/",
+      });
       return reply.code(result.statusCode).send(result.body);
     },
   );

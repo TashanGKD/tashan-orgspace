@@ -173,6 +173,72 @@ describe("typed SDK request boundary", () => {
     expect(store.updateTokens).toHaveBeenCalledTimes(1);
   });
 
+  test("refreshes Web sessions through a cookie without reading a refresh token", async () => {
+    let accessToken: string | undefined = "expired-access-token";
+    const store = {
+      getAccessToken: () => accessToken,
+      getRefreshToken: vi.fn(() => undefined),
+      updateTokens: vi.fn((tokens: { accessToken: string }) => {
+        accessToken = tokens.accessToken;
+      }),
+      clearTokens: vi.fn(),
+    };
+    const calls: TransportRequest[] = [];
+    const transport: Transport = async (request) => {
+      calls.push(request);
+      if (request.path === "/v1/auth/refresh") {
+        return response(200, {
+          sessionId: "3c5442ea-00e2-483b-9e81-2271e34120f1",
+          deviceId,
+          tokens: {
+            tokenType: "Bearer",
+            accessToken: "fresh-web-access-token",
+            accessTokenExpiresAt: "2026-08-18T12:15:00.000Z",
+            refreshToken: "rotated-cookie-secret-that-is-long-enough",
+            refreshTokenExpiresAt: "2026-09-17T12:00:00.000Z",
+          },
+        });
+      }
+      if (calls.length === 1) {
+        return response(401, {
+          error: {
+            code: "AUTH_TOKEN_EXPIRED",
+            message: "expired",
+            requestId: "bb310eb3-d828-4c4b-99fa-7e0f510cdb90",
+          },
+        });
+      }
+      return response(200, {
+        account: {
+          id: accountId,
+          username: "alice",
+          phone: null,
+          phoneVerifiedAt: null,
+          status: "active",
+          createdAt: "2026-08-18T12:00:00.000Z",
+        },
+        principal: { id: "af4ec631-8335-4c2b-9a02-df7033d45c55", type: "human", accountId },
+        sessionId: "3c5442ea-00e2-483b-9e81-2271e34120f1",
+        deviceId,
+      });
+    };
+    const web = createOrgSpaceClient({
+      transport,
+      credentials: store,
+      deviceId,
+      clientChannel: "web",
+      invocationSource: "web",
+      refreshMode: "cookie",
+    });
+
+    await expect(web.whoami()).resolves.toMatchObject({ deviceId });
+    expect(store.getRefreshToken).not.toHaveBeenCalled();
+    expect(calls[1]).toMatchObject({ path: "/v1/auth/refresh", body: {} });
+    expect(store.updateTokens).toHaveBeenCalledWith(
+      expect.objectContaining({ accessToken: "fresh-web-access-token" }),
+    );
+  });
+
   test("fetch transport enforces its finite timeout and honors an external abort", async () => {
     vi.useFakeTimers();
     const fetchImplementation = vi.fn(
@@ -209,5 +275,18 @@ describe("typed SDK request boundary", () => {
     } finally {
       vi.useRealTimers();
     }
+  });
+
+  test("fetch transport explicitly includes Web cookies when configured", async () => {
+    const fetchImplementation = vi.fn<typeof fetch>();
+    fetchImplementation.mockResolvedValue(new Response(null, { status: 204 }));
+    const transport = createFetchTransport({
+      baseUrl: "https://api-org.tashan.chat",
+      timeoutMilliseconds: 1000,
+      credentials: "include",
+      fetchImplementation,
+    });
+    await transport({ method: "GET", path: "/v1/health", headers: {} });
+    expect(fetchImplementation.mock.calls[0]?.[1]).toMatchObject({ credentials: "include" });
   });
 });

@@ -66,7 +66,10 @@ export class CliSessionCredentials implements SdkCredentialStore {
     return this.state.refreshToken;
   }
 
-  public async updateTokens(tokens: { accessToken: string; refreshToken: string }): Promise<void> {
+  public async updateTokens(tokens: { accessToken: string; refreshToken?: string }): Promise<void> {
+    if (tokens.refreshToken === undefined) {
+      throw new Error("CLI credential updates require a refresh token");
+    }
     this.state = {
       ...this.state,
       accessToken: tokens.accessToken,

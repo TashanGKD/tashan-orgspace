@@ -32,7 +32,7 @@
 | `vitest` | `4.1.10` |
 | `@testing-library/react` | `16.3.2` |
 | `@testing-library/user-event` | `14.6.5` |
-| `jsdom` | `30.0.1` |
+| `jsdom` | `29.0.1` (Node 24.14 compatible) |
 
 ## Scope and completion boundary
 
@@ -1190,7 +1190,7 @@ git commit -m "feat(cli): cover Phase 0 capabilities"
 - Create: `apps/web/src/api.ts`
 - Test: `apps/web/src/app.test.tsx`
 
-- [ ] **Step 1: Write accessible user-flow tests**
+- [x] **Step 1: Write accessible user-flow tests**
 
 ```tsx
 test("logs in, selects an organization, and revokes another device", async () => {
@@ -1207,23 +1207,23 @@ test("logs in, selects an organization, and revokes another device", async () =>
 
 Add tests for invalid credentials, phone-not-verified organization creation, current-device protection, loading states, and API error focus.
 
-- [ ] **Step 2: Run and verify failure**
+- [x] **Step 2: Run and verify failure**
 
 Run: `pnpm --filter @tashan/web test`
 
 Expected: FAIL because the Web app is absent.
 
-- [ ] **Step 3: Implement the minimal shell**
+- [x] **Step 3: Implement the minimal shell**
 
 Use the shared SDK and shared schemas. Keep access tokens in memory; use an HttpOnly refresh cookie for Web rather than browser storage. The Web shell implements the capability IDs marked `web: required`: registration, phone verification, login, logout, whoami, organization list, device list and device revoke. Capability list/describe remain `deferred` in Web but available in CLI.
 
-- [ ] **Step 4: Run Web tests and production build**
+- [x] **Step 4: Run Web tests and production build**
 
 Run: `pnpm --filter @tashan/web test && pnpm --filter @tashan/web build`
 
 Expected: accessible flow tests pass and Vite build succeeds.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add apps/web

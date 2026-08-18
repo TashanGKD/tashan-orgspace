@@ -124,7 +124,7 @@ export const LoginResponse = z
   .strict();
 export type LoginResponse = z.infer<typeof LoginResponse>;
 
-export const RefreshRequest = z.object({ refreshToken: z.string().min(32) }).strict();
+export const RefreshRequest = z.object({ refreshToken: z.string().min(32).optional() }).strict();
 export type RefreshRequest = z.infer<typeof RefreshRequest>;
 
 export const RefreshResponse = z

@@ -9,6 +9,7 @@ import {
   PhoneNumber,
   Phase0CreatablePrincipalType,
   PrincipalType,
+  RefreshRequest,
   RegisterRequest,
 } from "./index.js";
 
@@ -86,6 +87,10 @@ describe("identity inputs", () => {
     expect(RegisterRequest.safeParse({ username: "alice", password: "password" }).success).toBe(
       false,
     );
+  });
+
+  test("allows an empty refresh body for an HttpOnly Web cookie", () => {
+    expect(RefreshRequest.parse({})).toEqual({});
   });
 });
 

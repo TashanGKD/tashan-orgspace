@@ -1,5 +1,3 @@
-import { randomUUID } from "node:crypto";
-
 import { z, type ZodType } from "zod";
 
 import { Capability, type CapabilityId } from "@tashan/capabilities";
@@ -44,7 +42,7 @@ type MaybePromise<T> = T | Promise<T>;
 export interface SdkCredentialStore {
   getAccessToken(): MaybePromise<string | undefined>;
   getRefreshToken(): MaybePromise<string | undefined>;
-  updateTokens(tokens: { accessToken: string; refreshToken: string }): MaybePromise<void>;
+  updateTokens(tokens: { accessToken: string; refreshToken?: string }): MaybePromise<void>;
   clearTokens(): MaybePromise<void>;
 }
 
@@ -54,6 +52,7 @@ export interface OrgSpaceClientOptions {
   deviceId: string;
   clientChannel: "web" | "cli";
   invocationSource: "web" | "cli" | "ai_via_cli";
+  refreshMode?: "token" | "cookie";
 }
 
 export class OrgSpaceApiError extends Error {
@@ -104,7 +103,7 @@ export function createOrgSpaceClient(options: OrgSpaceClientOptions) {
   ): Promise<T> {
     const headers: Record<string, string> = {
       accept: "application/json",
-      "x-torg-request-id": randomUUID(),
+      "x-torg-request-id": crypto.randomUUID(),
       "x-torg-device-id": options.deviceId,
       "x-torg-client-channel": options.clientChannel,
       "x-torg-invocation-source": options.invocationSource,
@@ -120,7 +119,7 @@ export function createOrgSpaceClient(options: OrgSpaceClientOptions) {
           "AUTH_REQUIRED",
           401,
           "authentication is required",
-          randomUUID(),
+          crypto.randomUUID(),
         );
       }
       headers.authorization = `Bearer ${accessToken}`;
@@ -163,21 +162,29 @@ export function createOrgSpaceClient(options: OrgSpaceClientOptions) {
   }
 
   async function refreshStoredTokens(signal?: AbortSignal) {
-    const refreshToken = await options.credentials.getRefreshToken();
-    if (refreshToken === undefined) {
+    const cookieMode = options.refreshMode === "cookie";
+    const refreshToken = cookieMode ? undefined : await options.credentials.getRefreshToken();
+    if (!cookieMode && refreshToken === undefined) {
       throw new OrgSpaceApiError(
         "AUTH_REQUIRED",
         401,
         "refresh token is unavailable",
-        randomUUID(),
+        crypto.randomUUID(),
       );
     }
-    const body = RefreshRequest.parse({ refreshToken });
+    const body = RefreshRequest.parse(cookieMode ? {} : { refreshToken });
     const refreshed = await request("POST", "/v1/auth/refresh", RefreshResponse, body, {
       signal,
       allowRefresh: false,
     });
-    await options.credentials.updateTokens(refreshed.tokens);
+    await options.credentials.updateTokens(
+      cookieMode
+        ? { accessToken: refreshed.tokens.accessToken }
+        : {
+            accessToken: refreshed.tokens.accessToken,
+            refreshToken: refreshed.tokens.refreshToken,
+          },
+    );
     return refreshed;
   }
 
@@ -232,7 +239,14 @@ export function createOrgSpaceClient(options: OrgSpaceClientOptions) {
     login: async (input: unknown, signal?: AbortSignal) => {
       const body = LoginRequest.parse(input);
       const loggedIn = await request("POST", "/v1/auth/login", LoginResponse, body, { signal });
-      await options.credentials.updateTokens(loggedIn.tokens);
+      await options.credentials.updateTokens(
+        options.refreshMode === "cookie"
+          ? { accessToken: loggedIn.tokens.accessToken }
+          : {
+              accessToken: loggedIn.tokens.accessToken,
+              refreshToken: loggedIn.tokens.refreshToken,
+            },
+      );
       return loggedIn;
     },
 
@@ -243,7 +257,10 @@ export function createOrgSpaceClient(options: OrgSpaceClientOptions) {
         signal,
         allowRefresh: false,
       });
-      await options.credentials.updateTokens(refreshed.tokens);
+      await options.credentials.updateTokens({
+        accessToken: refreshed.tokens.accessToken,
+        refreshToken: refreshed.tokens.refreshToken,
+      });
       return refreshed;
     },
 
