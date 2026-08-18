@@ -126,6 +126,9 @@ importers:
 
   apps/web:
     dependencies:
+      "@tanstack/react-query":
+        specifier: 5.101.4
+        version: 5.101.4(react@19.2.8)
       "@tashan/capabilities":
         specifier: workspace:*
         version: link:../../packages/capabilities
@@ -138,6 +141,9 @@ importers:
       react-dom:
         specifier: 19.2.8
         version: 19.2.8(react@19.2.8)
+      react-router:
+        specifier: 8.3.0
+        version: 8.3.0(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
     devDependencies:
       "@testing-library/jest-dom":
         specifier: 6.9.1
@@ -962,6 +968,20 @@ packages:
         integrity: sha512-l2aFy5jALhniG5HgqrD6jXLi/rUWrKvqN/qJx6yoJsgKhblVd+iqqU4RCXavm/jPityDo5TCvKMnpjKnOriy0w==,
       }
 
+  "@tanstack/query-core@5.101.4":
+    resolution:
+      {
+        integrity: sha512-gNwcvOJcRbLWPOLG/2OBm+zM+Yv+MKsXKEOWC57USuZDEsI71hEErQsiEGx5wX9rzWWkfwM0fVSPoiIFSsxfiw==,
+      }
+
+  "@tanstack/react-query@5.101.4":
+    resolution:
+      {
+        integrity: sha512-yRg2pfOCxIs4ZJW3XYYHU/WgtD04FHSnfHlpRT7h7pR77hwkdRG4wxbKe4aq6P0RvXUTBSQpQeadS1SUYUe+KA==,
+      }
+    peerDependencies:
+      react: ^18 || ^19
+
   "@testing-library/dom@10.4.1":
     resolution:
       {
@@ -1364,6 +1384,12 @@ packages:
     resolution:
       {
         integrity: sha512-Kvp459HrV2FEJ1CAsi1Ku+MY3kasH19TFykTz2xWmMeq6bk2NU3XXvfJ+Q61m0xktWwt+1HSYf3JZsTms3aRJg==,
+      }
+
+  cookie-es@3.1.1:
+    resolution:
+      {
+        integrity: sha512-UaXxwISYJPTr9hwQxMFYZ7kNhSXboMXP+Z3TRX6f1/NyaGPfuNUZOWP1pUEb75B2HjfklIYLVRfWiFZJyC6Npg==,
       }
 
   cookie@1.1.1:
@@ -2217,6 +2243,19 @@ packages:
         integrity: sha512-w2GsyukL62IJnlaff/nRegPQR94C/XXamvMWmSHRJ4y7Ts/4ocGRmTHvOs8PSE6pB3dWOrD/nueuU5sduBsQ4w==,
       }
 
+  react-router@8.3.0:
+    resolution:
+      {
+        integrity: sha512-qyPMvW83jGIct3yiieisxdk9M745anqhpIMKN5m1t6yBMfgVPpt77aHOqs5fUlEJRMCGffg9BaQLH9oPVOL7xQ==,
+      }
+    engines: { node: ">=22.22.0" }
+    peerDependencies:
+      react: ">=19.2.7"
+      react-dom: ">=19.2.7"
+    peerDependenciesMeta:
+      react-dom:
+        optional: true
+
   react@19.2.8:
     resolution:
       {
@@ -3008,6 +3047,13 @@ snapshots:
 
   "@standard-schema/spec@1.1.0": {}
 
+  "@tanstack/query-core@5.101.4": {}
+
+  "@tanstack/react-query@5.101.4(react@19.2.8)":
+    dependencies:
+      "@tanstack/query-core": 5.101.4
+      react: 19.2.8
+
   "@testing-library/dom@10.4.1":
     dependencies:
       "@babel/code-frame": 7.29.7
@@ -3288,6 +3334,8 @@ snapshots:
   commander@15.0.0: {}
 
   convert-source-map@2.0.0: {}
+
+  cookie-es@3.1.1: {}
 
   cookie@1.1.1: {}
 
@@ -3776,6 +3824,13 @@ snapshots:
       scheduler: 0.27.0
 
   react-is@17.0.2: {}
+
+  react-router@8.3.0(react-dom@19.2.8(react@19.2.8))(react@19.2.8):
+    dependencies:
+      cookie-es: 3.1.1
+      react: 19.2.8
+    optionalDependencies:
+      react-dom: 19.2.8(react@19.2.8)
 
   react@19.2.8: {}
 
