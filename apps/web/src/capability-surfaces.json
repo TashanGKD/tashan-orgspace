@@ -1,13 +1,86 @@
 [
-  "auth.phone.start",
-  "auth.phone.confirm",
-  "auth.register",
-  "auth.login",
-  "auth.refresh",
-  "auth.logout",
-  "auth.whoami",
-  "device.list",
-  "device.revoke",
-  "organization.list",
-  "organization.create"
+  {
+    "capabilityId": "auth.phone.start",
+    "route": "/account",
+    "action": "phone-verification-start",
+    "test": "apps/web/src/app.test.tsx"
+  },
+  {
+    "capabilityId": "auth.phone.confirm",
+    "route": "/account",
+    "action": "phone-verification-confirm",
+    "test": "apps/web/src/app.test.tsx"
+  },
+  {
+    "capabilityId": "auth.register",
+    "route": "/",
+    "action": "register",
+    "test": "apps/web/src/app.test.tsx"
+  },
+  {
+    "capabilityId": "auth.login",
+    "route": "/",
+    "action": "login",
+    "test": "apps/web/src/app.test.tsx"
+  },
+  {
+    "capabilityId": "auth.refresh",
+    "route": "/",
+    "action": "session-restore",
+    "test": "apps/web/src/app.test.tsx"
+  },
+  {
+    "capabilityId": "auth.logout",
+    "route": "/org/:organizationId/home",
+    "action": "logout",
+    "test": "apps/web/src/platform/shell/app-shell.test.tsx"
+  },
+  {
+    "capabilityId": "auth.whoami",
+    "route": "/",
+    "action": "session-identity",
+    "test": "apps/web/src/app.test.tsx"
+  },
+  {
+    "capabilityId": "device.list",
+    "route": "/account",
+    "action": "device-list",
+    "test": "apps/web/src/app.test.tsx"
+  },
+  {
+    "capabilityId": "device.revoke",
+    "route": "/account",
+    "action": "device-revoke",
+    "test": "apps/web/src/app.test.tsx"
+  },
+  {
+    "capabilityId": "organization.list",
+    "route": "/org/:organizationId/home",
+    "action": "organization-list",
+    "test": "apps/web/src/app.test.tsx"
+  },
+  {
+    "capabilityId": "organization.create",
+    "route": "/org/:organizationId/home",
+    "action": "organization-create",
+    "test": "apps/web/src/app.test.tsx"
+  },
+  {
+    "capabilityId": "organization.member.list",
+    "route": "/org/:organizationId/admin/members",
+    "action": "member-list",
+    "test": "apps/web/src/features/organization/members-page.test.tsx"
+  },
+  {
+    "capabilityId": "organization.member.add",
+    "route": "/org/:organizationId/admin/members",
+    "action": "member-add",
+    "test": "apps/web/src/features/organization/members-page.test.tsx"
+  },
+  {
+    "capabilityId": "audit.list",
+    "route": "/org/:organizationId/admin/audit",
+    "action": "audit-list",
+    "test": "apps/web/src/features/audit/audit-page.test.tsx"
+  }
 ]

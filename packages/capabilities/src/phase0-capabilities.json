@@ -191,7 +191,7 @@
     "idempotent": true,
     "confirmation": "none",
     "cli": "org member list",
-    "web": "deferred",
+    "web": "required",
     "auditAction": "organization.member.list"
   },
   {
@@ -204,7 +204,7 @@
     "idempotent": true,
     "confirmation": "required",
     "cli": "org member add",
-    "web": "deferred",
+    "web": "required",
     "auditAction": "organization.member.add"
   },
   {
@@ -217,7 +217,7 @@
     "idempotent": true,
     "confirmation": "none",
     "cli": "audit list",
-    "web": "deferred",
+    "web": "required",
     "auditAction": "audit.list"
   }
 ]
