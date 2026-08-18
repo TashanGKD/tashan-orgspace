@@ -17,15 +17,16 @@
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",
-    "@types/node": "24.13.3",
     "@tashan/contracts": "workspace:*",
     "@tashan/sdk": "workspace:*",
+    "@types/node": "24.13.3",
+    "esbuild": "0.28.2",
     "eslint": "10.8.1",
     "eslint-config-prettier": "10.1.8",
     "jose": "6.2.9",
+    "prettier": "3.9.6",
     "redis": "6.2.1",
     "tsx": "4.23.12",
-    "prettier": "3.9.6",
     "typescript": "6.0.3",
     "typescript-eslint": "8.67.0",
     "vitest": "4.1.10"

@@ -81,7 +81,7 @@ Commit: `feat(release): define CLI distribution contract`
 - Modify: `pnpm-lock.yaml`
 - Modify: `.gitignore`
 
-- [ ] **Step 1: Write artifact layout tests first**
+- [x] **Step 1: Write artifact layout tests first**
 
 The test invokes the builder into a temporary directory and requires exactly:
 
@@ -95,17 +95,17 @@ torg-v<version>-<platform>/VERSION
 
 It runs the unpacked CLI with a PATH that contains no Node.js, verifies `--version`, and verifies no arguments only print help without network access.
 
-- [ ] **Step 2: Run and observe the missing builder failure**
+- [x] **Step 2: Run and observe the missing builder failure**
 
 Run: `pnpm vitest run tests/distribution/build-cli-release.test.ts`
 
 Expected: FAIL because `scripts/build-cli-release.mjs` does not exist.
 
-- [ ] **Step 3: Implement the minimal builder**
+- [x] **Step 3: Implement the minimal builder**
 
 Add esbuild as a pinned root development dependency. Bundle `apps/cli/src/main.ts` for Node 24, copy `process.execPath` and its Node license, generate a relocatable launcher that sets `TORG_ENV=production` and the manifest API URL, create the tarball with a single fixed top-level directory, and generate one adjacent `.sha256` file. Refuse dirty output directories, unsupported local platforms, missing Node license, and version overrides.
 
-- [ ] **Step 4: Verify and commit**
+- [x] **Step 4: Verify and commit**
 
 Run:
 
