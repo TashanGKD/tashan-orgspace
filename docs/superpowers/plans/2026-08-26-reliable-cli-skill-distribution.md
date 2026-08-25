@@ -95,7 +95,7 @@ git commit -m "release(distribution): define alpha 3 sources"
 - Modify: `tests/distribution/install-cli.test.ts`
 - Modify: `skill/tashan-orgspace/scripts/install-cli.sh`
 
-- [ ] **Step 1: Encode transport and integrity pathologies**
+- [x] **Step 1: Encode transport and integrity pathologies**
 
 Extend fixtures with two independent source directories and a fake `curl` log. Add tests asserting:
 
@@ -113,12 +113,12 @@ expect(readFileSync(curlLog, "utf8")).not.toContain("fallback");
 
 Also test both transports failing, duplicate checksum entries, asset 404 after checksum, failed upgrade preservation, and no-argument zero network/write behavior.
 
-- [ ] **Step 2: Run RED**
+- [x] **Step 2: Run RED**
 
 Run: `pnpm vitest run tests/distribution/install-cli.test.ts`  
 Expected: FAIL because the installer only has `TORG_RELEASE_BASE_URL` and one GitHub source.
 
-- [ ] **Step 3: Implement one-source transactions**
+- [x] **Step 3: Implement one-source transactions**
 
 Add bounded production curl options and a source loop equivalent to:
 
@@ -135,7 +135,7 @@ done
 
 Production ignores all source overrides. `TORG_INSTALL_TESTING=1` may set `TORG_PRIMARY_RELEASE_BASE_URL` and `TORG_FALLBACK_RELEASE_BASE_URL`. Use `--connect-timeout 10 --max-time 120 --retry 2 --retry-all-errors` with HTTPS/TLS enforcement in production.
 
-- [ ] **Step 4: Run GREEN and shell checks**
+- [x] **Step 4: Run GREEN and shell checks**
 
 Run:
 
@@ -146,7 +146,7 @@ shellcheck skill/tashan-orgspace/scripts/install-cli.sh 2>/dev/null || true
 
 Expected: installer tests PASS; shellcheck produces no actionable error when installed.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add tests/distribution/install-cli.test.ts skill/tashan-orgspace/scripts/install-cli.sh

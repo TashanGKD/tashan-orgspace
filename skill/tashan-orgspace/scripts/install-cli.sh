@@ -100,17 +100,20 @@ fi
 
 pinned_version=$(json_string version)
 repository=$(json_string repository)
+distribution_base=$(json_string distributionBaseUrl)
 version=${version:-$pinned_version}
 is_semver "$version" || fail "version must be semver"
 
 if [ "${TORG_INSTALL_TESTING:-}" = "1" ]; then
   platform=${TORG_INSTALL_PLATFORM:-$(detect_platform)}
-  release_base_url=${TORG_RELEASE_BASE_URL:-"https://github.com/$repository/releases/download/v$version"}
-  curl_options="-fL"
+  official_release_base_url=${TORG_PRIMARY_RELEASE_BASE_URL:-${TORG_RELEASE_BASE_URL:-"$distribution_base/v$version"}}
+  github_release_base_url=${TORG_FALLBACK_RELEASE_BASE_URL:-"https://github.com/$repository/releases/download/v$version"}
+  curl_options="-fL --connect-timeout 2 --max-time 10"
 else
   platform=$(detect_platform)
-  release_base_url="https://github.com/$repository/releases/download/v$version"
-  curl_options="-fL --proto =https --tlsv1.2"
+  official_release_base_url="$distribution_base/v$version"
+  github_release_base_url="https://github.com/$repository/releases/download/v$version"
+  curl_options="-fL --proto =https --tlsv1.2 --connect-timeout 10 --max-time 120 --retry 2 --retry-all-errors"
 fi
 
 case "$platform" in
@@ -165,27 +168,47 @@ cleanup() {
 trap cleanup EXIT HUP INT TERM
 
 temporary_root=$(mktemp -d "${TMPDIR:-/tmp}/torg-install.XXXXXX")
-archive="$temporary_root/$asset"
-checksums="$temporary_root/SHA256SUMS"
+archive=""
+selected_source=""
 
-# shellcheck disable=SC2086
-curl $curl_options -o "$checksums" "$release_base_url/SHA256SUMS" >/dev/null 2>&1 || fail "failed to download SHA256SUMS"
-# shellcheck disable=SC2086
-curl $curl_options -o "$archive" "$release_base_url/$asset" >/dev/null 2>&1 || fail "failed to download $asset"
+integrity_fail() {
+  fail "integrity failure from $1: $2"
+}
 
-expected_hash=$(awk -v file="$asset" '$2 == file { count += 1; hash = $1 } END { if (count == 1) print hash; else exit 1 }' "$checksums") || fail "checksum entry not found for $asset"
-printf '%s\n' "$expected_hash" | grep -Eq '^[0-9a-f]{64}$' || fail "invalid checksum for $asset"
-actual_hash=$(hash_file "$archive")
-[ "$actual_hash" = "$expected_hash" ] || fail "checksum verification failed for $asset"
+download_source() {
+  source_name=$1
+  source_base=$2
+  source_root="$temporary_root/source-$source_name"
+  source_archive="$source_root/$asset"
+  source_checksums="$source_root/SHA256SUMS"
+  source_actual_entries="$source_root/actual-entries"
+  source_expected_entries="$source_root/expected-entries"
+  mkdir "$source_root"
 
-if ! tar -tvzf "$archive" | awk '$1 !~ /^[-d]/ { bad = 1 } END { exit bad }'; then
-  fail "archive links are not allowed"
-fi
+  # shellcheck disable=SC2086
+  if ! curl $curl_options -o "$source_checksums" "$source_base/SHA256SUMS" >/dev/null 2>&1; then
+    rm -rf -- "$source_root"
+    return 1
+  fi
+  # shellcheck disable=SC2086
+  if ! curl $curl_options -o "$source_archive" "$source_base/$asset" >/dev/null 2>&1; then
+    rm -rf -- "$source_root"
+    return 1
+  fi
 
-actual_entries="$temporary_root/actual-entries"
-expected_entries="$temporary_root/expected-entries"
-tar -tzf "$archive" | LC_ALL=C sort >"$actual_entries"
-cat >"$expected_entries" <<EOF
+  checksum_count=$(awk -v file="$asset" '$2 == file { count += 1 } END { print count + 0 }' "$source_checksums")
+  [ "$checksum_count" = "1" ] || integrity_fail "$source_name" "checksum entry not found exactly once for $asset"
+  expected_hash=$(awk -v file="$asset" '$2 == file { print $1 }' "$source_checksums")
+  printf '%s\n' "$expected_hash" | grep -Eq '^[0-9a-f]{64}$' || integrity_fail "$source_name" "invalid checksum for $asset"
+  actual_hash=$(hash_file "$source_archive")
+  [ "$actual_hash" = "$expected_hash" ] || integrity_fail "$source_name" "checksum verification failed for $asset"
+
+  if ! tar -tvzf "$source_archive" | awk '$1 !~ /^[-d]/ { bad = 1 } END { exit bad }'; then
+    integrity_fail "$source_name" "archive links are not allowed"
+  fi
+
+  tar -tzf "$source_archive" | LC_ALL=C sort >"$source_actual_entries"
+  cat >"$source_expected_entries" <<EOF
 $top_level/
 $top_level/THIRD_PARTY_NOTICES/
 $top_level/THIRD_PARTY_NOTICES/Node-LICENSE
@@ -197,8 +220,21 @@ $top_level/lib/torg.mjs
 $top_level/runtime/
 $top_level/runtime/node
 EOF
-LC_ALL=C sort -o "$expected_entries" "$expected_entries"
-cmp -s "$actual_entries" "$expected_entries" || fail "invalid archive layout"
+  LC_ALL=C sort -o "$source_expected_entries" "$source_expected_entries"
+  cmp -s "$source_actual_entries" "$source_expected_entries" || integrity_fail "$source_name" "invalid archive layout"
+  archive=$source_archive
+  selected_source=$source_name
+  return 0
+}
+
+if download_source official "$official_release_base_url"; then
+  :
+elif download_source github "$github_release_base_url"; then
+  :
+else
+  fail "all release sources failed: official, github"
+fi
+printf 'install-cli: verified %s release source\n' "$selected_source"
 
 mkdir -p "$install_root/versions" "$bin_directory"
 version_directory="$install_root/versions/$version"
@@ -208,11 +244,11 @@ staging_root="$install_root/.staging-$version-$$"
 mkdir "$staging_root"
 tar -xzf "$archive" -C "$staging_root"
 candidate="$staging_root/$top_level"
-[ -x "$candidate/bin/torg" ] || fail "invalid archive layout"
-[ -x "$candidate/runtime/node" ] || fail "invalid archive layout"
-[ "$(cat "$candidate/VERSION")" = "$version" ] || fail "archive version mismatch"
+[ -x "$candidate/bin/torg" ] || integrity_fail "$selected_source" "invalid archive layout"
+[ -x "$candidate/runtime/node" ] || integrity_fail "$selected_source" "invalid archive layout"
+[ "$(cat "$candidate/VERSION")" = "$version" ] || integrity_fail "$selected_source" "archive version mismatch"
 candidate_version=$($candidate/bin/torg --version 2>/dev/null || true)
-[ "$candidate_version" = "$version" ] || fail "installed CLI smoke test failed"
+[ "$candidate_version" = "$version" ] || integrity_fail "$selected_source" "installed CLI smoke test failed"
 
 mv "$candidate" "$version_directory"
 rm -rf -- "$staging_root"
