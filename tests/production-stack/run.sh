@@ -9,6 +9,8 @@ project="tashan-orgspace-prod-test-$$"
 temporary_root="$(mktemp -d "${TMPDIR:-/tmp}/orgspace-production-stack.XXXXXX")"
 private_key_file="$temporary_root/jwt-private.pem"
 public_key_file="$temporary_root/jwt-public.pem"
+mkdir -p "$repository_root/.local-data"
+public_downloads="$(mktemp -d "$repository_root/.local-data/orgspace-public-downloads.XXXXXX")"
 
 cleanup() {
   cleanup_arguments=(down --remove-orphans)
@@ -17,6 +19,8 @@ cleanup() {
   fi
   docker compose -f "$compose_file" -p "$project" "${cleanup_arguments[@]}" >/dev/null 2>&1 || true
   rm -rf "$temporary_root"
+  rm -rf "$public_downloads"
+  rmdir "$repository_root/.local-data" >/dev/null 2>&1 || true
 }
 trap cleanup EXIT INT TERM
 
@@ -46,9 +50,23 @@ export ALIYUN_SMS_TEMPLATE_CODE="SMS_PRODUCTION_STACK"
 export ALIYUN_SMS_TEMPLATE_PARAM_KEY="code"
 export ALIYUN_SMS_ENDPOINT="dysmsapi.aliyuncs.com"
 export ALIYUN_SMS_REGION_ID="cn-hangzhou"
+export ORGSPACE_PUBLIC_DOWNLOADS_DIR="$public_downloads"
+
+mkdir -p "$public_downloads/v$SERVICE_VERSION"
+printf '%s\n' '#!/bin/sh' 'echo fixture installer' >"$public_downloads/install-skill.sh"
+printf '%s\n' 'fixture-checksum  fixture-asset' >"$public_downloads/v$SERVICE_VERSION/SHA256SUMS"
 
 docker compose -f "$compose_file" -p "$project" config --quiet
 docker compose -f "$compose_file" -p "$project" up -d --build --wait
+
+if [ "${ORGSPACE_TEST_DIAGNOSTICS:-0}" = "1" ]; then
+  printf 'host public downloads: %s\n' "$public_downloads"
+  find "$public_downloads" -maxdepth 2 -type f -print
+  gateway_container="$(docker compose -f "$compose_file" -p "$project" ps -q gateway)"
+  docker inspect "$gateway_container" --format '{{json .Mounts}}'
+  docker compose -f "$compose_file" -p "$project" exec -T gateway \
+    sh -c 'id; mount | grep downloads || true; ls -ld /usr/share/nginx/html/downloads/orgspace; find /usr/share/nginx/html/downloads/orgspace -maxdepth 2 -type f -print'
+fi
 
 gateway_ready=0
 for readiness_attempt in $(seq 1 200); do

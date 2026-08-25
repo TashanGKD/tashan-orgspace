@@ -29,4 +29,28 @@ describe("production-shaped control plane", () => {
     expect(response.headers.get("x-content-type-options")).toBe("nosniff");
     expect(response.headers.get("referrer-policy")).toBe("same-origin");
   });
+
+  test("serves downloads without SPA fallback or write methods", async () => {
+    const stable = await fetch(new URL("/downloads/orgspace/install-skill.sh", stackUrl));
+    expect(stable.status).toBe(200);
+    expect(await stable.text()).toContain("fixture installer");
+    expect(stable.headers.get("cache-control")).toContain("no-cache");
+
+    const versioned = await fetch(
+      new URL(`/downloads/orgspace/v${expectedVersion}/SHA256SUMS`, stackUrl),
+    );
+    expect(versioned.status).toBe(200);
+    expect(versioned.headers.get("cache-control")).toContain("immutable");
+
+    const unknown = await fetch(
+      new URL(`/downloads/orgspace/v${expectedVersion}/missing.tar.gz`, stackUrl),
+    );
+    expect(unknown.status).toBe(404);
+    expect(await unknown.text()).not.toContain('<div id="root"></div>');
+
+    const write = await fetch(new URL("/downloads/orgspace/install-skill.sh", stackUrl), {
+      method: "POST",
+    });
+    expect([403, 405]).toContain(write.status);
+  });
 });

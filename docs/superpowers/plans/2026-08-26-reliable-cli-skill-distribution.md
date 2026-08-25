@@ -261,7 +261,7 @@ git commit -m "ci(distribution): publish Skill with CLI assets"
 - Modify: `tests/production-stack/run.sh`
 - Modify: `tests/production-stack/stack.test.ts`
 
-- [ ] **Step 1: Write failing contract and production-stack tests**
+- [x] **Step 1: Write failing contract and production-stack tests**
 
 Require the one allowed bind:
 
@@ -274,7 +274,7 @@ Require the one allowed bind:
 
 Add tests that a fixture file returns 200, an unknown download returns 404 without React HTML, POST returns 405, versioned files are immutable-cacheable, and `install-skill.sh` is not immutable-cacheable.
 
-- [ ] **Step 2: Run RED**
+- [x] **Step 2: Run RED**
 
 Run:
 
@@ -285,15 +285,15 @@ ORGSPACE_TEST_CLEANUP_VOLUMES=1 pnpm test:production-stack
 
 Expected: contract or stack FAIL because no download mount/location exists.
 
-- [ ] **Step 3: Implement the only allowed bind and static locations**
+- [x] **Step 3: Implement the only allowed bind and static locations**
 
 Allow exactly the gateway source/target/read-only bind while continuing to reject every other bind. Add Nginx locations for the stable installer and versioned directory using `try_files $uri =404`, GET/HEAD only, no autoindex, and correct cache headers.
 
-- [ ] **Step 4: Run GREEN and negative self-test**
+- [x] **Step 4: Run GREEN and negative self-test**
 
 Run the two commands from Step 2. Expected: PASS, including self-test mutations for writable mount, wrong host path, SPA fallback, and directory listing.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add deploy scripts/check-production-contract* tests/production-stack

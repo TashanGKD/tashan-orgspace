@@ -143,6 +143,7 @@ fi
 run_deployer --apply --confirm-production >/dev/null
 grep -q '^rsync ' "$transport_log"
 grep -q '\.deployed-commit' "$transport_log"
+grep -q "mkdir -p '/home/aup/tashan-orgspace/shared/public-downloads'" "$transport_log"
 if grep '^ssh ' "$transport_log" | grep -qv -- '-o BatchMode=yes -o ConnectTimeout=10'; then
   echo "deployment SSH call is missing fail-fast connection options" >&2
   exit 1

@@ -150,14 +150,25 @@ for (const [serviceName, expectedImage] of Object.entries(expectedDataImages)) {
   }
 }
 
+let publicDownloadBinds = 0;
 for (const [serviceName, serviceValue] of Object.entries(services)) {
   const service = record(serviceValue, `service ${serviceName}`);
   if (!Array.isArray(service.volumes)) continue;
   for (const volumeValue of service.volumes) {
     const volume = record(volumeValue, `service ${serviceName} volume`);
-    if (volume.type === "bind") fail("host-control mounts are forbidden");
+    if (volume.type !== "bind") continue;
+    if (serviceName !== "gateway") fail("host-control mounts are forbidden");
+    if (volume.source !== "/home/aup/tashan-orgspace/shared/public-downloads") {
+      fail("public downloads bind source must be exact");
+    }
+    if (volume.target !== "/usr/share/nginx/html/downloads/orgspace") {
+      fail("public downloads bind target must be exact");
+    }
+    if (volume.read_only !== true) fail("public downloads bind must be read-only");
+    publicDownloadBinds += 1;
   }
 }
+if (publicDownloadBinds !== 1) fail("gateway must have exactly one public downloads bind");
 
 const gatewayService = record(services.gateway, "service gateway");
 if (gatewayService.read_only !== true) fail("gateway root filesystem must be read-only");
@@ -193,6 +204,33 @@ if (
   !/proxy_pass\s+http:\/\/api:4110;/.test(gatewayConfig)
 ) {
   fail("gateway must proxy /v1 to http://api:4110");
+}
+const stableDownloadLocation = gatewayConfig.indexOf(
+  "location = /downloads/orgspace/install-skill.sh",
+);
+const versionedDownloadLocation = gatewayConfig.indexOf("location ^~ /downloads/orgspace/v");
+const spaLocation = gatewayConfig.indexOf("location / {");
+if (
+  stableDownloadLocation === -1 ||
+  versionedDownloadLocation === -1 ||
+  spaLocation === -1 ||
+  !(stableDownloadLocation < versionedDownloadLocation && versionedDownloadLocation < spaLocation)
+) {
+  fail("gateway download locations are missing or ordered after SPA fallback");
+}
+const downloadConfig = gatewayConfig.slice(stableDownloadLocation, spaLocation);
+if (downloadConfig.includes("/index.html") || !downloadConfig.includes("try_files $uri =404;")) {
+  fail("downloads must return 404 without SPA fallback");
+}
+if (/autoindex\s+on;/.test(downloadConfig)) fail("download directory listing must stay disabled");
+if ((downloadConfig.match(/limit_except\s+GET/g) ?? []).length !== 2) {
+  fail("downloads must allow only GET and HEAD");
+}
+if (!downloadConfig.includes('Cache-Control "no-cache"')) {
+  fail("stable Skill installer must not use immutable caching");
+}
+if (!downloadConfig.includes("max-age=31536000, immutable")) {
+  fail("versioned downloads must use immutable caching");
 }
 
 const ecsIngress = read(paths.ecsIngress);
