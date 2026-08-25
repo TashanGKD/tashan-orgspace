@@ -334,17 +334,17 @@ git commit -m "feat(deploy): add public HTTPS ingress"
 - Create: `scripts/smoke-production.self-test.sh`
 - Create: `docs/runbooks/production-control-plane.md`
 
-- [ ] **Step 1: Write failing smoke tests**
+- [x] **Step 1: Write failing smoke tests**
 
 Use a local HTTPS fixture and fake `torg` to prove the smoke runner rejects HTTP, redirects to another host, malformed JSON, a version different from the expected release, token-like output, and a revoked session that still succeeds. No-argument execution must perform only `/v1/health` and capability discovery; account mutation requires `--account-lifecycle` plus credentials on stdin.
 
-- [ ] **Step 2: Verify RED**
+- [x] **Step 2: Verify RED**
 
 Run: `bash scripts/smoke-production.self-test.sh`
 
 Expected: FAIL because the smoke runner does not exist.
 
-- [ ] **Step 3: Implement the smoke runner and runbook**
+- [x] **Step 3: Implement the smoke runner and runbook**
 
 Support:
 
@@ -356,7 +356,7 @@ scripts/smoke-production.sh --recovery-check --confirm-production
 
 The runbook must provide exact read-only status commands, OrgSpace-only restart steps, tunnel recovery, PostgreSQL backup/restore drill, rollback by commit, audit locations, and an explicit warning that Tailscale/SSH is operator-only.
 
-- [ ] **Step 4: Verify GREEN and commit**
+- [x] **Step 4: Verify GREEN and commit**
 
 ```bash
 bash scripts/smoke-production.self-test.sh
