@@ -148,6 +148,8 @@ if grep '^ssh ' "$transport_log" | grep -qv -- '-o BatchMode=yes -o ConnectTimeo
   exit 1
 fi
 grep '^rsync ' "$transport_log" | grep -q -- '-e ssh -o BatchMode=yes -o ConnectTimeout=10'
+grep '^ssh ' "$transport_log" | grep -q -- '-o ControlMaster=yes -o ControlPersist=120'
+grep '^ssh ' "$transport_log" | grep -q -- '-O exit'
 if grep -Eq '/home/aup/(panshi|cognitive-ask-platform)' "$transport_log"; then
   echo "deployment escaped its filesystem boundary" >&2
   exit 1

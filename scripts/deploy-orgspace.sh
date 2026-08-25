@@ -4,10 +4,37 @@ set -euo pipefail
 repository_root="$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)"
 default_contract="$repository_root/deploy/production-contract.json"
 ssh_options=(-o BatchMode=yes -o ConnectTimeout=10 -o ServerAliveInterval=15 -o ServerAliveCountMax=2)
-rsync_ssh="ssh -o BatchMode=yes -o ConnectTimeout=10 -o ServerAliveInterval=15 -o ServerAliveCountMax=2"
+control_directory=""
+control_path=""
+control_started=0
+rsync_ssh=""
+
+close_control_connection() {
+  if [ "$control_started" = "1" ]; then
+    ssh "${ssh_options[@]}" -o ControlPath="$control_path" -O exit "$aup_host" >/dev/null 2>&1 || true
+  fi
+  if [ -n "$control_directory" ]; then
+    rmdir "$control_directory" >/dev/null 2>&1 || true
+  fi
+}
+
+trap close_control_connection EXIT
+trap 'exit 130' INT TERM
+
+ensure_control_connection() {
+  [ "$control_started" = "0" ] || return 0
+  control_directory="$(mktemp -d /tmp/torg-ssh.XXXXXX)"
+  chmod 700 "$control_directory"
+  control_path="$control_directory/control-%C"
+  ssh "${ssh_options[@]}" -o ControlMaster=yes -o ControlPersist=120 \
+    -o ControlPath="$control_path" -N -f "$aup_host"
+  control_started=1
+  rsync_ssh="ssh -o BatchMode=yes -o ConnectTimeout=10 -o ServerAliveInterval=15 -o ServerAliveCountMax=2 -o ControlMaster=auto -o ControlPath=$control_path"
+}
 
 orgspace_ssh() {
-  ssh "${ssh_options[@]}" "$@"
+  ensure_control_connection
+  ssh "${ssh_options[@]}" -o ControlMaster=auto -o ControlPath="$control_path" "$@"
 }
 
 die() {
