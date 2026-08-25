@@ -391,7 +391,7 @@ git commit -m "docs(distribution): document official installer"
 **Files:**
 - Modify: `docs/superpowers/plans/2026-08-26-reliable-cli-skill-distribution.md`
 
-- [ ] **Step 1: Run complete local verifier**
+- [x] **Step 1: Run complete local verifier**
 
 Run: `ORGSPACE_TEST_CLEANUP_VOLUMES=1 bash scripts/verify-phase0.sh`  
 Expected: PASS with all existing tests plus dual-source, Skill installer, publisher, mirror smoke, and production static tests.

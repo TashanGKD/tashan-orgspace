@@ -29,6 +29,8 @@ run_step "node scripts/check-production-contract.self-test.mjs" node scripts/che
 run_step "node scripts/check-gate-self-tests.self-test.mjs" node scripts/check-gate-self-tests.self-test.mjs
 run_step "node scripts/check-commit-evidence.self-test.mjs" node scripts/check-commit-evidence.self-test.mjs
 run_step "bash scripts/deploy-orgspace.self-test.sh" bash scripts/deploy-orgspace.self-test.sh
+run_step "bash scripts/publish-public-distribution.self-test.sh" bash scripts/publish-public-distribution.self-test.sh
+run_step "bash scripts/smoke-public-distribution.self-test.sh" bash scripts/smoke-public-distribution.self-test.sh
 run_step "bash scripts/configure-orgspace-ingress.self-test.sh" bash scripts/configure-orgspace-ingress.self-test.sh
 run_step "bash scripts/smoke-production.self-test.sh" bash scripts/smoke-production.self-test.sh
 run_step "pnpm test:production-stack" env ORGSPACE_TEST_CLEANUP_VOLUMES=1 pnpm test:production-stack

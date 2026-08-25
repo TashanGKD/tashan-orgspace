@@ -6,6 +6,8 @@ smoke="$repository_root/scripts/smoke-production.sh"
 temporary_root="$(mktemp -d "${TMPDIR:-/tmp}/orgspace-smoke-test.XXXXXX")"
 fake_bin="$temporary_root/bin"
 smoke_log="$temporary_root/smoke.log"
+service_version="$(node -p "JSON.parse(require('node:fs').readFileSync('$repository_root/release/cli-release.json')).version")"
+export ORGSPACE_TEST_SERVICE_VERSION="$service_version"
 mkdir -p "$fake_bin"
 trap 'rm -rf "$temporary_root"' EXIT INT TERM
 
@@ -26,7 +28,7 @@ case "${FAKE_HEALTH_MODE:-ok}" in
   redirect) code=302; effective="https://wrong.tashan.chat/v1/health"; body='redirect' ;;
   malformed) code=200; effective="$url"; body='not-json' ;;
   wrong-version) code=200; effective="$url"; body='{"status":"ok","version":"9.9.9"}' ;;
-  *) code=200; effective="$url"; body='{"status":"ok","version":"0.1.0-alpha.2"}' ;;
+  *) code=200; effective="$url"; body="{\"status\":\"ok\",\"version\":\"${ORGSPACE_TEST_SERVICE_VERSION:?}\"}" ;;
 esac
 printf '%s' "$body" > "$output_file"
 printf '%s\t%s' "$code" "$effective"
