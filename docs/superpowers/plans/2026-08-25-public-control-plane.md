@@ -442,7 +442,7 @@ git commit -m "test(deploy): verify production-shaped stack"
 - Create from ingress installer: `/etc/nginx/sites-available/orgspace.tashan.chat` on ECS
 - Create: `docs/verification/2026-08-25-public-control-plane.md`
 
-- [ ] **Step 1: Run read-only preflight**
+- [x] **Step 1: Run read-only preflight**
 
 ```bash
 scripts/deploy-orgspace.sh --preflight
@@ -451,11 +451,11 @@ scripts/configure-orgspace-ingress.sh --preflight
 
 Expected: AUP/ECS reachable; ports `44110` and `14010` unused by unrelated processes; Docker/Compose/autossh/certificate available; remote OrgSpace secret file either valid or reported missing without printing values.
 
-- [ ] **Step 2: Create independent production secrets**
+- [x] **Step 2: Create independent production secrets**
 
 Generate a new PostgreSQL password, phone-code pepper, and Ed25519 JWT key pair specifically for OrgSpace. Copy approved Aliyun SMS credentials/sign/template into the OrgSpace secret file without displaying them. Validate names and non-empty values with a script that prints keys only, then enforce `chmod 600`.
 
-- [ ] **Step 3: Deploy with explicit production confirmation**
+- [x] **Step 3: Deploy with explicit production confirmation**
 
 ```bash
 scripts/deploy-orgspace.sh --apply --confirm-production
