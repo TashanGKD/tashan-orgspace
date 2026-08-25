@@ -47,6 +47,7 @@ beforeEach(async () => {
   app = await buildApp({
     sql,
     tokenService,
+    serviceVersion: "0.1.0-alpha.2-test",
     phoneSender: sender,
     loginRateLimiter: new AllowAllRateLimiter(),
     phoneRateLimiter: new AllowAllRateLimiter(),
@@ -90,24 +91,40 @@ const aliceDeviceB = {
   name: "Alice Mac B",
 };
 
-async function register(username: string, password = "CorrectHorseBattery9") {
+type TestDevice = Omit<typeof aliceDeviceA, "channel"> & { channel: "cli" | "web" };
+
+async function verification(phone: string, purpose: "register" | "password_reset") {
+  const response = await app.inject({
+    method: "POST",
+    url: "/v1/auth/verification/send",
+    headers: { "idempotency-key": nextIdempotencyKey("verification") },
+    payload: { phone, purpose },
+  });
+  expect(response.statusCode).toBe(202);
+  const message = sender.messages.findLast((candidate) => candidate.purpose === purpose);
+  if (message === undefined) throw new Error("fake sender did not receive verification code");
+  return { challengeId: response.json<{ challengeId: string }>().challengeId, code: message.code };
+}
+
+async function register(
+  phone: string,
+  device: TestDevice = aliceDeviceA,
+  password = "CorrectHorseBattery9",
+) {
+  const challenge = await verification(phone, "register");
   return app.inject({
     method: "POST",
     url: "/v1/auth/register",
     headers: { "idempotency-key": nextIdempotencyKey("register") },
-    payload: { username, password },
+    payload: { phone, password, challengeId: challenge.challengeId, code: challenge.code, device },
   });
 }
 
-async function login(
-  username: string,
-  device: typeof aliceDeviceA,
-  password = "CorrectHorseBattery9",
-) {
+async function login(phone: string, device: TestDevice, password = "CorrectHorseBattery9") {
   const response = await app.inject({
     method: "POST",
     url: "/v1/auth/login",
-    payload: { username, password, device },
+    payload: { phone, password, device },
   });
   expect(response.statusCode).toBe(200);
   return response.json<{
@@ -116,27 +133,14 @@ async function login(
   }>();
 }
 
-async function verifyPhone(token: string, phone: string) {
-  const start = await app.inject({
-    method: "POST",
-    url: "/v1/phone-verifications",
-    headers: authHeaders(token, true),
-    payload: { phone },
-  });
-  expect(start.statusCode).toBe(202);
-  const challengeId = start.json<{ challengeId: string }>().challengeId;
-  const code = sender.messages.at(-1)?.code;
-  if (code === undefined) throw new Error("fake sender did not receive verification code");
-  const confirm = await app.inject({
-    method: "POST",
-    url: "/v1/phone-verifications/confirm",
-    headers: authHeaders(token, true),
-    payload: { challengeId, code },
-  });
-  expect(confirm.statusCode).toBe(200);
-}
-
 describe("Phase 0 HTTP capability surface", () => {
+  test("reports the injected service version and a valid timestamp", async () => {
+    const response = await app.inject({ method: "GET", url: "/v1/health" });
+    expect(response.statusCode).toBe(200);
+    expect(response.json()).toMatchObject({ status: "ok", version: "0.1.0-alpha.2-test" });
+    expect(Number.isNaN(Date.parse(response.json<{ time: string }>().time))).toBe(false);
+  });
+
   test("returns the stable error envelope", async () => {
     const response = await app.inject({ method: "GET", url: "/v1/auth/whoami" });
     expect(response.statusCode).toBe(401);
@@ -145,24 +149,41 @@ describe("Phase 0 HTTP capability surface", () => {
 
   test("replays identical idempotent registration and rejects a changed authenticated mutation", async () => {
     const registrationKey = "stable-registration-key";
+    const phone = "+8613800138001";
+    const challenge = await verification(phone, "register");
     const registrationRequest = {
       method: "POST" as const,
       url: "/v1/auth/register",
       headers: { "idempotency-key": registrationKey },
-      payload: { username: "alice", password: "CorrectHorseBattery9" },
+      payload: {
+        phone,
+        password: "CorrectHorseBattery9",
+        challengeId: challenge.challengeId,
+        code: challenge.code,
+        device: aliceDeviceA,
+      },
     };
     const first = await app.inject(registrationRequest);
     const replay = await app.inject(registrationRequest);
     expect(first.statusCode).toBe(201);
     expect(replay.statusCode).toBe(201);
     expect(replay.json()).toEqual(first.json());
+    const registrationTokens = first.json<{
+      tokens: { accessToken: string; refreshToken: string };
+    }>().tokens;
+    const [storedRegistration] = await sql<{ response_body: string }[]>`
+      select response_body::text as response_body
+      from idempotency_records
+      where capability_id = 'auth.register' and idempotency_key = ${registrationKey}
+    `;
+    expect(storedRegistration?.response_body).not.toContain(registrationTokens.accessToken);
+    expect(storedRegistration?.response_body).not.toContain(registrationTokens.refreshToken);
     const [accountCount] = await sql<{ count: number }[]>`
-      select count(*)::int as count from accounts where username = 'alice'
+      select count(*)::int as count from accounts where phone_e164 = ${phone}
     `;
     expect(accountCount?.count).toBe(1);
 
-    const alice = await login("alice", aliceDeviceA);
-    await verifyPhone(alice.tokens.accessToken, "+8613800138001");
+    const alice = await login(phone, aliceDeviceA);
     const organizationKey = "stable-organization-key";
     const firstOrganization = await app.inject({
       method: "POST",
@@ -188,13 +209,13 @@ describe("Phase 0 HTTP capability surface", () => {
   });
 
   test("rejects malformed IDs, missing idempotency keys, spoofed forwarding and duplicate users", async () => {
-    const registration = await register("alice");
+    const registration = await register("+8613800138001");
     expect(registration.statusCode).toBe(201);
-    const duplicate = await register("ALICE", "AnotherStrongPassword9");
+    const duplicate = await register("13800138001", aliceDeviceB, "AnotherStrongPassword9");
     expect(duplicate.statusCode).toBe(409);
-    expect(ErrorEnvelope.parse(duplicate.json()).error.code).toBe("USERNAME_TAKEN");
+    expect(ErrorEnvelope.parse(duplicate.json()).error.code).toBe("ACCOUNT_EXISTS");
 
-    const alice = await login("alice", aliceDeviceA);
+    const alice = await login("+8613800138001", aliceDeviceA);
     const malformed = await app.inject({
       method: "DELETE",
       url: "/v1/devices/not-a-uuid",
@@ -228,12 +249,12 @@ describe("Phase 0 HTTP capability surface", () => {
   });
 
   test("rotates a Web refresh token through an HttpOnly cookie", async () => {
-    expect((await register("web-alice")).statusCode).toBe(201);
     const webDevice = { ...aliceDeviceA, channel: "web" as const };
+    expect((await register("+8613800138011", webDevice)).statusCode).toBe(201);
     const loggedIn = await app.inject({
       method: "POST",
       url: "/v1/auth/login",
-      payload: { username: "web-alice", password: "CorrectHorseBattery9", device: webDevice },
+      payload: { phone: "+8613800138011", password: "CorrectHorseBattery9", device: webDevice },
     });
     expect(loggedIn.statusCode).toBe(200);
     const loginCookie = loggedIn.headers["set-cookie"];
@@ -269,9 +290,8 @@ describe("Phase 0 HTTP capability surface", () => {
       ).statusCode,
     ).toBe(200);
 
-    expect((await register("alice")).statusCode).toBe(201);
-    const alice = await login("alice", aliceDeviceA);
-    await verifyPhone(alice.tokens.accessToken, "+8613800138001");
+    expect((await register("+8613800138001")).statusCode).toBe(201);
+    const alice = await login("+8613800138001", aliceDeviceA);
 
     const refreshed = await app.inject({
       method: "POST",
@@ -328,9 +348,18 @@ describe("Phase 0 HTTP capability surface", () => {
       ).statusCode,
     ).toBe(200);
 
-    expect((await register("bob")).statusCode).toBe(201);
-    const bob = await login("bob", { ...aliceDeviceA, id: "9a99c012-a85b-46f1-966d-403637476921" });
-    await verifyPhone(bob.tokens.accessToken, "+8613800138002");
+    expect(
+      (
+        await register("+8613800138002", {
+          ...aliceDeviceA,
+          id: "9a99c012-a85b-46f1-966d-403637476921",
+        })
+      ).statusCode,
+    ).toBe(201);
+    const bob = await login("+8613800138002", {
+      ...aliceDeviceA,
+      id: "9a99c012-a85b-46f1-966d-403637476921",
+    });
     const addMember = await app.inject({
       method: "POST",
       url: `/v1/organizations/${organizationId}/members`,
@@ -346,7 +375,7 @@ describe("Phase 0 HTTP capability surface", () => {
     });
     expect(auditList.statusCode).toBe(200);
 
-    const aliceSecond = await login("alice", aliceDeviceB);
+    const aliceSecond = await login("+8613800138001", aliceDeviceB);
     const revoked = await app.inject({
       method: "DELETE",
       url: `/v1/devices/${aliceDeviceA.id}`,
@@ -380,6 +409,20 @@ describe("Phase 0 HTTP capability surface", () => {
     });
     expect(logout.statusCode).toBe(200);
 
+    const resetChallenge = await verification("+8613800138002", "password_reset");
+    const reset = await app.inject({
+      method: "POST",
+      url: "/v1/auth/password/reset",
+      headers: { "idempotency-key": nextIdempotencyKey("reset") },
+      payload: {
+        phone: "+8613800138002",
+        challengeId: resetChallenge.challengeId,
+        code: resetChallenge.code,
+        newPassword: "AnotherStrongPassword9",
+      },
+    });
+    expect(reset.statusCode).toBe(200);
+
     const rows = await sql<{ capability_id: string }[]>`
       select distinct capability_id from audit_events
     `;
@@ -389,9 +432,8 @@ describe("Phase 0 HTTP capability surface", () => {
   });
 
   test("denies a valid user from another organization", async () => {
-    await register("alice");
-    const alice = await login("alice", aliceDeviceA);
-    await verifyPhone(alice.tokens.accessToken, "+8613800138001");
+    await register("+8613800138001");
+    const alice = await login("+8613800138001", aliceDeviceA);
     const aliceOrg = await app.inject({
       method: "POST",
       url: "/v1/organizations",
@@ -400,12 +442,14 @@ describe("Phase 0 HTTP capability surface", () => {
     });
     const aliceOrgId = aliceOrg.json<{ organization: { id: string } }>().organization.id;
 
-    await register("charlie");
-    const charlie = await login("charlie", {
+    await register("+8613800138003", {
       ...aliceDeviceA,
       id: "316324ee-4571-47c1-9a55-d30fdce16c02",
     });
-    await verifyPhone(charlie.tokens.accessToken, "+8613800138003");
+    const charlie = await login("+8613800138003", {
+      ...aliceDeviceA,
+      id: "316324ee-4571-47c1-9a55-d30fdce16c02",
+    });
 
     const response = await app.inject({
       method: "GET",

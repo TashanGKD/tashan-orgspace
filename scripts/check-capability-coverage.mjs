@@ -1,5 +1,5 @@
-import { readFileSync } from "node:fs";
-import { dirname, resolve } from "node:path";
+import { existsSync, readFileSync } from "node:fs";
+import { dirname, isAbsolute, posix, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 function duplicates(values) {
@@ -14,9 +14,7 @@ function duplicates(values) {
 
 function requireUnique(label, values) {
   const repeated = duplicates(values);
-  if (repeated.length > 0) {
-    throw new Error(`duplicate ${label}: ${repeated.join(", ")}`);
-  }
+  if (repeated.length > 0) throw new Error(`duplicate ${label}: ${repeated.join(", ")}`);
 }
 
 function requireStringArray(label, values) {
@@ -25,13 +23,53 @@ function requireStringArray(label, values) {
   }
 }
 
-export function checkCoverage(server, cli, web, skill) {
+function validateWebSurface(surface, files) {
+  if (
+    typeof surface !== "object" ||
+    surface === null ||
+    Array.isArray(surface) ||
+    Object.keys(surface).sort().join(",") !== "action,capabilityId,route,test" ||
+    typeof surface.capabilityId !== "string" ||
+    typeof surface.route !== "string" ||
+    typeof surface.action !== "string" ||
+    typeof surface.test !== "string"
+  ) {
+    throw new Error("invalid Web surface entry");
+  }
+  const route = surface.route;
+  if (
+    !route.startsWith("/") ||
+    route.includes("\\") ||
+    route.includes("//") ||
+    route.includes("?") ||
+    route.includes("#") ||
+    route !== posix.normalize(route) ||
+    (route !== "/" && route.endsWith("/"))
+  ) {
+    throw new Error(`Web surface must use an absolute Web route: ${route}`);
+  }
+  if (!/^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$/.test(surface.action)) {
+    throw new Error(`invalid Web action: ${surface.action}`);
+  }
+  if (
+    isAbsolute(surface.test) ||
+    surface.test.includes("\\") ||
+    surface.test.split("/").includes("..") ||
+    !/^apps\/web\/src\/.+\.test\.tsx?$/.test(surface.test)
+  ) {
+    throw new Error(`invalid Web test path: ${surface.test}`);
+  }
+  if (!files.has(surface.test)) throw new Error(`missing Web test file: ${surface.test}`);
+}
+
+export function checkCoverage(server, cli, web, skill, files = new Set()) {
   if (!Array.isArray(server)) throw new Error("server capabilities must be an array");
   if (typeof cli !== "object" || cli === null || Array.isArray(cli)) {
     throw new Error("CLI bindings must be an object");
   }
-  requireStringArray("Web surfaces", web);
+  if (!Array.isArray(web)) throw new Error("Web surfaces must be an array");
   requireStringArray("Skill capabilities", skill);
+  for (const surface of web) validateWebSurface(surface, files);
 
   const serverIds = server.map((capability) => {
     if (
@@ -48,15 +86,20 @@ export function checkCoverage(server, cli, web, skill) {
   const requiredWebIds = server
     .filter((capability) => capability.web === "required")
     .map((capability) => capability.id);
+  const webIds = web.map((surface) => surface.capabilityId);
 
   requireUnique("server capability", serverIds);
-  requireUnique("Web surface", web);
+  requireUnique("Web capability", webIds);
+  requireUnique(
+    "Web action",
+    web.map((surface) => surface.action),
+  );
   requireUnique("Skill capability", skill);
 
   const serverSet = new Set(serverIds);
   const cliSet = new Set(cliIds);
   const requiredWebSet = new Set(requiredWebIds);
-  const webSet = new Set(web);
+  const webSet = new Set(webIds);
   const skillSet = new Set(skill);
 
   for (const id of skill) {
@@ -75,7 +118,7 @@ export function checkCoverage(server, cli, web, skill) {
   for (const id of requiredWebIds) {
     if (!webSet.has(id)) throw new Error(`missing Web surface: ${id}`);
   }
-  for (const id of web) {
+  for (const id of webIds) {
     if (!requiredWebSet.has(id)) throw new Error(`unknown Web surface: ${id}`);
   }
   return { capabilities: serverIds.length, violations: 0 };
@@ -97,8 +140,8 @@ export function checkRepositoryCoverage(repositoryRoot) {
   if (typeof skillDocument !== "object" || skillDocument === null || skillDocument.version !== 1) {
     throw new Error("invalid Skill capability reference document");
   }
-
-  return checkCoverage(server, cli, web, skillDocument.capabilities);
+  const files = { has: (path) => existsSync(resolve(repositoryRoot, path)) };
+  return checkCoverage(server, cli, web, skillDocument.capabilities, files);
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {

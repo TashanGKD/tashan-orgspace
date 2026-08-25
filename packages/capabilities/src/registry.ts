@@ -8,7 +8,9 @@ const MUTATING_TERMINALS = new Set([
   "logout",
   "refresh",
   "register",
+  "reset",
   "revoke",
+  "send",
   "start",
 ]);
 

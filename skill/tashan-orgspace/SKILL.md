@@ -33,7 +33,7 @@ Inspect live capabilities before using a feature; the bundled capability list is
 
 ## Authenticate safely
 
-Read [authentication.md](references/authentication.md) before registering, logging in, verifying a phone, or changing devices. Let `torg` collect passwords and verification codes through its hidden interactive prompt. Never place a password, code, access token, refresh token, or credential-file passphrase in arguments, environment variables, chat, logs, or command output.
+Read [authentication.md](references/authentication.md) before registering, logging in, resetting a password, or changing devices. Let `torg` collect passwords and verification codes through its hidden interactive prompt. Never place a password, code, access token, refresh token, or credential-file passphrase in arguments, environment variables, chat, logs, or command output.
 
 Use the login token stored by the CLI as the real user and device identity. Do not create subaccounts to represent additional computers.
 

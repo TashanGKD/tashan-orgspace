@@ -126,6 +126,39 @@ test("session persistence selects token secrets and drops extra API response fie
   );
 });
 
+test("session identity stores a display name and masked phone without the full phone", async () => {
+  const store = new MemoryCredentialStore();
+  const session = await CliSessionCredentials.load(
+    store,
+    "session:test",
+    "35f503c2-a5d7-4250-a337-4f4fd03cf8df",
+  );
+  await session.updateIdentity({
+    accountId: "b228e557-2214-4f95-b49d-d4ff7d9759d4",
+    displayName: "用户8000",
+    phone: "+8613800138000",
+  });
+
+  const persisted = await store.read("session:test");
+  expect(persisted).toContain("用户8000");
+  expect(persisted).toContain("+861****8000");
+  expect(persisted).not.toContain("+8613800138000");
+});
+
+test("legacy username session data fails closed with a re-login instruction", async () => {
+  const store = new MemoryCredentialStore();
+  await store.write(
+    "session:test",
+    JSON.stringify({
+      version: 1,
+      deviceId: "35f503c2-a5d7-4250-a337-4f4fd03cf8df",
+      username: "alice",
+    }),
+  );
+
+  await expect(CliSessionCredentials.load(store, "session:test")).rejects.toThrow(/log in again/i);
+});
+
 test("falls back to process memory only when the OS backend is unavailable", async () => {
   const memory = new MemoryCredentialStore();
   const unavailable = {

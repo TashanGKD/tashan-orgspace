@@ -28,6 +28,27 @@ try {
   );
   rmSync(join(fixtureRoot, "verify-orphan.sh"));
 
+  const productionSafetyGates = [
+    ["check-production-contract.mjs", "check-production-contract.self-test.mjs"],
+    ["deploy-orgspace.sh", "deploy-orgspace.self-test.sh"],
+    ["configure-orgspace-ingress.sh", "configure-orgspace-ingress.self-test.sh"],
+    ["smoke-production.sh", "smoke-production.self-test.sh"],
+  ];
+  for (const [gate, selfTest] of productionSafetyGates) {
+    writeFileSync(join(fixtureRoot, gate), "exit 0\n");
+    writeFileSync(join(fixtureRoot, selfTest), "exit 0\n");
+  }
+  assert.doesNotThrow(() => checkGateSelfTests(fixtureRoot));
+  for (const [gate, selfTest] of productionSafetyGates) {
+    rmSync(join(fixtureRoot, selfTest));
+    assert.throws(
+      () => checkGateSelfTests(fixtureRoot),
+      new RegExp(`missing gate self-test: ${selfTest.replaceAll(".", "\\.")}`),
+      gate,
+    );
+    writeFileSync(join(fixtureRoot, selfTest), "exit 0\n");
+  }
+
   mkdirSync(join(fixtureRoot, "nested"));
   writeFileSync(join(fixtureRoot, "nested", "check-shadow.mjs"), "export {};\n");
   assert.throws(

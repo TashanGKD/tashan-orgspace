@@ -5,6 +5,7 @@ import { validateTrustedProxyCidrs } from "./http/trusted-proxy.js";
 const RuntimeEnvironment = z.enum(["development", "test", "production"]);
 const PhoneProvider = z.enum(["disabled", "aliyun"]);
 const LOOPBACK_HOSTS = new Set(["127.0.0.1", "localhost", "::1", "[::1]"]);
+const RELEASE_VERSION = /^\d+\.\d+\.\d+(?:-[0-9A-Za-z]+(?:[.-][0-9A-Za-z]+)*)?$/;
 
 function required(environment: NodeJS.ProcessEnv, key: string): string {
   const value = environment[key]?.trim();
@@ -57,6 +58,10 @@ export function loadConfig(environment: NodeJS.ProcessEnv = process.env) {
   const corsOrigins = commaList(required(environment, "CORS_ORIGINS"));
   const trustedProxyCidrs = commaList(environment.TRUSTED_PROXY_CIDRS);
   const phoneCodePepper = required(environment, "PHONE_CODE_PEPPER");
+  const serviceVersion =
+    runtime === "production"
+      ? required(environment, "SERVICE_VERSION")
+      : environment.SERVICE_VERSION?.trim() || "0.0.0-development";
   if (phoneCodePepper.length < 16)
     throw new Error("PHONE_CODE_PEPPER must be at least 16 characters");
   validateCorsOrigins(corsOrigins, runtime);
@@ -67,6 +72,9 @@ export function loadConfig(environment: NodeJS.ProcessEnv = process.env) {
     rejectProductionLoopback("REDIS_URL", redisUrl);
     if (/change[-_ ]?me|test[-_ ]?only|placeholder/i.test(phoneCodePepper)) {
       throw new Error("PHONE_CODE_PEPPER must not use a production placeholder");
+    }
+    if (!RELEASE_VERSION.test(serviceVersion)) {
+      throw new Error("production SERVICE_VERSION must be a release version");
     }
   }
 
@@ -80,6 +88,9 @@ export function loadConfig(environment: NodeJS.ProcessEnv = process.env) {
           accessKeySecret: required(environment, "ALIYUN_SMS_ACCESS_KEY_SECRET"),
           signName: required(environment, "ALIYUN_SMS_SIGN_NAME"),
           templateCode: required(environment, "ALIYUN_SMS_TEMPLATE_CODE"),
+          templateParamKey: required(environment, "ALIYUN_SMS_TEMPLATE_PARAM_KEY"),
+          endpoint: required(environment, "ALIYUN_SMS_ENDPOINT"),
+          regionId: required(environment, "ALIYUN_SMS_REGION_ID"),
         } as const);
 
   const port = z.coerce
@@ -90,6 +101,7 @@ export function loadConfig(environment: NodeJS.ProcessEnv = process.env) {
     .parse(environment.PORT ?? 4110);
   return {
     runtime,
+    serviceVersion,
     host: environment.HOST?.trim() || "127.0.0.1",
     port,
     databaseUrl,

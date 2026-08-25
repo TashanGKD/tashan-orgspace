@@ -41,9 +41,9 @@ describe("Redis rate limiter", () => {
   test("allows only the configured number of attempts", async () => {
     const rateLimiter = limiter(2);
 
-    await expect(rateLimiter.consume("login:username:alice")).resolves.toBe(true);
-    await expect(rateLimiter.consume("login:username:alice")).resolves.toBe(true);
-    await expect(rateLimiter.consume("login:username:alice")).resolves.toBe(false);
+    await expect(rateLimiter.consume("login:phone:+8613800138000")).resolves.toBe(true);
+    await expect(rateLimiter.consume("login:phone:+8613800138000")).resolves.toBe(true);
+    await expect(rateLimiter.consume("login:phone:+8613800138000")).resolves.toBe(false);
   });
 
   test("keeps concurrent increments atomic and attaches an expiry", async () => {

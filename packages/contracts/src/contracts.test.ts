@@ -2,15 +2,18 @@ import { describe, expect, test } from "vitest";
 
 import {
   ActorSource,
+  DeviceLoginMetadata,
   ErrorEnvelope,
   LoginRequest,
   OrganizationMemberAddRequest,
   OrganizationRole,
+  PasswordResetRequest,
   PhoneNumber,
   Phase0CreatablePrincipalType,
   PrincipalType,
   RefreshRequest,
   RegisterRequest,
+  VerificationPurpose,
 } from "./index.js";
 
 describe("security discriminants", () => {
@@ -48,7 +51,7 @@ describe("security discriminants", () => {
 });
 
 describe("identity inputs", () => {
-  test.each(["13800138000", "+0123456789", "+86138 0013 8000", "+1234567", "+1234567890123456"])(
+  test.each(["12800138000", "+0123456789", "+86138 0013 8000", "+1234567", "+1234567890123456"])(
     "rejects non-E.164 phone value %s",
     (value) => {
       expect(PhoneNumber.safeParse(value).success).toBe(false);
@@ -59,9 +62,13 @@ describe("identity inputs", () => {
     expect(PhoneNumber.parse("+8613800138000")).toBe("+8613800138000");
   });
 
+  test("normalizes a mainland China mobile number to E.164", () => {
+    expect(PhoneNumber.parse("13800138000")).toBe("+8613800138000");
+  });
+
   test("rejects actor-source injection in login", () => {
     const validLogin = {
-      username: "alice",
+      phone: "13800138000",
       password: "CorrectHorseBattery9",
       device: {
         id: "8df6fa80-6de8-48dd-92cb-a14db311c8e8",
@@ -83,10 +90,70 @@ describe("identity inputs", () => {
     expect(result.success).toBe(false);
   });
 
-  test("rejects weak registration passwords", () => {
-    expect(RegisterRequest.safeParse({ username: "alice", password: "password" }).success).toBe(
-      false,
-    );
+  test("rejects legacy username login even when the rest of the input is valid", () => {
+    const device = DeviceLoginMetadata.parse({
+      id: "35f503c2-a5d7-4250-a337-4f4fd03cf8df",
+      name: "Test device",
+      os: "test",
+      architecture: "test",
+      clientVersion: "0.0.0",
+      channel: "cli",
+    });
+
+    expect(
+      LoginRequest.safeParse({
+        username: "alice",
+        password: "CorrectHorseBattery9",
+        device,
+      }).success,
+    ).toBe(false);
+  });
+
+  test("requires a verified challenge and strong password for registration", () => {
+    const device = DeviceLoginMetadata.parse({
+      id: "35f503c2-a5d7-4250-a337-4f4fd03cf8df",
+      name: "Test device",
+      os: "test",
+      architecture: "test",
+      clientVersion: "0.0.0",
+      channel: "cli",
+    });
+
+    expect(
+      RegisterRequest.parse({
+        phone: "13800138000",
+        challengeId: "7f24ea08-8e7d-4d11-a51e-a3816f3d93fa",
+        code: "123456",
+        password: "CorrectHorseBattery9",
+        device,
+      }).phone,
+    ).toBe("+8613800138000");
+    expect(
+      RegisterRequest.safeParse({
+        phone: "13800138000",
+        challengeId: "7f24ea08-8e7d-4d11-a51e-a3816f3d93fa",
+        code: "123456",
+        password: "password",
+        device,
+      }).success,
+    ).toBe(false);
+  });
+
+  test("accepts only register and password_reset verification purposes", () => {
+    expect(VerificationPurpose.options).toEqual(["register", "password_reset"]);
+    expect(VerificationPurpose.safeParse("login").success).toBe(false);
+  });
+
+  test("rejects secret-bearing extra fields in password reset", () => {
+    expect(
+      PasswordResetRequest.safeParse({
+        phone: "+8613800138000",
+        challengeId: "7f24ea08-8e7d-4d11-a51e-a3816f3d93fa",
+        code: "123456",
+        newPassword: "CorrectHorseBattery9",
+        token: "must-not-pass",
+      }).success,
+    ).toBe(false);
   });
 
   test("allows an empty refresh body for an HttpOnly Web cookie", () => {

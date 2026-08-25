@@ -1,11 +1,6 @@
-import type { FastifyInstance, preHandlerHookHandler } from "fastify";
+import type { FastifyInstance } from "fastify";
 
-import {
-  PhoneVerificationConfirmRequest,
-  PhoneVerificationConfirmResponse,
-  PhoneVerificationStartRequest,
-  PhoneVerificationStartResponse,
-} from "@tashan/contracts";
+import { VerificationSendRequest, VerificationSendResponse } from "@tashan/contracts";
 
 import type { MutationCoordinator } from "../http/idempotency.js";
 import { requestContext } from "../http/request-context.js";
@@ -16,66 +11,35 @@ export async function registerPhoneRoutes(
   dependencies: {
     phones: PhoneVerificationService;
     mutations: MutationCoordinator;
-    authenticate: preHandlerHookHandler;
   },
 ): Promise<void> {
   app.post(
-    "/v1/phone-verifications",
-    { config: { capabilityId: "auth.phone.start" }, preHandler: dependencies.authenticate },
+    "/v1/auth/verification/send",
+    { config: { capabilityId: "auth.verification.send" } },
     async (request, reply) => {
-      const body = PhoneVerificationStartRequest.parse(request.body);
+      const body = VerificationSendRequest.parse(request.body);
       const context = requestContext(request);
-      const identity = context.identity;
-      if (identity === undefined) throw new Error("authenticated identity is missing");
       const result = await dependencies.mutations.executeIdempotent({
         request,
-        capabilityId: "auth.phone.start",
-        actorPrincipalId: identity.principalId,
+        capabilityId: "auth.verification.send",
+        actorKey: `verification:${body.purpose}:${body.phone}:${context.clientIp}`,
         idempotencyInput: body,
+        auditAfterState: { phone: body.phone, purpose: body.purpose },
         work: async (transaction) => {
           const challenge = await dependencies.phones.start(
-            identity.accountId,
-            body.phone,
-            context.clientIp,
+            {
+              phone: body.phone,
+              purpose: body.purpose,
+              serverIp: context.clientIp,
+              requestId: request.id,
+            },
             transaction,
           );
           return {
             statusCode: 202,
-            body: PhoneVerificationStartResponse.parse({
+            body: VerificationSendResponse.parse({
               challengeId: challenge.challengeId,
               expiresAt: challenge.expiresAt.toISOString(),
-            }),
-          };
-        },
-      });
-      return reply.code(result.statusCode).send(result.body);
-    },
-  );
-
-  app.post(
-    "/v1/phone-verifications/confirm",
-    { config: { capabilityId: "auth.phone.confirm" }, preHandler: dependencies.authenticate },
-    async (request, reply) => {
-      const body = PhoneVerificationConfirmRequest.parse(request.body);
-      const identity = requestContext(request).identity;
-      if (identity === undefined) throw new Error("authenticated identity is missing");
-      const result = await dependencies.mutations.executeIdempotent({
-        request,
-        capabilityId: "auth.phone.confirm",
-        actorPrincipalId: identity.principalId,
-        idempotencyInput: body,
-        work: async (transaction) => {
-          const verified = await dependencies.phones.confirm(
-            identity.accountId,
-            body.challengeId,
-            body.code,
-            transaction,
-          );
-          return {
-            statusCode: 200,
-            body: PhoneVerificationConfirmResponse.parse({
-              phone: verified.phone,
-              verifiedAt: verified.verifiedAt.toISOString(),
             }),
           };
         },

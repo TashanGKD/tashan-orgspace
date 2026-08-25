@@ -29,45 +29,22 @@ afterAll(async () => {
   await sql?.end();
 });
 
-async function createAccount(verified: boolean) {
+async function createAccount() {
   sequence += 1;
   const phone = `+8613800138${String(sequence).padStart(3, "0")}`;
   const [account] = await sql<{ id: string }[]>`
-    insert into accounts (username, password_hash, phone_e164, phone_verified_at)
-    values (
-      ${`member-${sequence}`}, 'argon2id-fixture',
-      ${verified ? phone : null}, ${verified ? new Date() : null}
-    )
+    insert into accounts (display_name, password_hash, phone_e164, phone_verified_at)
+    values (${`Member ${sequence}`}, 'argon2id-fixture', ${phone}, now())
     returning id
   `;
   if (account === undefined) throw new Error("failed to create account fixture");
   return account.id;
 }
 
-describe("verified-phone membership boundary", () => {
-  test("cannot create an organization without a verified phone", async () => {
-    const accountId = await createAccount(false);
-
-    await expect(organizations.createOrganization(accountId, "Tashan")).rejects.toMatchObject({
-      code: "PHONE_NOT_VERIFIED",
-    });
-  });
-
-  test("cannot activate membership for an unverified target account", async () => {
-    const ownerId = await createAccount(true);
-    const targetId = await createAccount(false);
-    const organization = await organizations.createOrganization(ownerId, "Tashan");
-
-    await expect(
-      organizations.addMember(ownerId, organization.id, targetId, "member"),
-    ).rejects.toMatchObject({ code: "PHONE_NOT_VERIFIED" });
-  });
-});
-
 describe("organization-scoped authorization", () => {
   test("valid member from another organization is forbidden", async () => {
-    const ownerA = await createAccount(true);
-    const ownerB = await createAccount(true);
+    const ownerA = await createAccount();
+    const ownerB = await createAccount();
     const orgA = await organizations.createOrganization(ownerA, "Organization A");
     await organizations.createOrganization(ownerB, "Organization B");
 
@@ -77,9 +54,9 @@ describe("organization-scoped authorization", () => {
   });
 
   test("ordinary member cannot add another member", async () => {
-    const owner = await createAccount(true);
-    const member = await createAccount(true);
-    const target = await createAccount(true);
+    const owner = await createAccount();
+    const member = await createAccount();
+    const target = await createAccount();
     const organization = await organizations.createOrganization(owner, "Tashan");
     await organizations.addMember(owner, organization.id, member, "member");
 
@@ -88,9 +65,9 @@ describe("organization-scoped authorization", () => {
     ).rejects.toMatchObject({ code: "ORG_FORBIDDEN" });
   });
 
-  test("verified owner can add and list a verified member", async () => {
-    const owner = await createAccount(true);
-    const member = await createAccount(true);
+  test("owner can add and list a member", async () => {
+    const owner = await createAccount();
+    const member = await createAccount();
     const organization = await organizations.createOrganization(owner, "Tashan");
     await organizations.addMember(owner, organization.id, member, "member");
 

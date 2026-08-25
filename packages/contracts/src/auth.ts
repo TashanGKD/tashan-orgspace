@@ -4,6 +4,7 @@ import {
   AccountId,
   ClientChannel,
   DeviceId,
+  DisplayName,
   IsoDateTime,
   Password,
   PhoneNumber,
@@ -11,7 +12,7 @@ import {
   PrincipalId,
   PrincipalType,
   SessionId,
-  Username,
+  VerificationPurpose,
 } from "./common.js";
 
 export const AccountStatus = z.enum(["active", "suspended"]);
@@ -20,9 +21,9 @@ export type AccountStatus = z.infer<typeof AccountStatus>;
 export const AccountSummary = z
   .object({
     id: AccountId,
-    username: Username,
-    phone: PhoneNumber.nullable(),
-    phoneVerifiedAt: IsoDateTime.nullable(),
+    displayName: DisplayName,
+    phone: PhoneNumber,
+    phoneVerifiedAt: IsoDateTime,
     status: AccountStatus,
     createdAt: IsoDateTime,
   })
@@ -52,50 +53,31 @@ export type DeviceLoginMetadata = z.infer<typeof DeviceLoginMetadata>;
 
 export const RegisterRequest = z
   .object({
-    username: Username,
+    phone: PhoneNumber,
+    challengeId: PhoneVerificationChallengeId,
+    code: z.string().regex(/^\d{6}$/, "verification code must contain six digits"),
     password: Password,
+    device: DeviceLoginMetadata,
   })
   .strict();
 export type RegisterRequest = z.infer<typeof RegisterRequest>;
 
-export const RegisterResponse = z
-  .object({
-    account: AccountSummary,
-    principal: PrincipalSummary,
-  })
+export const VerificationSendRequest = z
+  .object({ phone: PhoneNumber, purpose: VerificationPurpose })
   .strict();
-export type RegisterResponse = z.infer<typeof RegisterResponse>;
+export type VerificationSendRequest = z.infer<typeof VerificationSendRequest>;
 
-export const PhoneVerificationStartRequest = z.object({ phone: PhoneNumber }).strict();
-export type PhoneVerificationStartRequest = z.infer<typeof PhoneVerificationStartRequest>;
-
-export const PhoneVerificationStartResponse = z
+export const VerificationSendResponse = z
   .object({
     challengeId: PhoneVerificationChallengeId,
     expiresAt: IsoDateTime,
   })
   .strict();
-export type PhoneVerificationStartResponse = z.infer<typeof PhoneVerificationStartResponse>;
-
-export const PhoneVerificationConfirmRequest = z
-  .object({
-    challengeId: PhoneVerificationChallengeId,
-    code: z.string().regex(/^\d{6}$/, "verification code must contain six digits"),
-  })
-  .strict();
-export type PhoneVerificationConfirmRequest = z.infer<typeof PhoneVerificationConfirmRequest>;
-
-export const PhoneVerificationConfirmResponse = z
-  .object({
-    phone: PhoneNumber,
-    verifiedAt: IsoDateTime,
-  })
-  .strict();
-export type PhoneVerificationConfirmResponse = z.infer<typeof PhoneVerificationConfirmResponse>;
+export type VerificationSendResponse = z.infer<typeof VerificationSendResponse>;
 
 export const LoginRequest = z
   .object({
-    username: Username,
+    phone: PhoneNumber,
     password: z.string().min(1).max(256),
     device: DeviceLoginMetadata,
   })
@@ -123,6 +105,22 @@ export const LoginResponse = z
   })
   .strict();
 export type LoginResponse = z.infer<typeof LoginResponse>;
+
+export const RegisterResponse = LoginResponse;
+export type RegisterResponse = z.infer<typeof RegisterResponse>;
+
+export const PasswordResetRequest = z
+  .object({
+    phone: PhoneNumber,
+    challengeId: PhoneVerificationChallengeId,
+    code: z.string().regex(/^\d{6}$/, "verification code must contain six digits"),
+    newPassword: Password,
+  })
+  .strict();
+export type PasswordResetRequest = z.infer<typeof PasswordResetRequest>;
+
+export const PasswordResetResponse = z.object({ reset: z.literal(true) }).strict();
+export type PasswordResetResponse = z.infer<typeof PasswordResetResponse>;
 
 export const RefreshRequest = z.object({ refreshToken: z.string().min(32).optional() }).strict();
 export type RefreshRequest = z.infer<typeof RefreshRequest>;

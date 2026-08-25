@@ -5,17 +5,12 @@ import { AccessTokenService } from "./auth/access-token.js";
 import { buildApp } from "./app.js";
 import { loadConfig } from "./config.js";
 import { createDatabaseClient } from "./db/client.js";
+import { AliyunVerificationCodeSender } from "./phone/aliyun-verification-code-sender.js";
 import { UnavailableVerificationCodeSender } from "./phone/verification-code-sender.js";
 import { RedisFixedWindowRateLimiter } from "./rate-limit/redis-fixed-window.js";
 
 async function main(): Promise<void> {
   const config = loadConfig();
-  if (config.phone.provider !== "disabled") {
-    throw new Error(
-      "Aliyun SMS transport is reserved for the notification phase and is not enabled",
-    );
-  }
-
   const sql = createDatabaseClient(config.databaseUrl);
   const redis = createClient({ url: config.redisUrl });
   await redis.connect();
@@ -31,7 +26,11 @@ async function main(): Promise<void> {
   const app = await buildApp({
     sql,
     tokenService,
-    phoneSender: new UnavailableVerificationCodeSender(),
+    serviceVersion: config.serviceVersion,
+    phoneSender:
+      config.phone.provider === "aliyun"
+        ? new AliyunVerificationCodeSender(config.phone)
+        : new UnavailableVerificationCodeSender(),
     loginRateLimiter: new RedisFixedWindowRateLimiter({
       client: redis,
       namespace: "orgspace:login",

@@ -5,6 +5,8 @@ import {
   LoginResponse,
   LogoutRequest,
   LogoutResponse,
+  PasswordResetRequest,
+  PasswordResetResponse,
   RefreshRequest,
   RefreshResponse,
   RegisterRequest,
@@ -92,19 +94,83 @@ export async function registerAuthRoutes(
       const result = await dependencies.mutations.executeIdempotent({
         request,
         capabilityId: "auth.register",
-        actorKey: `registration:${context.clientIp}:${body.username.toLowerCase()}`,
+        actorKey: `registration:${context.clientIp}:${body.phone}`,
         idempotencyInput: body,
+        auditAfterState: { phone: body.phone },
+        protectResponse: true,
         work: async (transaction) => {
-          const identity = await dependencies.auth.register(body, transaction);
-          context.accountId = identity.accountId;
-          context.principalId = identity.principalId;
+          const session = await dependencies.auth.register(body, transaction);
+          context.accountId = session.accountId;
+          context.principalId = session.principalId;
+          context.identity = {
+            accountId: session.accountId,
+            principalId: session.principalId,
+            sessionId: session.sessionId,
+            deviceId: session.deviceId,
+            actorSource: body.device.channel,
+            deviceMetadata: {
+              name: body.device.name,
+              os: body.device.os,
+              architecture: body.device.architecture,
+              clientVersion: body.device.clientVersion,
+            },
+          };
           const summaries = await accountAndPrincipalSummary(
             transaction,
-            identity.accountId,
-            identity.principalId,
+            session.accountId,
+            session.principalId,
           );
-          return { statusCode: 201, body: RegisterResponse.parse(summaries) };
+          const times = tokenTimes();
+          return {
+            statusCode: 201,
+            body: RegisterResponse.parse({
+              ...summaries,
+              sessionId: session.sessionId,
+              deviceId: session.deviceId,
+              tokens: {
+                tokenType: "Bearer",
+                accessToken: session.accessToken,
+                accessTokenExpiresAt: times.accessTokenExpiresAt,
+                refreshToken: session.refreshToken,
+                refreshTokenExpiresAt: times.refreshTokenExpiresAt,
+              },
+            }),
+          };
         },
+      });
+      if (body.device.channel === "web") {
+        reply.setCookie(
+          WEB_REFRESH_COOKIE,
+          result.body.tokens.refreshToken,
+          WEB_REFRESH_COOKIE_OPTIONS,
+        );
+      }
+      return reply.code(result.statusCode).send(result.body);
+    },
+  );
+
+  app.post(
+    "/v1/auth/password/reset",
+    { config: { capabilityId: "auth.password.reset" } },
+    async (request, reply) => {
+      const body = PasswordResetRequest.parse(request.body);
+      const context = requestContext(request);
+      const result = await dependencies.mutations.executeIdempotent({
+        request,
+        capabilityId: "auth.password.reset",
+        actorKey: `password-reset:${context.clientIp}:${body.phone}`,
+        idempotencyInput: body,
+        auditAfterState: { phone: body.phone },
+        work: async (transaction) => {
+          await dependencies.auth.resetPassword(body, transaction);
+          return { statusCode: 200, body: PasswordResetResponse.parse({ reset: true }) };
+        },
+      });
+      reply.clearCookie(WEB_REFRESH_COOKIE, {
+        httpOnly: true,
+        secure: true,
+        sameSite: "strict",
+        path: "/",
       });
       return reply.code(result.statusCode).send(result.body);
     },
@@ -156,6 +222,7 @@ export async function registerAuthRoutes(
           }),
         };
       },
+      { phone: body.phone },
     );
     if (body.device.channel === "web") {
       reply.setCookie(

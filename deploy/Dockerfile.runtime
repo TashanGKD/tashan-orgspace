@@ -1,0 +1,29 @@
+FROM m.daocloud.io/docker.io/library/node:24.14.0-bookworm-slim
+
+ENV COREPACK_HOME=/opt/corepack
+ENV PATH=/opt/corepack:${PATH}
+WORKDIR /workspace
+
+RUN mkdir -p /opt/corepack \
+  && corepack enable --install-directory /opt/corepack \
+  && corepack prepare pnpm@10.32.1 --activate
+
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml tsconfig.base.json tsconfig.e2e.json ./
+COPY apps/api/package.json apps/api/package.json
+COPY apps/worker/package.json apps/worker/package.json
+COPY packages/capabilities/package.json packages/capabilities/package.json
+COPY packages/contracts/package.json packages/contracts/package.json
+COPY packages/sdk/package.json packages/sdk/package.json
+COPY packages/testkit/package.json packages/testkit/package.json
+RUN pnpm install --frozen-lockfile
+
+COPY apps/api apps/api
+COPY apps/worker apps/worker
+COPY packages/capabilities packages/capabilities
+COPY packages/contracts packages/contracts
+COPY packages/sdk packages/sdk
+COPY packages/testkit packages/testkit
+RUN chown -R node:node /workspace
+
+USER node
+CMD ["node", "--version"]

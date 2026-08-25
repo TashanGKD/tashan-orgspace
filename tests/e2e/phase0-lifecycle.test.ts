@@ -12,14 +12,14 @@ describe("Phase 0 lifecycle", () => {
       aliceDeviceA: string;
       aliceDeviceB: string;
       revoked: { exitCode: number; stderr: string };
-      surviving: { account: { username: string }; deviceId: string };
+      surviving: { account: { displayName: string }; deviceId: string };
       organizationAudit: { capabilityId: string }[];
     }>({ type: "lifecycle", alice, bob });
 
     expect(result.revoked).toMatchObject({ exitCode: 3 });
     expect(result.revoked.stderr).toContain("AUTH_TOKEN_REVOKED");
     expect(result.surviving).toMatchObject({
-      account: { username: "life-alice" },
+      account: { displayName: "用户8101" },
       deviceId: result.aliceDeviceB,
     });
     expect(result.organizationAudit).toContainEqual(

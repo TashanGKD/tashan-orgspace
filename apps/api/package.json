@@ -13,6 +13,8 @@
     "typecheck": "tsc --noEmit -p tsconfig.json"
   },
   "dependencies": {
+    "@alicloud/dysmsapi20170525": "4.6.0",
+    "@alicloud/openapi-client": "0.4.15",
     "@fastify/cookie": "11.1.2",
     "@fastify/cors": "11.3.0",
     "@tashan/capabilities": "workspace:*",
@@ -27,6 +29,7 @@
   },
   "devDependencies": {
     "@tashan/testkit": "workspace:*",
+    "@types/ws": "8.18.1",
     "tsx": "4.23.12",
     "vitest": "4.1.10"
   }

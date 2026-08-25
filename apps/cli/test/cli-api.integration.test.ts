@@ -50,6 +50,7 @@ beforeAll(async () => {
   app = await buildApp({
     sql,
     tokenService,
+    serviceVersion: "0.1.0-alpha.2-test",
     phoneSender: sender,
     loginRateLimiter: new AllowAllRateLimiter(),
     phoneRateLimiter: new AllowAllRateLimiter(),
@@ -83,6 +84,7 @@ function transportForApp(): Transport {
 function cliDependencies(
   store: MemoryCredentialStore,
   deviceId: string,
+  hiddenValues: string[] = [],
   stdinValues: string[] = [],
 ): CliDependencies {
   return {
@@ -90,7 +92,7 @@ function cliDependencies(
     deviceId,
     deviceMetadata: { name: `Test ${deviceId.slice(0, 8)}`, os: "test", architecture: "test" },
     environment: {},
-    promptHidden: async () => password,
+    promptHidden: async () => hiddenValues.shift() ?? password,
     readStdin: async () => {
       const value = stdinValues.shift();
       if (value === undefined) throw new Error("test stdin was exhausted");
@@ -119,9 +121,14 @@ describe("CLI against the real Phase 0 API", () => {
     const aliceStoreA = new MemoryCredentialStore();
     const aliceStoreB = new MemoryCredentialStore();
     const bobStore = new MemoryCredentialStore();
-    const aliceA = cliDependencies(aliceStoreA, aliceDeviceA);
-    const aliceB = cliDependencies(aliceStoreB, aliceDeviceB);
-    const bob = cliDependencies(bobStore, bobDevice);
+    const aliceSecrets: string[] = [];
+    const bobSecrets: string[] = [];
+    const aliceBSecrets: string[] = [];
+    const aliceA = cliDependencies(aliceStoreA, aliceDeviceA, aliceSecrets);
+    const aliceB = cliDependencies(aliceStoreB, aliceDeviceB, aliceBSecrets);
+    const bob = cliDependencies(bobStore, bobDevice, bobSecrets);
+    const alicePhone = "+8613800138001";
+    const bobPhone = "+8613800138002";
 
     expect(await runJson(["health"], aliceA)).toMatchObject({ status: "ok" });
     const capabilities = (await runJson(["capability", "list"], aliceA)) as {
@@ -133,67 +140,71 @@ describe("CLI against the real Phase 0 API", () => {
       cli: "device revoke",
     });
 
-    await runJson(
-      ["auth", "register", "--username", "alice-cli", "--idempotency-key", "register-alice"],
-      aliceA,
-    );
-    const bobRegistration = (await runJson(
-      ["auth", "register", "--username", "bob-cli", "--idempotency-key", "register-bob"],
-      bob,
-    )) as { account: { id: string } };
-    await runJson(["auth", "login", "--username", "alice-cli"], aliceA);
-    await runJson(["auth", "login", "--username", "bob-cli"], bob);
-    await runJson(["auth", "refresh"], aliceA);
-    expect(await runJson(["auth", "whoami"], aliceA)).toMatchObject({
-      account: { username: "alice-cli" },
-      deviceId: aliceDeviceA,
-    });
-
-    const phoneStart = (await runJson(
+    const aliceChallenge = (await runJson(
       [
         "auth",
-        "phone-start",
+        "code-send",
         "--phone",
-        "+8613800138001",
+        alicePhone,
+        "--purpose",
+        "register",
         "--idempotency-key",
-        "phone-start-alice",
+        "code-alice",
       ],
       aliceA,
     )) as { challengeId: string };
-    const code = sender.messages.at(-1)?.code;
-    expect(code).toBeDefined();
-    const aliceAWithCode = cliDependencies(aliceStoreA, aliceDeviceA, [code ?? ""]);
+    const aliceCode = sender.messages.at(-1)?.code;
+    if (aliceCode === undefined) throw new Error("Alice verification code was not sent");
+    aliceSecrets.push(aliceCode, password);
     await runJson(
       [
         "auth",
-        "phone-confirm",
+        "register",
+        "--phone",
+        alicePhone,
         "--challenge",
-        phoneStart.challengeId,
-        "--code-stdin",
+        aliceChallenge.challengeId,
         "--idempotency-key",
-        "phone-confirm-alice",
+        "register-alice",
       ],
-      aliceAWithCode,
+      aliceA,
     );
-
-    const bobPhoneStart = (await runJson(
-      ["auth", "phone-start", "--phone", "+8613800138002", "--idempotency-key", "phone-start-bob"],
+    const bobChallenge = (await runJson(
+      [
+        "auth",
+        "code-send",
+        "--phone",
+        bobPhone,
+        "--purpose",
+        "register",
+        "--idempotency-key",
+        "code-bob",
+      ],
       bob,
     )) as { challengeId: string };
     const bobCode = sender.messages.at(-1)?.code;
-    expect(bobCode).toBeDefined();
-    await runJson(
+    if (bobCode === undefined) throw new Error("Bob verification code was not sent");
+    bobSecrets.push(bobCode, password);
+    const bobRegistration = (await runJson(
       [
         "auth",
-        "phone-confirm",
+        "register",
+        "--phone",
+        bobPhone,
         "--challenge",
-        bobPhoneStart.challengeId,
-        "--code-stdin",
+        bobChallenge.challengeId,
         "--idempotency-key",
-        "phone-confirm-bob",
+        "register-bob",
       ],
-      cliDependencies(bobStore, bobDevice, [bobCode ?? ""]),
-    );
+      bob,
+    )) as { account: { id: string } };
+    await runJson(["auth", "login", "--phone", alicePhone], aliceA);
+    await runJson(["auth", "login", "--phone", bobPhone], bob);
+    await runJson(["auth", "refresh"], aliceA);
+    expect(await runJson(["auth", "whoami"], aliceA)).toMatchObject({
+      account: { displayName: "用户8001" },
+      deviceId: aliceDeviceA,
+    });
 
     const team = (await runJson(
       ["org", "create", "--name", "CLI Team", "--yes", "--idempotency-key", "org-team"],
@@ -227,8 +238,11 @@ describe("CLI against the real Phase 0 API", () => {
     const members = (await runJson(
       ["org", "member", "list", "--org", team.organization.id],
       bob,
-    )) as { items: { username: string }[] };
-    expect(members.items.map((member) => member.username).sort()).toEqual(["alice-cli", "bob-cli"]);
+    )) as { items: { displayName: string }[] };
+    expect(members.items.map((member) => member.displayName).sort()).toEqual([
+      "用户8001",
+      "用户8002",
+    ]);
     const audit = (await runJson(["audit", "list", "--org", team.organization.id], bob)) as {
       items: { capabilityId: string }[];
     };
@@ -243,7 +257,7 @@ describe("CLI against the real Phase 0 API", () => {
     expect(forbidden.exitCode).toBe(4);
     expect(forbidden.stderr).toContain("ORG_FORBIDDEN");
 
-    await runJson(["auth", "login", "--username", "alice-cli"], aliceB);
+    await runJson(["auth", "login", "--phone", alicePhone], aliceB);
     const devices = (await runJson(["device", "list"], aliceB)) as {
       items: { id: string }[];
     };
@@ -265,5 +279,36 @@ describe("CLI against the real Phase 0 API", () => {
     const loggedOut = await runCli(["auth", "whoami", "--json"], aliceB);
     expect(loggedOut.exitCode).toBe(3);
     expect(loggedOut.stderr).toContain("AUTH_REQUIRED");
+
+    const resetChallenge = (await runJson(
+      [
+        "auth",
+        "code-send",
+        "--phone",
+        alicePhone,
+        "--purpose",
+        "password-reset",
+        "--idempotency-key",
+        "reset-code-alice",
+      ],
+      aliceA,
+    )) as { challengeId: string };
+    const resetCode = sender.messages.at(-1)?.code;
+    if (resetCode === undefined) throw new Error("password reset code was not sent");
+    aliceSecrets.push(resetCode, "AnotherStrongPassword9");
+    await runJson(
+      [
+        "auth",
+        "password-reset",
+        "--phone",
+        alicePhone,
+        "--challenge",
+        resetChallenge.challengeId,
+        "--yes",
+        "--idempotency-key",
+        "reset-alice",
+      ],
+      aliceA,
+    );
   });
 });

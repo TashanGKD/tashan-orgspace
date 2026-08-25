@@ -1,6 +1,6 @@
 # Safety boundaries
 
-- Treat usernames, phone numbers, device metadata, IP-derived audit data, organization membership, tokens, verification codes, and audit events as sensitive.
+- Treat phone numbers, display names, device metadata, IP-derived audit data, organization membership, tokens, verification codes, and audit events as sensitive.
 - Never read or expose Keychain, Secret Service, encrypted credential-file, or raw token contents. Use only documented `torg` commands.
 - Never put secrets in command arguments, URLs, environment variables, shell history, logs, chat, or JSON output.
 - Use server-returned identifiers. Reject guessed IDs and ambiguous targets.

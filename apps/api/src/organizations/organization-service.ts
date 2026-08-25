@@ -17,12 +17,6 @@ export class OrganizationService {
     }
 
     const operation = async (transaction: TransactionClient) => {
-      const [account] = await transaction<{ phone_verified_at: Date | null }[]>`
-        select phone_verified_at from accounts where id = ${accountId} and status = 'active' for update
-      `;
-      if (account?.phone_verified_at == null) {
-        throw new AuthError("PHONE_NOT_VERIFIED", "verified phone is required for membership");
-      }
       const [organization] = await transaction<{ id: string; name: string }[]>`
         insert into organizations (name) values (${normalizedName}) returning id, name
       `;
@@ -52,16 +46,6 @@ export class OrganizationService {
         "org_owner",
         "org_admin",
       ]);
-      const [target] = await transaction<{ phone_verified_at: Date | null }[]>`
-        select phone_verified_at
-        from accounts
-        where id = ${targetAccountId} and status = 'active'
-        for update
-      `;
-      if (target?.phone_verified_at == null) {
-        throw new AuthError("PHONE_NOT_VERIFIED", "verified phone is required for membership");
-      }
-
       const [membership] = await transaction<{ id: string }[]>`
         insert into memberships (organization_id, account_id, role, status)
         values (${organizationId}, ${targetAccountId}, ${role}, 'active')
@@ -83,7 +67,7 @@ export class OrganizationService {
           id: string;
           organization_id: string;
           account_id: string;
-          username: string;
+          display_name: string;
           role: MembershipRole;
           status: "active" | "suspended" | "removed";
           created_at: Date;
@@ -91,7 +75,7 @@ export class OrganizationService {
         }[]
       >`
         select
-          m.id, m.organization_id, m.account_id, a.username::text,
+          m.id, m.organization_id, m.account_id, a.display_name,
           m.role, m.status, m.created_at, m.updated_at
         from memberships m
         join accounts a on a.id = m.account_id

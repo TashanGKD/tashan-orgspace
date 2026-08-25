@@ -1,19 +1,14 @@
 import { readFile } from "node:fs/promises";
 import { spawn } from "node:child_process";
 
-import {
-  LoginResponse,
-  PhoneVerificationConfirmResponse,
-  PhoneVerificationStartResponse,
-  RegisterResponse,
-} from "@tashan/contracts";
+import { LoginResponse, RegisterResponse, VerificationSendResponse } from "@tashan/contracts";
 
 const password = "CorrectHorseBattery9";
 let idempotencySequence = 0;
 
 export interface VerifiedAccount {
   accountId: string;
-  username: string;
+  displayName: string;
   password: string;
   phone: string;
 }
@@ -45,7 +40,7 @@ function nextKey(prefix: string): string {
   return `e2e-${prefix}-${idempotencySequence}`;
 }
 
-async function jsonRequest(
+export async function e2eJsonRequest(
   path: string,
   init: RequestInit,
 ): Promise<{ status: number; body: unknown }> {
@@ -74,24 +69,37 @@ async function latestCode(phone: string): Promise<string> {
   throw new Error(`verification code was not recorded for ${phone}`);
 }
 
-export async function registerAndVerify(username: string, phone: string): Promise<VerifiedAccount> {
-  const registered = await jsonRequest("/v1/auth/register", {
+export async function sendVerificationChallenge(
+  phone: string,
+  purpose: "register" | "password_reset",
+): Promise<{ challengeId: string; code: string }> {
+  const started = await e2eJsonRequest("/v1/auth/verification/send", {
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+      "idempotency-key": nextKey("verification-send"),
+    },
+    body: JSON.stringify({ phone, purpose }),
+  });
+  if (started.status !== 202) throw new Error(`verification send failed: ${started.status}`);
+  const challenge = VerificationSendResponse.parse(started.body);
+  return { challengeId: challenge.challengeId, code: await latestCode(phone) };
+}
+
+export async function registerAndVerify(label: string, phone: string): Promise<VerifiedAccount> {
+  const challenge = await sendVerificationChallenge(phone, "register");
+  const deviceId = crypto.randomUUID();
+  const registered = await e2eJsonRequest("/v1/auth/register", {
     method: "POST",
     headers: { "content-type": "application/json", "idempotency-key": nextKey("register") },
-    body: JSON.stringify({ username, password }),
-  });
-  if (registered.status !== 201) throw new Error(`registration failed: ${registered.status}`);
-  const registration = RegisterResponse.parse(registered.body);
-  const deviceId = crypto.randomUUID();
-  const loggedIn = await jsonRequest("/v1/auth/login", {
-    method: "POST",
-    headers: { "content-type": "application/json" },
     body: JSON.stringify({
-      username,
+      phone,
+      challengeId: challenge.challengeId,
+      code: challenge.code,
       password,
       device: {
         id: deviceId,
-        name: `${username} verification client`,
+        name: `${label} registration client`,
         os: "e2e",
         architecture: "test",
         clientVersion: "0.0.0-e2e",
@@ -99,28 +107,40 @@ export async function registerAndVerify(username: string, phone: string): Promis
       },
     }),
   });
-  if (loggedIn.status !== 200) throw new Error(`login failed: ${loggedIn.status}`);
-  const login = LoginResponse.parse(loggedIn.body);
-  const authHeaders = {
-    authorization: `Bearer ${login.tokens.accessToken}`,
-    "content-type": "application/json",
-    "x-torg-invocation-source": "cli",
+  if (registered.status !== 201) throw new Error(`registration failed: ${registered.status}`);
+  const registration = RegisterResponse.parse(registered.body);
+  return {
+    accountId: registration.account.id,
+    displayName: registration.account.displayName,
+    password,
+    phone: registration.account.phone,
   };
-  const started = await jsonRequest("/v1/phone-verifications", {
+}
+
+export async function loginPhone(
+  phone: string,
+  loginPassword: string,
+  deviceId: string,
+  name: string,
+): Promise<{ status: number; body: unknown }> {
+  const result = await e2eJsonRequest("/v1/auth/login", {
     method: "POST",
-    headers: { ...authHeaders, "idempotency-key": nextKey("phone-start") },
-    body: JSON.stringify({ phone }),
+    headers: { "content-type": "application/json", "x-torg-invocation-source": "cli" },
+    body: JSON.stringify({
+      phone,
+      password: loginPassword,
+      device: {
+        id: deviceId,
+        name,
+        os: "e2e-os",
+        architecture: "e2e-arch",
+        clientVersion: "0.0.0-e2e",
+        channel: "cli",
+      },
+    }),
   });
-  if (started.status !== 202) throw new Error(`phone start failed: ${started.status}`);
-  const challenge = PhoneVerificationStartResponse.parse(started.body);
-  const confirmed = await jsonRequest("/v1/phone-verifications/confirm", {
-    method: "POST",
-    headers: { ...authHeaders, "idempotency-key": nextKey("phone-confirm") },
-    body: JSON.stringify({ challengeId: challenge.challengeId, code: await latestCode(phone) }),
-  });
-  if (confirmed.status !== 200) throw new Error(`phone confirm failed: ${confirmed.status}`);
-  PhoneVerificationConfirmResponse.parse(confirmed.body);
-  return { accountId: registration.account.id, username, password, phone };
+  if (result.status === 200) LoginResponse.parse(result.body);
+  return result;
 }
 
 export async function runCliScenario<T>(input: Record<string, unknown>): Promise<T> {

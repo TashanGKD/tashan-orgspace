@@ -2,7 +2,12 @@ import { AuthError } from "../auth/auth-errors.js";
 
 export interface VerificationCodeSender {
   readonly available: boolean;
-  send(input: { phone: string; code: string; expiresAt: Date }): Promise<void>;
+  send(input: {
+    phone: string;
+    code: string;
+    expiresAt: Date;
+    purpose: "register" | "password_reset";
+  }): Promise<void>;
 }
 
 export class UnavailableVerificationCodeSender implements VerificationCodeSender {

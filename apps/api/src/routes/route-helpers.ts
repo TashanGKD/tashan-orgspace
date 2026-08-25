@@ -8,9 +8,9 @@ export async function accountAndPrincipalSummary(
   const [row] = await transaction<
     {
       account_id: string;
-      username: string;
-      phone_e164: string | null;
-      phone_verified_at: Date | null;
+      display_name: string;
+      phone_e164: string;
+      phone_verified_at: Date;
       account_status: "active" | "suspended";
       account_created_at: Date;
       principal_id: string;
@@ -19,7 +19,7 @@ export async function accountAndPrincipalSummary(
     }[]
   >`
     select
-      a.id as account_id, a.username::text, a.phone_e164, a.phone_verified_at,
+      a.id as account_id, a.display_name, a.phone_e164, a.phone_verified_at,
       a.status as account_status, a.created_at as account_created_at,
       p.id as principal_id, p.type as principal_type, p.account_id as principal_account_id
     from accounts a
@@ -30,9 +30,9 @@ export async function accountAndPrincipalSummary(
   return {
     account: {
       id: row.account_id,
-      username: row.username,
+      displayName: row.display_name,
       phone: row.phone_e164,
-      phoneVerifiedAt: row.phone_verified_at?.toISOString() ?? null,
+      phoneVerifiedAt: row.phone_verified_at.toISOString(),
       status: row.account_status,
       createdAt: row.account_created_at.toISOString(),
     },
@@ -73,7 +73,7 @@ export async function membershipSummary(transaction: TransactionClient, membersh
       id: string;
       organization_id: string;
       account_id: string;
-      username: string;
+      display_name: string;
       role: "org_owner" | "org_admin" | "member";
       status: "active" | "suspended" | "removed";
       created_at: Date;
@@ -81,7 +81,7 @@ export async function membershipSummary(transaction: TransactionClient, membersh
     }[]
   >`
     select
-      m.id, m.organization_id, m.account_id, a.username::text,
+      m.id, m.organization_id, m.account_id, a.display_name,
       m.role, m.status, m.created_at, m.updated_at
     from memberships m
     join accounts a on a.id = m.account_id
@@ -92,7 +92,7 @@ export async function membershipSummary(transaction: TransactionClient, membersh
     id: row.id,
     organizationId: row.organization_id,
     accountId: row.account_id,
-    username: row.username,
+    displayName: row.display_name,
     role: row.role,
     status: row.status,
     createdAt: row.created_at.toISOString(),

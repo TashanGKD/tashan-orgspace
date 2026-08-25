@@ -13,6 +13,7 @@ import { OutboxRepository } from "../repositories/outbox-repository.js";
 import { AuthError } from "../auth/auth-errors.js";
 import { auditInputForRequest } from "./request-audit.js";
 import { requestContext, singleHeader } from "./request-context.js";
+import { IdempotencyResponseProtector } from "./idempotency-response-protector.js";
 
 export interface MutationResult<T> {
   statusCode: number;
@@ -25,17 +26,24 @@ interface ExecuteMutationInput<T> {
   actorPrincipalId?: string;
   actorKey?: string;
   idempotencyInput: unknown;
+  auditAfterState?: Record<string, unknown>;
+  protectResponse?: boolean;
   work(transaction: TransactionClient): Promise<MutationResult<T>>;
 }
 
 export class MutationCoordinator {
-  private readonly idempotency = new IdempotencyRepository();
+  private readonly idempotency: IdempotencyRepository;
   private readonly outbox = new OutboxRepository();
 
   public constructor(
     private readonly sql: DatabaseClient,
     private readonly audit: AuditService,
-  ) {}
+    responseProtectionSecret: string,
+  ) {
+    this.idempotency = new IdempotencyRepository(
+      new IdempotencyResponseProtector(responseProtectionSecret),
+    );
+  }
 
   public async executeIdempotent<T>(input: ExecuteMutationInput<T>): Promise<MutationResult<T>> {
     const idempotencyKey = requireIdempotencyKey(input.request);
@@ -56,18 +64,31 @@ export class MutationCoordinator {
       });
       if (claim.kind === "in_progress") throw new IdempotencyConflictError();
       if (claim.kind === "cached") {
-        await this.recordSuccess(transaction, input.request, input.capabilityId, true);
+        await this.recordSuccess(
+          transaction,
+          input.request,
+          input.capabilityId,
+          true,
+          input.auditAfterState,
+        );
         return { statusCode: claim.responseStatus, body: claim.responseBody as T };
       }
 
       const result = await input.work(transaction);
-      await this.recordSuccess(transaction, input.request, input.capabilityId, false);
+      await this.recordSuccess(
+        transaction,
+        input.request,
+        input.capabilityId,
+        false,
+        input.auditAfterState,
+      );
       await this.idempotency.complete(transaction, {
         ...actor,
         capabilityId: input.capabilityId,
         idempotencyKey,
         responseStatus: result.statusCode,
         responseBody: result.body,
+        ...(input.protectResponse === undefined ? {} : { protectResponse: input.protectResponse }),
       });
       return result;
     })) as MutationResult<T>;
@@ -77,10 +98,11 @@ export class MutationCoordinator {
     request: FastifyRequest,
     capabilityId: CapabilityId,
     work: (transaction: TransactionClient) => Promise<MutationResult<T>>,
+    auditAfterState?: Record<string, unknown>,
   ): Promise<MutationResult<T>> {
     return (await this.sql.begin(async (transaction) => {
       const result = await work(transaction);
-      await this.recordSuccess(transaction, request, capabilityId, false);
+      await this.recordSuccess(transaction, request, capabilityId, false, auditAfterState);
       return result;
     })) as MutationResult<T>;
   }
@@ -90,9 +112,13 @@ export class MutationCoordinator {
     request: FastifyRequest,
     capabilityId: CapabilityId,
     replayed: boolean,
+    auditAfterState?: Record<string, unknown>,
   ): Promise<void> {
     await this.audit.append(
-      auditInputForRequest(request, capabilityId, "success", undefined, { replayed }),
+      auditInputForRequest(request, capabilityId, "success", undefined, {
+        ...auditAfterState,
+        replayed,
+      }),
       transaction,
     );
     await this.outbox.append(transaction, {

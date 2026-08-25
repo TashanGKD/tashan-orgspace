@@ -55,6 +55,7 @@ const tokenService = new AccessTokenService({
 const app = await buildApp({
   sql,
   tokenService,
+  serviceVersion: "0.1.0-alpha.2-test",
   phoneSender: new FileVerificationCodeSender(codeFile),
   loginRateLimiter: new RedisFixedWindowRateLimiter({
     client: redis,

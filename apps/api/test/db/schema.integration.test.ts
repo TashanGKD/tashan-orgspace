@@ -33,10 +33,10 @@ async function columnNames(table: string): Promise<string[]> {
 
 async function createIdentityFixture() {
   identityFixtureSequence += 1;
-  const username = `alice-${identityFixtureSequence}`;
+  const phone = `+86138001${String(38000 + identityFixtureSequence)}`;
   const [account] = await sql<{ id: string }[]>`
-    insert into accounts (username, password_hash)
-    values (${username}, 'argon2id-fixture')
+    insert into accounts (display_name, password_hash, phone_e164, phone_verified_at)
+    values (${`Alice ${identityFixtureSequence}`}, 'argon2id-fixture', ${phone}, now())
     returning id
   `;
   if (account === undefined) throw new Error("failed to create account fixture");
@@ -57,6 +57,16 @@ async function createIdentityFixture() {
 }
 
 describe("Phase 0 database schema", () => {
+  test("uses verified phones and display names as the account identity", async () => {
+    expect(await columnNames("accounts")).toEqual(
+      expect.arrayContaining(["phone_e164", "phone_verified_at", "display_name"]),
+    );
+    expect(await columnNames("accounts")).not.toContain("username");
+    expect(await columnNames("phone_verifications")).toEqual(
+      expect.arrayContaining(["purpose", "request_id", "server_ip", "delivery_result"]),
+    );
+  });
+
   test("creates the device-bound session columns", async () => {
     expect(await columnNames("sessions")).toEqual(
       expect.arrayContaining([

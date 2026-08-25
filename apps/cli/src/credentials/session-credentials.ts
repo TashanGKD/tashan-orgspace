@@ -8,12 +8,13 @@ import type { CredentialStore } from "./credential-store.js";
 
 const StoredSession = z
   .object({
-    version: z.literal(1),
+    version: z.literal(2),
     deviceId: z.uuid(),
     accessToken: z.string().min(1).optional(),
     refreshToken: z.string().min(32).optional(),
     accountId: z.uuid().optional(),
-    username: z.string().min(1).optional(),
+    displayName: z.string().min(1).optional(),
+    phoneMasked: z.string().min(1).optional(),
   })
   .strict()
   .superRefine((value, context) => {
@@ -39,11 +40,19 @@ export class CliSessionCredentials implements SdkCredentialStore {
     const raw = await store.read(label);
     if (raw === undefined) {
       return new CliSessionCredentials(store, label, {
-        version: 1,
+        version: 2,
         deviceId: z.uuid().parse(preferredDeviceId ?? randomUUID()),
       });
     }
-    const state = StoredSession.parse(JSON.parse(raw) as unknown);
+    const decoded = JSON.parse(raw) as unknown;
+    if (
+      typeof decoded === "object" &&
+      decoded !== null &&
+      (("version" in decoded && decoded.version === 1) || "username" in decoded)
+    ) {
+      throw new Error("legacy username session credentials are unsupported; log in again");
+    }
+    const state = StoredSession.parse(decoded);
     if (preferredDeviceId !== undefined && preferredDeviceId !== state.deviceId) {
       throw new Error("configured device ID does not match the stored session device");
     }
@@ -54,8 +63,8 @@ export class CliSessionCredentials implements SdkCredentialStore {
     return this.state.deviceId;
   }
 
-  public get username(): string | undefined {
-    return this.state.username;
+  public get displayName(): string | undefined {
+    return this.state.displayName;
   }
 
   public async getAccessToken(): Promise<string | undefined> {
@@ -78,8 +87,19 @@ export class CliSessionCredentials implements SdkCredentialStore {
     await this.persist();
   }
 
-  public async updateIdentity(input: { accountId: string; username: string }): Promise<void> {
-    this.state = { ...this.state, ...input };
+  public async updateIdentity(input: {
+    accountId: string;
+    displayName: string;
+    phone: string;
+  }): Promise<void> {
+    const phoneMasked =
+      input.phone.length > 7 ? `${input.phone.slice(0, 4)}****${input.phone.slice(-4)}` : "****";
+    this.state = {
+      ...this.state,
+      accountId: input.accountId,
+      displayName: input.displayName,
+      phoneMasked,
+    };
     await this.persist();
   }
 

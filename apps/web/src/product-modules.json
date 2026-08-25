@@ -1,0 +1,197 @@
+[
+  {
+    "id": "global.my-work",
+    "label": "我的工作",
+    "description": "聚合你在所有组织中的任务、审批、会议和消息。",
+    "context": "global",
+    "status": "coming_soon",
+    "route": "/my-work",
+    "roles": [],
+    "capabilities": []
+  },
+  {
+    "id": "global.account",
+    "label": "账号与设备",
+    "description": "管理手机号验证、登录设备和当前会话。",
+    "context": "global",
+    "status": "available",
+    "route": "/account",
+    "roles": [],
+    "capabilities": [
+      "auth.verification.send",
+      "auth.password.reset",
+      "device.list",
+      "device.revoke"
+    ]
+  },
+  {
+    "id": "personal.overview",
+    "label": "个人空间",
+    "description": "查看个人空间的文件、运行资源、服务和用量。",
+    "context": "personal",
+    "status": "coming_soon",
+    "route": "/personal",
+    "roles": [],
+    "capabilities": []
+  },
+  {
+    "id": "personal.files",
+    "label": "个人文件",
+    "description": "管理仅本人可访问的文件。",
+    "context": "personal",
+    "status": "coming_soon",
+    "route": "/personal/files",
+    "roles": [],
+    "capabilities": []
+  },
+  {
+    "id": "personal.runtime",
+    "label": "个人运行与构建",
+    "description": "在个人空间内运行程序和构建镜像。",
+    "context": "personal",
+    "status": "coming_soon",
+    "route": "/personal/runtime",
+    "roles": [],
+    "capabilities": []
+  },
+  {
+    "id": "personal.services",
+    "label": "个人服务与数据库",
+    "description": "管理个人常驻服务、数据库和域名。",
+    "context": "personal",
+    "status": "coming_soon",
+    "route": "/personal/services",
+    "roles": [],
+    "capabilities": []
+  },
+  {
+    "id": "personal.usage",
+    "label": "个人用量",
+    "description": "查看个人空间容量和计算资源用量。",
+    "context": "personal",
+    "status": "coming_soon",
+    "route": "/personal/usage",
+    "roles": [],
+    "capabilities": []
+  },
+  {
+    "id": "organization.home",
+    "label": "组织首页",
+    "description": "查看当前组织的工作入口和 Phase 0 状态。",
+    "context": "organization",
+    "status": "available",
+    "route": "/org/:organizationId/home",
+    "roles": ["org_owner", "org_admin", "member"],
+    "capabilities": ["organization.list", "organization.create"]
+  },
+  {
+    "id": "organization.tasks",
+    "label": "任务",
+    "description": "查看、创建、指派和跟踪组织任务。",
+    "context": "organization",
+    "status": "coming_soon",
+    "route": "/org/:organizationId/tasks",
+    "roles": ["org_owner", "org_admin", "member"],
+    "capabilities": []
+  },
+  {
+    "id": "organization.okr",
+    "label": "OKR",
+    "description": "查看组织目标、指标、周期和进度。",
+    "context": "organization",
+    "status": "coming_soon",
+    "route": "/org/:organizationId/okr",
+    "roles": ["org_owner", "org_admin", "member"],
+    "capabilities": []
+  },
+  {
+    "id": "organization.approvals",
+    "label": "审批",
+    "description": "处理组织审批请求和流程记录。",
+    "context": "organization",
+    "status": "coming_soon",
+    "route": "/org/:organizationId/approvals",
+    "roles": ["org_owner", "org_admin", "member"],
+    "capabilities": []
+  },
+  {
+    "id": "organization.meetings",
+    "label": "会议",
+    "description": "查看会议、参会人、日程和提醒。",
+    "context": "organization",
+    "status": "coming_soon",
+    "route": "/org/:organizationId/meetings",
+    "roles": ["org_owner", "org_admin", "member"],
+    "capabilities": []
+  },
+  {
+    "id": "organization.files",
+    "label": "组织文件",
+    "description": "管理组织空间中的文件和目录。",
+    "context": "organization",
+    "status": "coming_soon",
+    "route": "/org/:organizationId/files",
+    "roles": ["org_owner", "org_admin", "member"],
+    "capabilities": []
+  },
+  {
+    "id": "organization.messages",
+    "label": "消息",
+    "description": "使用组织群聊和组织内成员私聊。",
+    "context": "organization",
+    "status": "coming_soon",
+    "route": "/org/:organizationId/messages",
+    "roles": ["org_owner", "org_admin", "member"],
+    "capabilities": []
+  },
+  {
+    "id": "organization.runtime",
+    "label": "运行与构建",
+    "description": "在组织空间内运行程序和构建镜像。",
+    "context": "organization",
+    "status": "coming_soon",
+    "route": "/org/:organizationId/runtime",
+    "roles": ["org_owner", "org_admin", "member"],
+    "capabilities": []
+  },
+  {
+    "id": "organization.services",
+    "label": "服务与数据库",
+    "description": "管理组织常驻服务、数据库和域名。",
+    "context": "organization",
+    "status": "coming_soon",
+    "route": "/org/:organizationId/services",
+    "roles": ["org_owner", "org_admin", "member"],
+    "capabilities": []
+  },
+  {
+    "id": "organization.members",
+    "label": "成员与角色",
+    "description": "查看组织成员并由管理员添加成员。",
+    "context": "organization",
+    "status": "available",
+    "route": "/org/:organizationId/admin/members",
+    "roles": ["org_owner", "org_admin"],
+    "capabilities": ["organization.member.list", "organization.member.add"]
+  },
+  {
+    "id": "organization.audit",
+    "label": "组织审计",
+    "description": "查看组织操作、设备、来源 IP 和请求证据。",
+    "context": "organization",
+    "status": "available",
+    "route": "/org/:organizationId/admin/audit",
+    "roles": ["org_owner", "org_admin"],
+    "capabilities": ["audit.list"]
+  },
+  {
+    "id": "organization.policies",
+    "label": "组织制度",
+    "description": "配置配额、通知、短信和流程制度。",
+    "context": "organization",
+    "status": "coming_soon",
+    "route": "/org/:organizationId/admin/policies",
+    "roles": ["org_owner", "org_admin"],
+    "capabilities": []
+  }
+]

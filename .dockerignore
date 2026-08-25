@@ -1,0 +1,14 @@
+.git
+.github
+.worktrees
+node_modules
+**/node_modules
+**/dist
+.env
+.env.*
+!deploy/env.production.example
+docs
+release
+skill
+tests
+*.log

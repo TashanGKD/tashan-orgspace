@@ -45,8 +45,9 @@ export function registerOrganizationCommands(program: Command, context: CommandC
     context.emit(
       memberList,
       result,
-      result.items.map((item) => `${item.accountId}\t${item.username}\t${item.role}`).join("\n") ||
-        "No members",
+      result.items
+        .map((item) => `${item.accountId}\t${item.displayName}\t${item.role}`)
+        .join("\n") || "No members",
     );
   });
 
@@ -72,7 +73,7 @@ export function registerOrganizationCommands(program: Command, context: CommandC
         { accountId: options.account, role: options.role },
         { idempotencyKey },
       );
-      context.emit(memberAdd, result, `Added ${result.membership.username}`);
+      context.emit(memberAdd, result, `Added ${result.membership.displayName}`);
     },
   );
 }

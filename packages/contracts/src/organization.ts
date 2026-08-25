@@ -2,11 +2,11 @@ import { z } from "zod";
 
 import {
   AccountId,
+  DisplayName,
   IsoDateTime,
   MembershipId,
   OrganizationId,
   OrganizationMembershipRole,
-  Username,
 } from "./common.js";
 
 export const OrganizationStatus = z.enum(["active", "suspended", "closed"]);
@@ -31,7 +31,7 @@ export const MembershipSummary = z
     id: MembershipId,
     organizationId: OrganizationId,
     accountId: AccountId,
-    username: Username,
+    displayName: DisplayName,
     role: OrganizationMembershipRole,
     status: MembershipStatus,
     createdAt: IsoDateTime,

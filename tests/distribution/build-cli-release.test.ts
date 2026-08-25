@@ -30,7 +30,7 @@ describe("CLI release builder", () => {
     );
 
     const platform = `${process.platform}-${process.arch}`;
-    const archiveName = `torg-v0.1.0-alpha.1-${platform}.tar.gz`;
+    const archiveName = `torg-v0.1.0-alpha.2-${platform}.tar.gz`;
     const archivePath = join(outputDirectory, archiveName);
     const topLevel = archiveName.replace(/\.tar\.gz$/, "");
     const entries = execFileSync("tar", ["-tzf", archivePath], { encoding: "utf8" })
@@ -63,7 +63,7 @@ describe("CLI release builder", () => {
       PATH: "/usr/bin:/bin",
     };
     const version = spawnSync(launcher, ["--version"], { encoding: "utf8", env: environment });
-    expect(version).toMatchObject({ status: 0, stdout: "0.1.0-alpha.1\n", stderr: "" });
+    expect(version).toMatchObject({ status: 0, stdout: "0.1.0-alpha.2\n", stderr: "" });
     const noArguments = spawnSync(launcher, [], { encoding: "utf8", env: environment });
     expect(noArguments.status).toBe(0);
     expect(noArguments.stdout).toContain("Usage: torg");
@@ -76,7 +76,7 @@ describe("CLI release builder", () => {
       encoding: "utf8",
       env: environment,
     });
-    expect(linkedVersion).toMatchObject({ status: 0, stdout: "0.1.0-alpha.1\n", stderr: "" });
+    expect(linkedVersion).toMatchObject({ status: 0, stdout: "0.1.0-alpha.2\n", stderr: "" });
   }, 30_000);
 
   test("refuses a non-empty output directory", () => {

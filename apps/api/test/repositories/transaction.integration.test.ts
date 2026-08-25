@@ -19,6 +19,7 @@ const accounts = new AccountRepository();
 const audit = new AuditRepository();
 const idempotency = new IdempotencyRepository();
 const outbox = new OutboxRepository();
+let accountSequence = 0;
 
 beforeAll(async () => {
   await resetTestDatabase(testDatabaseUrl);
@@ -46,10 +47,13 @@ async function counts() {
 }
 
 async function createActor() {
+  accountSequence += 1;
   return unitOfWork.run(async (transaction) => {
     const account = await accounts.insert(transaction, {
-      username: "idempotency-user",
+      displayName: "Idempotency user",
       passwordHash: "argon2id-fixture",
+      phoneE164: `+8613800138${String(accountSequence).padStart(3, "0")}`,
+      phoneVerifiedAt: new Date(),
     });
     const [principal] = await transaction<{ id: string }[]>`
       insert into principals (account_id, type)
@@ -65,9 +69,12 @@ describe("transactional repositories", () => {
   test("rolls back domain, audit, and outbox together", async () => {
     await expect(
       unitOfWork.run(async (transaction) => {
+        accountSequence += 1;
         const account = await accounts.insert(transaction, {
-          username: "rollback-user",
+          displayName: "Rollback user",
           passwordHash: "argon2id-fixture",
+          phoneE164: `+8613800138${String(accountSequence).padStart(3, "0")}`,
+          phoneVerifiedAt: new Date(),
         });
         await audit.append(transaction, {
           accountId: account.id,
@@ -93,9 +100,12 @@ describe("transactional repositories", () => {
 
   test("commits domain, audit, and outbox together", async () => {
     await unitOfWork.run(async (transaction) => {
+      accountSequence += 1;
       const account = await accounts.insert(transaction, {
-        username: "commit-user",
+        displayName: "Commit user",
         passwordHash: "argon2id-fixture",
+        phoneE164: `+8613800138${String(accountSequence).padStart(3, "0")}`,
+        phoneVerifiedAt: new Date(),
       });
       await audit.append(transaction, {
         accountId: account.id,

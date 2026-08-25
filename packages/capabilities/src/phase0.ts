@@ -15,8 +15,21 @@ export const CapabilityId = z.enum(capabilityIds);
 export type CapabilityId = z.infer<typeof CapabilityId>;
 
 export const CapabilityBindings = z.record(CapabilityId, z.string().min(1));
-export const CapabilitySurfaceList = z.array(CapabilityId).superRefine((values, context) => {
-  if (new Set(values).size !== values.length) {
-    context.addIssue({ code: "custom", message: "duplicate capability surface" });
+export const CapabilitySurface = z
+  .object({
+    capabilityId: CapabilityId,
+    route: z.string().startsWith("/"),
+    action: z.string().regex(/^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$/),
+    test: z.string().regex(/^apps\/web\/src\/.+\.test\.tsx?$/),
+  })
+  .strict();
+export const CapabilitySurfaceList = z.array(CapabilitySurface).superRefine((values, context) => {
+  const capabilityIds = values.map(({ capabilityId }) => capabilityId);
+  const actions = values.map(({ action }) => action);
+  if (new Set(capabilityIds).size !== capabilityIds.length) {
+    context.addIssue({ code: "custom", message: "duplicate Web capability" });
+  }
+  if (new Set(actions).size !== actions.length) {
+    context.addIssue({ code: "custom", message: "duplicate Web action" });
   }
 });
