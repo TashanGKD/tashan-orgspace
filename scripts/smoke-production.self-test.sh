@@ -26,7 +26,7 @@ case "${FAKE_HEALTH_MODE:-ok}" in
   redirect) code=302; effective="https://wrong.tashan.chat/v1/health"; body='redirect' ;;
   malformed) code=200; effective="$url"; body='not-json' ;;
   wrong-version) code=200; effective="$url"; body='{"status":"ok","version":"9.9.9"}' ;;
-  *) code=200; effective="$url"; body='{"status":"ok","version":"0.1.0-alpha.1"}' ;;
+  *) code=200; effective="$url"; body='{"status":"ok","version":"0.1.0-alpha.2"}' ;;
 esac
 printf '%s' "$body" > "$output_file"
 printf '%s\t%s' "$code" "$effective"

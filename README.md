@@ -85,4 +85,4 @@ docs/       架构、运行手册、产品设计与实施计划
 
 ## 部署状态
 
-本仓库当前发布的是 `v0.1.0-alpha.1` 预发布 CLI 与 Skill。独立生产后端和 `https://orgspace.tashan.chat` 尚未部署；现有 `org.tashan.chat` 属于其他项目，不在本仓库的部署范围内。
+本轮发布版本为 `v0.1.0-alpha.2`。独立 Phase 0 生产后端已部署到 `https://orgspace.tashan.chat`；文件、协作、聊天和安全计算等 Phase 1+ 能力仍未发布。现有 `org.tashan.chat` 属于其他项目，不在本仓库的部署范围内。

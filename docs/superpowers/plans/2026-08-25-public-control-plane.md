@@ -491,11 +491,11 @@ git commit -m "docs(deploy): record public control plane evidence"
 - Modify: `README.md`
 - Modify: `docs/verification/2026-08-25-public-control-plane.md`
 
-- [ ] **Step 1: Bump one release version everywhere**
+- [x] **Step 1: Bump one release version everywhere**
 
 Use the next prerelease version after `0.1.0-alpha.1` and update the CLI package, release manifest, Skill manifest, Skill instructions, and README together. Do not create a stable tag until the stable-release health gate has passed on the deployed commit.
 
-- [ ] **Step 2: Run release and fresh-user gates**
+- [x] **Step 2: Run release and fresh-user gates**
 
 ```bash
 bash scripts/verify-phase0.sh

@@ -50,7 +50,7 @@ type FixtureOptions = {
 };
 
 function createReleaseFixture(options: FixtureOptions = {}) {
-  const version = options.version ?? "0.1.0-alpha.1";
+  const version = options.version ?? "0.1.0-alpha.2";
   const platform = options.platform ?? "darwin-arm64";
   const root = temporaryDirectory("torg-installer-release-");
   const releaseDirectory = join(root, `v${version}`);
@@ -141,7 +141,7 @@ describe("Skill CLI installer", () => {
     const target = join(context.bin, "torg");
     expect(lstatSync(target).isSymbolicLink()).toBe(true);
     expect(readlinkSync(target)).toBe(join(context.home, "data/torg/current/bin/torg"));
-    expect(execFileSync(target, ["--version"], { encoding: "utf8" })).toBe("0.1.0-alpha.1\n");
+    expect(execFileSync(target, ["--version"], { encoding: "utf8" })).toBe("0.1.0-alpha.2\n");
 
     const second = runInstaller(["--install"], context.environment);
     expect(second).toMatchObject({ status: 0, stderr: "" });
@@ -222,14 +222,14 @@ describe("Skill CLI installer", () => {
     expect(runInstaller(["--install"], context.environment).status).toBe(0);
     const target = join(context.bin, "torg");
 
-    const badUpgrade = createReleaseFixture({ version: "0.1.0-alpha.2", badChecksum: true });
+    const badUpgrade = createReleaseFixture({ version: "0.1.0-alpha.3", badChecksum: true });
     const upgradeEnvironment = {
       ...context.environment,
       TORG_RELEASE_BASE_URL: `file://${badUpgrade.releaseDirectory}`,
     };
-    const result = runInstaller(["--install", "--version", "0.1.0-alpha.2"], upgradeEnvironment);
+    const result = runInstaller(["--install", "--version", "0.1.0-alpha.3"], upgradeEnvironment);
     expect(result.status).not.toBe(0);
-    expect(execFileSync(target, ["--version"], { encoding: "utf8" })).toBe("0.1.0-alpha.1\n");
+    expect(execFileSync(target, ["--version"], { encoding: "utf8" })).toBe("0.1.0-alpha.2\n");
     expect(readdirSync(context.temp)).toEqual([]);
   });
 
@@ -239,12 +239,12 @@ describe("Skill CLI installer", () => {
     expect(runInstaller(["--install"], context.environment).status).toBe(0);
     const target = join(context.bin, "torg");
 
-    const upgrade = createReleaseFixture({ version: "0.1.0-alpha.2" });
-    const result = runInstaller(["--install", "--version", "0.1.0-alpha.2"], {
+    const upgrade = createReleaseFixture({ version: "0.1.0-alpha.3" });
+    const result = runInstaller(["--install", "--version", "0.1.0-alpha.3"], {
       ...context.environment,
       TORG_RELEASE_BASE_URL: `file://${upgrade.releaseDirectory}`,
     });
     expect(result).toMatchObject({ status: 0, stderr: "" });
-    expect(execFileSync(target, ["--version"], { encoding: "utf8" })).toBe("0.1.0-alpha.2\n");
+    expect(execFileSync(target, ["--version"], { encoding: "utf8" })).toBe("0.1.0-alpha.3\n");
   });
 });
