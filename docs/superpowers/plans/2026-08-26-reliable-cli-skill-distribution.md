@@ -308,16 +308,16 @@ git commit -m "feat(distribution): serve immutable AUP downloads"
 - Modify: `scripts/check-gate-self-tests.mjs`
 - Modify: `scripts/check-gate-self-tests.self-test.mjs`
 
-- [ ] **Step 1: Encode adversarial publisher inputs**
+- [x] **Step 1: Encode adversarial publisher inputs**
 
 The self-test fake SSH/rsync layer must prove refusal for `../../version`, missing/extra archives, duplicate checksum entries, symlink input, dirty tracked files, tag/manifest mismatch, existing remote version, wrong remote root, and `--apply` without confirmation. It must also prove no arguments and `--preflight` perform no remote writes.
 
-- [ ] **Step 2: Run RED**
+- [x] **Step 2: Run RED**
 
 Run: `bash scripts/publish-public-distribution.self-test.sh`  
 Expected: FAIL because the publisher does not exist.
 
-- [ ] **Step 3: Implement publisher**
+- [x] **Step 3: Implement publisher**
 
 Usage:
 
@@ -329,7 +329,7 @@ scripts/publish-public-distribution.sh --apply --confirm-production --source-dir
 
 The publisher reads version/assets from the release manifest, validates four exact archives and `SHA256SUMS`, verifies the current exact tag, uploads to `$remoteRoot/shared/public-downloads/.staging/v$version-$$`, revalidates remotely, refuses existing `v$version`, atomically renames staging, then atomically updates only `install-skill.sh`.
 
-- [ ] **Step 4: Run GREEN and gate discovery**
+- [x] **Step 4: Run GREEN and gate discovery**
 
 Run:
 
@@ -339,7 +339,7 @@ node scripts/check-gate-self-tests.mjs
 node scripts/check-gate-self-tests.self-test.mjs
 ```
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add scripts/publish-public-distribution* scripts/check-gate-self-tests*

@@ -6,6 +6,7 @@ function isGateFile(name) {
   const productionSafetyGates = new Set([
     "configure-orgspace-ingress.sh",
     "deploy-orgspace.sh",
+    "publish-public-distribution.sh",
     "smoke-production.sh",
   ]);
   return (
