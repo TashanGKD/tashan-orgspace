@@ -63,12 +63,12 @@ if [ -n "$headers" ]; then
   length=$(wc -c <"$output" | tr -d ' ')
   {
     printf 'HTTP/1.1 %s Fixture\r\n' "$status"
-    printf 'Content-Length: %s\r\n' "$length"
+    printf 'content-length: %s\r\n' "$length"
     case "$relative:${ORGSPACE_TEST_DISTRIBUTION_MODE:-good}" in
-      install-skill.sh:stable-immutable) printf 'Cache-Control: public, max-age=31536000, immutable\r\n' ;;
-      install-skill.sh:*) printf 'Cache-Control: no-cache\r\n' ;;
-      *:version-no-immutable) printf 'Cache-Control: public, max-age=60\r\n' ;;
-      *) printf 'Cache-Control: public, max-age=31536000, immutable\r\n' ;;
+      install-skill.sh:stable-immutable) printf 'cache-control: public, max-age=31536000, immutable\r\n' ;;
+      install-skill.sh:*) printf 'cache-control: no-cache\r\n' ;;
+      *:version-no-immutable) printf 'cache-control: public, max-age=60\r\n' ;;
+      *) printf 'cache-control: public, max-age=31536000, immutable\r\n' ;;
     esac
     printf '\r\n'
   } >"$headers"
