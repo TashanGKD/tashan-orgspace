@@ -111,7 +111,7 @@ git commit -m "feat(deploy): expose production build identity"
 - Create: `scripts/check-production-contract.mjs`
 - Create: `scripts/check-production-contract.self-test.mjs`
 
-- [ ] **Step 1: Write the failing production-contract gate and negative self-test**
+- [x] **Step 1: Write the failing production-contract gate and negative self-test**
 
 The gate must parse Compose and supporting files and fail on these real-shape violations:
 
@@ -127,13 +127,13 @@ project name is not tashan-orgspace-prod
 
 The self-test copies fixtures to a temporary directory, injects each violation independently, and asserts the gate exits non-zero with the exact violated invariant.
 
-- [ ] **Step 2: Run the self-test and verify RED**
+- [x] **Step 2: Run the self-test and verify RED**
 
 Run: `node scripts/check-production-contract.self-test.mjs`
 
 Expected: FAIL because the gate and production files do not yet exist.
 
-- [ ] **Step 3: Implement the production images and Compose stack**
+- [x] **Step 3: Implement the production images and Compose stack**
 
 Use pinned base images. The runtime image installs the frozen workspace and starts one of these commands supplied by Compose:
 
@@ -152,7 +152,7 @@ services:
 
 Only `gateway` publishes a port. PostgreSQL and Redis use named volumes and internal DNS. API receives `DATABASE_URL=postgresql://...@postgres:5432/orgspace`, `REDIS_URL=redis://redis:6379`, `HOST=0.0.0.0`, `PORT=4110`, `CORS_ORIGINS=https://orgspace.tashan.chat`, `JWT_ISSUER=https://orgspace.tashan.chat`, and `TRUSTED_PROXY_CIDRS=172.31.64.0/24`. Define that subnet explicitly and place gateway at `172.31.64.10` so client-IP trust is bounded.
 
-- [ ] **Step 4: Run contract and Docker config checks**
+- [x] **Step 4: Run contract and Docker config checks**
 
 ```bash
 node scripts/check-production-contract.mjs
@@ -161,7 +161,7 @@ node scripts/check-production-contract.self-test.mjs
 
 Expected: all PASS without starting containers or writing production state. The contract gate itself must run `docker compose config --quiet` with generated non-secret fixture values so the committed example file can remain names-only.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add .dockerignore deploy scripts/check-production-contract.mjs \
