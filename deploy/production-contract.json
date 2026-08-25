@@ -5,6 +5,7 @@
   "ecsHostAlias": "tashan-ecs",
   "remoteRoot": "/home/aup/tashan-orgspace",
   "composeProject": "tashan-orgspace-prod",
+  "dockerImagePrefix": "m.daocloud.io/docker.io/library",
   "aupLoopbackPort": 44110,
   "ecsLoopbackPort": 14010,
   "ecsCertificate": "/etc/ssl/wildcard-tashan/fullchain.cer",

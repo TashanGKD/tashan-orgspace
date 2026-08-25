@@ -410,21 +410,21 @@ git commit -m "ci(deploy): enforce production safety gates"
 - Modify: `package.json`
 - Modify: `scripts/verify-phase0.sh`
 
-- [ ] **Step 1: Write the failing production-stack test**
+- [x] **Step 1: Write the failing production-stack test**
 
 Assert the built stack serves Web `/`, returns same-origin `/v1/health`, reports the injected version, rejects a foreign CORS origin, preserves the client IP only from the fixed gateway subnet, and leaves PostgreSQL/Redis unreachable from host ports.
 
-- [ ] **Step 2: Verify RED**
+- [x] **Step 2: Verify RED**
 
 Run: `pnpm test:production-stack`
 
 Expected: FAIL because the production-stack runner is absent.
 
-- [ ] **Step 3: Implement isolated local execution**
+- [x] **Step 3: Implement isolated local execution**
 
 Use a unique Compose project, temporary generated JWT/phone/database secrets, ports chosen by Docker or an explicit test override, and a trap that stops only this project. Do not delete named volumes unless `ORGSPACE_TEST_CLEANUP_VOLUMES=1` is explicitly set.
 
-- [ ] **Step 4: Verify GREEN and commit**
+- [x] **Step 4: Verify GREEN and commit**
 
 ```bash
 pnpm test:production-stack

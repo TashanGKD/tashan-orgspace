@@ -31,6 +31,7 @@ run_step "node scripts/check-commit-evidence.self-test.mjs" node scripts/check-c
 run_step "bash scripts/deploy-orgspace.self-test.sh" bash scripts/deploy-orgspace.self-test.sh
 run_step "bash scripts/configure-orgspace-ingress.self-test.sh" bash scripts/configure-orgspace-ingress.self-test.sh
 run_step "bash scripts/smoke-production.self-test.sh" bash scripts/smoke-production.self-test.sh
+run_step "pnpm test:production-stack" env ORGSPACE_TEST_CLEANUP_VOLUMES=1 pnpm test:production-stack
 run_step "pnpm test:e2e" pnpm test:e2e
 
 echo "verify-phase0: PASS"

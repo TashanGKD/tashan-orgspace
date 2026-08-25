@@ -8,7 +8,7 @@ x-database-url: &database-url postgresql://orgspace:${ORGSPACE_POSTGRES_PASSWORD
 
 services:
   postgres:
-    image: postgres:17.6-alpine
+    image: m.daocloud.io/docker.io/library/postgres:17.6-alpine
     restart: unless-stopped
     environment:
       POSTGRES_DB: orgspace
@@ -24,7 +24,7 @@ services:
       - postgres-data:/var/lib/postgresql/data
 
   redis:
-    image: redis:8.2.1-alpine
+    image: m.daocloud.io/docker.io/library/redis:8.2.1-alpine
     restart: unless-stopped
     command: ["redis-server", "--appendonly", "yes"]
     healthcheck:
@@ -132,8 +132,8 @@ services:
       - "127.0.0.1:44110:8080"
     read_only: true
     tmpfs:
-      - /var/cache/nginx:size=32m,mode=0755
-      - /var/run:size=4m,mode=0755
+      - /var/cache/nginx:size=32m,uid=101,gid=101,mode=0755
+      - /var/run:size=4m,uid=101,gid=101,mode=0755
     security_opt:
       - no-new-privileges:true
     cap_drop:

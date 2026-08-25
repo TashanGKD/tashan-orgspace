@@ -10,7 +10,7 @@ const gate = join(repositoryRoot, "scripts/check-production-contract.mjs");
 const validCompose = `name: tashan-orgspace-prod
 services:
   postgres:
-    image: postgres:17.6-alpine
+    image: m.daocloud.io/docker.io/library/postgres:17.6-alpine
     environment:
       POSTGRES_DB: orgspace
       POSTGRES_PASSWORD: \${ORGSPACE_POSTGRES_PASSWORD:?required}
@@ -18,7 +18,7 @@ services:
     volumes:
       - postgres-data:/var/lib/postgresql/data
   redis:
-    image: redis:8.2.1-alpine
+    image: m.daocloud.io/docker.io/library/redis:8.2.1-alpine
     command: ["redis-server", "--appendonly", "yes"]
     volumes:
       - redis-data:/data
@@ -77,6 +77,10 @@ services:
         ipv4_address: 172.31.64.10
     ports:
       - "127.0.0.1:44110:8080"
+    read_only: true
+    tmpfs:
+      - /var/cache/nginx:size=32m,uid=101,gid=101,mode=0755
+      - /var/run:size=4m,uid=101,gid=101,mode=0755
 volumes:
   postgres-data:
   redis-data:
@@ -119,8 +123,8 @@ reverse_forward="127.0.0.1:$ecs_port:127.0.0.1:$aup_port"
 nohup autossh -M 0 -N -o ExitOnForwardFailure=yes -o ServerAliveInterval=30 -o ServerAliveCountMax=3 -i "$key_file" -R "$reverse_forward" "$ecs_target"
 `;
 
-const validRuntimeDockerfile = `FROM node:24.14.0-bookworm-slim\nUSER node\n`;
-const validWebDockerfile = `FROM node:24.14.0-bookworm-slim AS build\nFROM nginx:1.30.4-alpine\nUSER nginx\n`;
+const validRuntimeDockerfile = `FROM m.daocloud.io/docker.io/library/node:24.14.0-bookworm-slim\nUSER node\n`;
+const validWebDockerfile = `FROM m.daocloud.io/docker.io/library/node:24.14.0-bookworm-slim AS build\nFROM m.daocloud.io/docker.io/library/nginx:1.30.4-alpine\nUSER nginx\n`;
 const validEnvironmentExample = `ORGSPACE_POSTGRES_PASSWORD=
 SERVICE_VERSION=
 JWT_ACTIVE_KEY_ID=
@@ -148,6 +152,7 @@ const validProductionContract = {
   ecsLoopbackPort: 14010,
   ecsCertificate: "/etc/ssl/wildcard-tashan/fullchain.cer",
   ecsCertificateKey: "/etc/ssl/wildcard-tashan/tashan.chat.key",
+  dockerImagePrefix: "m.daocloud.io/docker.io/library",
 };
 const validRelease = { apiUrl: "https://orgspace.tashan.chat" };
 
@@ -274,11 +279,23 @@ expectReject("remote root escape", "remoteRoot must be /home/aup/tashan-orgspace
 expectReject("AUP port drift", "gateway port must match production aupLoopbackPort", {
   productionContract: { ...validProductionContract, aupLoopbackPort: 44111 },
 });
+expectReject("image registry drift", "dockerImagePrefix must use the approved mirror", {
+  productionContract: { ...validProductionContract, dockerImagePrefix: "docker.io/library" },
+});
+expectReject("unapproved database image", "postgres and redis must use the approved image mirror", {
+  compose: validCompose.replace(
+    "m.daocloud.io/docker.io/library/postgres:17.6-alpine",
+    "docker.io/library/postgres:17.6-alpine",
+  ),
+});
 expectReject("runtime image runs as root", "runtime image must declare USER node", {
   runtimeDockerfile: validRuntimeDockerfile.replace("USER node\n", ""),
 });
 expectReject("web image runs as root", "web image must declare USER nginx", {
   webDockerfile: validWebDockerfile.replace("USER nginx\n", ""),
+});
+expectReject("root-owned gateway tmpfs", "gateway tmpfs must be writable only by nginx uid 101", {
+  compose: validCompose.replaceAll("uid=101,gid=101", "uid=0,gid=0"),
 });
 
 console.log("check-production-contract.self-test: PASS");

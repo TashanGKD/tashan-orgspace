@@ -65,6 +65,7 @@ const expectedContractFields = [
   "aupHostAlias",
   "aupLoopbackPort",
   "composeProject",
+  "dockerImagePrefix",
   "ecsCertificate",
   "ecsCertificateKey",
   "ecsHostAlias",
@@ -87,6 +88,9 @@ if (productionContract.remoteRoot !== "/home/aup/tashan-orgspace") {
 }
 if (productionContract.composeProject !== "tashan-orgspace-prod") {
   fail("composeProject must be tashan-orgspace-prod");
+}
+if (productionContract.dockerImagePrefix !== "m.daocloud.io/docker.io/library") {
+  fail("dockerImagePrefix must use the approved mirror");
 }
 if (productionContract.aupLoopbackPort !== 44110) {
   fail("gateway port must match production aupLoopbackPort");
@@ -120,6 +124,7 @@ if (rendered.status !== 0) {
 }
 
 const model = record(JSON.parse(rendered.stdout), "Compose model");
+const composeSource = read(paths.compose);
 if (model.name !== productionContract.composeProject) {
   fail(`Compose project name must be ${productionContract.composeProject}`);
 }
@@ -134,6 +139,16 @@ for (const serviceName of ["postgres", "redis"]) {
     fail("postgres and redis must not publish host ports");
   }
 }
+const expectedDataImages = {
+  postgres: `${productionContract.dockerImagePrefix}/postgres:17.6-alpine`,
+  redis: `${productionContract.dockerImagePrefix}/redis:8.2.1-alpine`,
+};
+for (const [serviceName, expectedImage] of Object.entries(expectedDataImages)) {
+  const service = record(services[serviceName], `service ${serviceName}`);
+  if (service.image !== expectedImage) {
+    fail("postgres and redis must use the approved image mirror");
+  }
+}
 
 for (const [serviceName, serviceValue] of Object.entries(services)) {
   const service = record(serviceValue, `service ${serviceName}`);
@@ -145,6 +160,15 @@ for (const [serviceName, serviceValue] of Object.entries(services)) {
 }
 
 const gatewayService = record(services.gateway, "service gateway");
+if (gatewayService.read_only !== true) fail("gateway root filesystem must be read-only");
+for (const requiredTmpfs of [
+  "/var/cache/nginx:size=32m,uid=101,gid=101,mode=0755",
+  "/var/run:size=4m,uid=101,gid=101,mode=0755",
+]) {
+  if (!composeSource.includes(requiredTmpfs)) {
+    fail("gateway tmpfs must be writable only by nginx uid 101");
+  }
+}
 const gatewayPorts = Array.isArray(gatewayService.ports) ? gatewayService.ports : [];
 if (gatewayPorts.length !== 1) fail("gateway must publish only 127.0.0.1:44110:8080");
 const gatewayPort = record(gatewayPorts[0], "gateway port");
@@ -213,14 +237,23 @@ if (!/proxy_set_header\s+X-Forwarded-For\s+\$http_x_forwarded_for;/.test(gateway
 }
 
 const runtimeDockerfile = read(paths.runtimeDockerfile);
-if (!/^FROM node:24\.14\.0-bookworm-slim$/m.test(runtimeDockerfile)) {
-  fail("runtime image must pin node:24.14.0-bookworm-slim");
+if (
+  !/^FROM m\.daocloud\.io\/docker\.io\/library\/node:24\.14\.0-bookworm-slim$/m.test(
+    runtimeDockerfile,
+  )
+) {
+  fail("runtime image must pin the approved Node mirror image");
 }
 if (!/^USER node$/m.test(runtimeDockerfile)) fail("runtime image must declare USER node");
 
 const webDockerfile = read(paths.webDockerfile);
-if (!/^FROM nginx:1\.30\.4-alpine$/m.test(webDockerfile)) {
-  fail("web image must pin nginx:1.30.4-alpine");
+if (
+  !/^FROM m\.daocloud\.io\/docker\.io\/library\/node:24\.14\.0-bookworm-slim AS build$/m.test(
+    webDockerfile,
+  ) ||
+  !/^FROM m\.daocloud\.io\/docker\.io\/library\/nginx:1\.30\.4-alpine$/m.test(webDockerfile)
+) {
+  fail("web image must pin the approved Node and Nginx mirror images");
 }
 if (!/^USER nginx$/m.test(webDockerfile)) fail("web image must declare USER nginx");
 

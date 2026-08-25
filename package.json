@@ -14,6 +14,7 @@
     "typecheck": "pnpm -r typecheck && tsc --noEmit -p tsconfig.e2e.json",
     "test": "pnpm -r test",
     "test:distribution": "vitest run tests/distribution --testTimeout=15000 && bash scripts/test-fresh-user-install.self-test.sh && bash scripts/test-fresh-user-install.sh --local-build",
+    "test:production-stack": "bash tests/production-stack/run.sh",
     "test:e2e": "tsx tests/e2e/run.ts"
   },
   "devDependencies": {
