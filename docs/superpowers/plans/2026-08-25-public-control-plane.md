@@ -178,7 +178,7 @@ git commit -m "feat(deploy): add isolated production stack"
 - Modify: `release/cli-release.json`
 - Modify: `skill/tashan-orgspace/release.json`
 
-- [ ] **Step 1: Add failing drift cases**
+- [x] **Step 1: Add failing drift cases**
 
 Require all consumers to agree with this manifest:
 
@@ -199,7 +199,7 @@ Require all consumers to agree with this manifest:
 
 Inject a mismatched CLI URL, Nginx upstream port, Compose project, and remote root; each must fail with a targeted error.
 
-- [ ] **Step 2: Verify RED, implement, and verify GREEN**
+- [x] **Step 2: Verify RED, implement, and verify GREEN**
 
 Run the self-test before and after extending the gate:
 
@@ -211,7 +211,7 @@ node scripts/check-release-contract.mjs
 
 Expected before: FAIL on missing manifest checks. Expected after: PASS.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add deploy/production-contract.json scripts/check-production-contract.mjs \

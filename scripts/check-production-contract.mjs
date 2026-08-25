@@ -19,6 +19,9 @@ const paths = {
   runtimeDockerfile: join(root, "deploy/Dockerfile.runtime"),
   webDockerfile: join(root, "deploy/Dockerfile.web"),
   environmentExample: join(root, "deploy/env.production.example"),
+  productionContract: join(root, "deploy/production-contract.json"),
+  release: join(root, "release/cli-release.json"),
+  skillRelease: join(root, "skill/tashan-orgspace/release.json"),
 };
 
 const fixtureEnvironment = {
@@ -51,6 +54,60 @@ function read(path) {
   return readFileSync(path, "utf8");
 }
 
+function readJson(path, label) {
+  return record(JSON.parse(read(path)), label);
+}
+
+const productionContract = readJson(paths.productionContract, "production contract");
+const expectedContractFields = [
+  "aupHostAlias",
+  "aupLoopbackPort",
+  "composeProject",
+  "ecsCertificate",
+  "ecsCertificateKey",
+  "ecsHostAlias",
+  "ecsLoopbackPort",
+  "healthPath",
+  "publicOrigin",
+  "remoteRoot",
+];
+if (Object.keys(productionContract).sort().join(",") !== expectedContractFields.join(",")) {
+  fail("production contract fields must be exact");
+}
+if (productionContract.publicOrigin !== "https://orgspace.tashan.chat") {
+  fail("publicOrigin must be https://orgspace.tashan.chat");
+}
+if (productionContract.healthPath !== "/v1/health") fail("healthPath must be /v1/health");
+if (productionContract.aupHostAlias !== "aup-server") fail("aupHostAlias must be aup-server");
+if (productionContract.ecsHostAlias !== "tashan-ecs") fail("ecsHostAlias must be tashan-ecs");
+if (productionContract.remoteRoot !== "/home/aup/tashan-orgspace") {
+  fail("remoteRoot must be /home/aup/tashan-orgspace");
+}
+if (productionContract.composeProject !== "tashan-orgspace-prod") {
+  fail("composeProject must be tashan-orgspace-prod");
+}
+if (productionContract.aupLoopbackPort !== 44110) {
+  fail("gateway port must match production aupLoopbackPort");
+}
+if (productionContract.ecsLoopbackPort !== 14010) {
+  fail("ecsLoopbackPort must be 14010");
+}
+if (productionContract.ecsCertificate !== "/etc/ssl/wildcard-tashan/fullchain.cer") {
+  fail("ECS certificate path must match the wildcard certificate");
+}
+if (productionContract.ecsCertificateKey !== "/etc/ssl/wildcard-tashan/tashan.chat.key") {
+  fail("ECS certificate key path must match the wildcard certificate");
+}
+
+const release = readJson(paths.release, "CLI release");
+if (release.apiUrl !== productionContract.publicOrigin) {
+  fail("release API URL must match production publicOrigin");
+}
+const skillRelease = readJson(paths.skillRelease, "Skill release");
+if (skillRelease.apiUrl !== productionContract.publicOrigin) {
+  fail("Skill API URL must match production publicOrigin");
+}
+
 const rendered = spawnSync(
   "docker",
   ["compose", "-f", paths.compose, "config", "--format", "json"],
@@ -61,8 +118,8 @@ if (rendered.status !== 0) {
 }
 
 const model = record(JSON.parse(rendered.stdout), "Compose model");
-if (model.name !== "tashan-orgspace-prod") {
-  fail("Compose project name must be tashan-orgspace-prod");
+if (model.name !== productionContract.composeProject) {
+  fail(`Compose project name must be ${productionContract.composeProject}`);
 }
 const services = record(model.services, "Compose services");
 for (const serviceName of ["postgres", "redis", "migrate", "api", "worker", "gateway"]) {
@@ -91,7 +148,7 @@ if (gatewayPorts.length !== 1) fail("gateway must publish only 127.0.0.1:44110:8
 const gatewayPort = record(gatewayPorts[0], "gateway port");
 if (
   gatewayPort.host_ip !== "127.0.0.1" ||
-  String(gatewayPort.published) !== "44110" ||
+  String(gatewayPort.published) !== String(productionContract.aupLoopbackPort) ||
   Number(gatewayPort.target) !== 8080
 ) {
   fail("gateway must publish only 127.0.0.1:44110:8080");

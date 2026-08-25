@@ -117,12 +117,29 @@ ALIYUN_SMS_ENDPOINT=
 ALIYUN_SMS_REGION_ID=
 `;
 
+const validProductionContract = {
+  publicOrigin: "https://orgspace.tashan.chat",
+  healthPath: "/v1/health",
+  aupHostAlias: "aup-server",
+  ecsHostAlias: "tashan-ecs",
+  remoteRoot: "/home/aup/tashan-orgspace",
+  composeProject: "tashan-orgspace-prod",
+  aupLoopbackPort: 44110,
+  ecsLoopbackPort: 14010,
+  ecsCertificate: "/etc/ssl/wildcard-tashan/fullchain.cer",
+  ecsCertificateKey: "/etc/ssl/wildcard-tashan/tashan.chat.key",
+};
+const validRelease = { apiUrl: "https://orgspace.tashan.chat" };
+
 function writeFixture({
   compose = validCompose,
   gateway = validGateway,
   runtimeDockerfile = validRuntimeDockerfile,
   webDockerfile = validWebDockerfile,
   environmentExample = validEnvironmentExample,
+  productionContract = validProductionContract,
+  release = validRelease,
+  skillRelease = validRelease,
 } = {}) {
   const root = mkdtempSync(join(tmpdir(), "orgspace-production-contract-"));
   const files = {
@@ -131,6 +148,9 @@ function writeFixture({
     "deploy/Dockerfile.web": webDockerfile,
     "deploy/nginx/aup-gateway.conf": gateway,
     "deploy/env.production.example": environmentExample,
+    "deploy/production-contract.json": `${JSON.stringify(productionContract, null, 2)}\n`,
+    "release/cli-release.json": `${JSON.stringify(release, null, 2)}\n`,
+    "skill/tashan-orgspace/release.json": `${JSON.stringify(skillRelease, null, 2)}\n`,
   };
   for (const [relativePath, content] of Object.entries(files)) {
     const target = join(root, relativePath);
@@ -208,6 +228,18 @@ expectReject("wrong API upstream", "gateway must proxy /v1 to http://api:4110", 
 });
 expectReject("wrong project", "Compose project name must be tashan-orgspace-prod", {
   compose: validCompose.replace("name: tashan-orgspace-prod", "name: other-project"),
+});
+expectReject("release origin drift", "release API URL must match production publicOrigin", {
+  release: { apiUrl: "https://wrong.tashan.chat" },
+});
+expectReject("skill origin drift", "Skill API URL must match production publicOrigin", {
+  skillRelease: { apiUrl: "https://wrong.tashan.chat" },
+});
+expectReject("remote root escape", "remoteRoot must be /home/aup/tashan-orgspace", {
+  productionContract: { ...validProductionContract, remoteRoot: "/home/aup/other" },
+});
+expectReject("AUP port drift", "gateway port must match production aupLoopbackPort", {
+  productionContract: { ...validProductionContract, aupLoopbackPort: 44111 },
 });
 expectReject("runtime image runs as root", "runtime image must declare USER node", {
   runtimeDockerfile: validRuntimeDockerfile.replace("USER node\n", ""),
