@@ -99,6 +99,26 @@ const validGateway = `server {
 }
 `;
 
+const validEcsIngress = `server {
+  listen 80;
+  server_name orgspace.tashan.chat;
+}
+server {
+  listen 443 ssl http2;
+  server_name orgspace.tashan.chat;
+  ssl_certificate /etc/ssl/wildcard-tashan/fullchain.cer;
+  ssl_certificate_key /etc/ssl/wildcard-tashan/tashan.chat.key;
+  location / {
+    proxy_set_header X-Forwarded-For $remote_addr;
+    proxy_pass http://127.0.0.1:14010;
+  }
+}
+`;
+const validTunnel = `ecs_target="root@101.200.234.115"
+reverse_forward="127.0.0.1:$ecs_port:127.0.0.1:$aup_port"
+nohup autossh -M 0 -N -o ExitOnForwardFailure=yes -o ServerAliveInterval=30 -o ServerAliveCountMax=3 -i "$key_file" -R "$reverse_forward" "$ecs_target"
+`;
+
 const validRuntimeDockerfile = `FROM node:24.14.0-bookworm-slim\nUSER node\n`;
 const validWebDockerfile = `FROM node:24.14.0-bookworm-slim AS build\nFROM nginx:1.30.4-alpine\nUSER nginx\n`;
 const validEnvironmentExample = `ORGSPACE_POSTGRES_PASSWORD=
@@ -134,6 +154,8 @@ const validRelease = { apiUrl: "https://orgspace.tashan.chat" };
 function writeFixture({
   compose = validCompose,
   gateway = validGateway,
+  ecsIngress = validEcsIngress,
+  tunnel = validTunnel,
   runtimeDockerfile = validRuntimeDockerfile,
   webDockerfile = validWebDockerfile,
   environmentExample = validEnvironmentExample,
@@ -147,6 +169,8 @@ function writeFixture({
     "deploy/Dockerfile.runtime": runtimeDockerfile,
     "deploy/Dockerfile.web": webDockerfile,
     "deploy/nginx/aup-gateway.conf": gateway,
+    "deploy/nginx/ecs-orgspace.conf": ecsIngress,
+    "deploy/start-tunnel.sh": tunnel,
     "deploy/env.production.example": environmentExample,
     "deploy/production-contract.json": `${JSON.stringify(productionContract, null, 2)}\n`,
     "release/cli-release.json": `${JSON.stringify(release, null, 2)}\n`,
@@ -225,6 +249,15 @@ expectReject("missing version", "api SERVICE_VERSION is required", {
 });
 expectReject("wrong API upstream", "gateway must proxy /v1 to http://api:4110", {
   gateway: validGateway.replace("http://api:4110", "http://other:4110"),
+});
+expectReject("wrong ECS upstream", "ECS ingress must proxy only to 127.0.0.1:14010", {
+  ecsIngress: validEcsIngress.replace("127.0.0.1:14010", "127.0.0.1:14011"),
+});
+expectReject("wrong public host", "ECS ingress host must match production publicOrigin", {
+  ecsIngress: validEcsIngress.replaceAll("orgspace.tashan.chat", "wrong.tashan.chat"),
+});
+expectReject("non-loopback tunnel", "tunnel reverse forward must stay on loopback", {
+  tunnel: validTunnel.replace("127.0.0.1:$ecs_port", "0.0.0.0:$ecs_port"),
 });
 expectReject("wrong project", "Compose project name must be tashan-orgspace-prod", {
   compose: validCompose.replace("name: tashan-orgspace-prod", "name: other-project"),

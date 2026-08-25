@@ -286,17 +286,17 @@ git commit -m "feat(deploy): add fail-closed AUP deployer"
 - Modify: `scripts/check-production-contract.mjs`
 - Modify: `scripts/check-production-contract.self-test.mjs`
 
-- [ ] **Step 1: Encode at least three breaking inputs**
+- [x] **Step 1: Encode at least three breaking inputs**
 
 Test and reject: a non-loopback `-R` bind; an ECS port different from `14010`; a tunnel target different from `127.0.0.1:44110`; a Host other than `orgspace.tashan.chat`; an HTTP-only vhost; wildcard `proxy_pass`; a configuration operation that changes any existing enabled vhost.
 
-- [ ] **Step 2: Verify RED**
+- [x] **Step 2: Verify RED**
 
 Run: `bash scripts/configure-orgspace-ingress.self-test.sh`
 
 Expected: FAIL because the ingress scripts do not exist.
 
-- [ ] **Step 3: Implement safe ingress lifecycle**
+- [x] **Step 3: Implement safe ingress lifecycle**
 
 `deploy/start-tunnel.sh` has no-argument help and requires `--apply`. It starts exactly:
 
@@ -308,7 +308,7 @@ autossh -M 0 -N -o ExitOnForwardFailure=yes -o ServerAliveInterval=30 \
 
 The ECS template redirects HTTP to HTTPS, uses the verified wildcard certificate, enforces `server_name orgspace.tashan.chat`, sets bounded upload/header timeouts, forwards normalized proxy headers, and proxies to `http://127.0.0.1:14010`. The configure script installs only `/etc/nginx/sites-available/orgspace.tashan.chat`, validates `nginx -t`, atomically enables it, reloads Nginx, starts the AUP tunnel, and verifies both ECS-loopback and public health. It must restore the prior OrgSpace vhost on failure.
 
-- [ ] **Step 4: Verify GREEN**
+- [x] **Step 4: Verify GREEN**
 
 ```bash
 bash scripts/configure-orgspace-ingress.self-test.sh
@@ -318,7 +318,7 @@ bash -n deploy/start-tunnel.sh scripts/configure-orgspace-ingress.sh
 
 Expected: PASS.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add deploy/start-tunnel.sh deploy/nginx/ecs-orgspace.conf \

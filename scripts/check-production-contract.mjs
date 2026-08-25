@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { spawnSync } from "node:child_process";
-import { fileURLToPath } from "node:url";
+import { fileURLToPath, URL } from "node:url";
 
 const repositoryRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const rootArgumentIndex = process.argv.indexOf("--root");
@@ -16,6 +16,8 @@ const root =
 const paths = {
   compose: join(root, "deploy/compose.production.yml"),
   gateway: join(root, "deploy/nginx/aup-gateway.conf"),
+  ecsIngress: join(root, "deploy/nginx/ecs-orgspace.conf"),
+  tunnel: join(root, "deploy/start-tunnel.sh"),
   runtimeDockerfile: join(root, "deploy/Dockerfile.runtime"),
   webDockerfile: join(root, "deploy/Dockerfile.web"),
   environmentExample: join(root, "deploy/env.production.example"),
@@ -167,6 +169,44 @@ if (
   !/proxy_pass\s+http:\/\/api:4110;/.test(gatewayConfig)
 ) {
   fail("gateway must proxy /v1 to http://api:4110");
+}
+
+const ecsIngress = read(paths.ecsIngress);
+const publicHost = new URL(productionContract.publicOrigin).hostname;
+if (!ecsIngress.includes(`server_name ${publicHost};`)) {
+  fail("ECS ingress host must match production publicOrigin");
+}
+if (!ecsIngress.includes("listen 443 ssl http2;")) fail("ECS ingress must require HTTPS");
+if (!ecsIngress.includes(`ssl_certificate ${productionContract.ecsCertificate};`)) {
+  fail("ECS ingress certificate must match production contract");
+}
+if (!ecsIngress.includes(`ssl_certificate_key ${productionContract.ecsCertificateKey};`)) {
+  fail("ECS ingress certificate key must match production contract");
+}
+const ecsUpstreams = [...ecsIngress.matchAll(/proxy_pass\s+([^;]+);/g)].map((match) => match[1]);
+const expectedEcsUpstream = `http://127.0.0.1:${productionContract.ecsLoopbackPort}`;
+if (ecsUpstreams.length !== 1 || ecsUpstreams[0] !== expectedEcsUpstream) {
+  fail(`ECS ingress must proxy only to 127.0.0.1:${productionContract.ecsLoopbackPort}`);
+}
+if (!ecsIngress.includes("proxy_set_header X-Forwarded-For $remote_addr;")) {
+  fail("ECS ingress must replace untrusted forwarded client addresses");
+}
+
+const tunnel = read(paths.tunnel);
+if (!tunnel.includes('reverse_forward="127.0.0.1:$ecs_port:127.0.0.1:$aup_port"')) {
+  fail("tunnel reverse forward must stay on loopback");
+}
+for (const requiredTunnelFragment of [
+  'ecs_target="root@101.200.234.115"',
+  "autossh -M 0 -N",
+  "-o ExitOnForwardFailure=yes",
+  "-o ServerAliveInterval=30",
+  "-o ServerAliveCountMax=3",
+  '-R "$reverse_forward"',
+]) {
+  if (!tunnel.includes(requiredTunnelFragment)) {
+    fail(`tunnel is missing required safety option: ${requiredTunnelFragment}`);
+  }
 }
 if (!/proxy_set_header\s+X-Forwarded-For\s+\$http_x_forwarded_for;/.test(gatewayConfig)) {
   fail("gateway must preserve the ECS-provided client address");
