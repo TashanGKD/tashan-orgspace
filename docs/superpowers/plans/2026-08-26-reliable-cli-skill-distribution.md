@@ -36,7 +36,7 @@
 - Modify: `scripts/check-release-contract.mjs`
 - Modify: `scripts/check-release-contract.self-test.mjs`
 
-- [ ] **Step 1: Write failing schema tests**
+- [x] **Step 1: Write failing schema tests**
 
 Add self-test cases requiring this exact shape and rejecting unknown/mutable HTTP sources:
 
@@ -61,16 +61,16 @@ assert.throws(
 );
 ```
 
-- [ ] **Step 2: Run RED**
+- [x] **Step 2: Run RED**
 
 Run: `node scripts/check-release-contract.self-test.mjs`  
 Expected: FAIL because schema v1 rejects the new required fields.
 
-- [ ] **Step 3: Implement schema v2 and bump alpha.3 everywhere**
+- [x] **Step 3: Implement schema v2 and bump alpha.3 everywhere**
 
 Require exact fields, exact official origin, exact Skill asset name, and identical release documents. Update CLI package and three platform asset names to `0.1.0-alpha.3`.
 
-- [ ] **Step 4: Run GREEN and drift search**
+- [x] **Step 4: Run GREEN and drift search**
 
 Run:
 
@@ -82,7 +82,7 @@ rg -n '0\.1\.0-alpha\.2' apps/cli release skill README.md
 
 Expected: both gates PASS; remaining alpha.2 references are historical evidence only.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add apps/cli/package.json release/cli-release.json skill/tashan-orgspace/release.json scripts/check-release-contract.mjs scripts/check-release-contract.self-test.mjs

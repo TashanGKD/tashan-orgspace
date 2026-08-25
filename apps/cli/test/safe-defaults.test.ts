@@ -6,7 +6,7 @@ import { runCli } from "../src/program.js";
 describe("safe CLI defaults", () => {
   test("reports the release contract version", async () => {
     const result = await runCli(["--version"]);
-    expect(result).toEqual({ stdout: "0.1.0-alpha.2\n", stderr: "", exitCode: 0 });
+    expect(result).toEqual({ stdout: "0.1.0-alpha.3\n", stderr: "", exitCode: 0 });
   });
 
   test("no args prints help without credential or network access", async () => {
