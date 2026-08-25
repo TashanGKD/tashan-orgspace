@@ -414,7 +414,7 @@ rg -n 'curl \|.*sh|--insecure|tls.*false|0\.0\.0\.0.*44110|docker\.sock' distrib
 
 Expected: no unsafe bootstrap, TLS bypass, public AUP listener, or Docker socket mount.
 
-- [ ] **Step 3: Push and open a reviewed PR**
+- [x] **Step 3: Push and open a reviewed PR**
 
 Push `codex/reliable-cli-distribution`, create a PR to `main`, include the two original fresh-user failures and new negative tests, then wait for all CI and review comments.
 
