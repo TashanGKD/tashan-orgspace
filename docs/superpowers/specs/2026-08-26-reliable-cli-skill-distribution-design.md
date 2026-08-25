@@ -1,8 +1,8 @@
 # OrgSpace 可靠 Skill/CLI 分发设计
 
-日期：2026-08-26  
-状态：已选择方案 A，待用户审阅书面规范  
-范围：公开 Skill 与 `torg` CLI 的无 Tailscale 安装可靠性；不新增业务 capability。
+- 日期：2026-08-26
+- 状态：方案 A 已确认，正在按计划实施
+- 范围：公开 Skill 与 `torg` CLI 的无 Tailscale 安装可靠性；不新增业务 capability
 
 ## 1. 背景与目标
 

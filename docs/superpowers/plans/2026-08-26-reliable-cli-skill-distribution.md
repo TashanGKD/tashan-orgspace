@@ -63,7 +63,8 @@ assert.throws(
 
 - [x] **Step 2: Run RED**
 
-Run: `node scripts/check-release-contract.self-test.mjs`  
+Run: `node scripts/check-release-contract.self-test.mjs`
+
 Expected: FAIL because schema v1 rejects the new required fields.
 
 - [x] **Step 3: Implement schema v2 and bump alpha.3 everywhere**
@@ -115,7 +116,8 @@ Also test both transports failing, duplicate checksum entries, asset 404 after c
 
 - [x] **Step 2: Run RED**
 
-Run: `pnpm vitest run tests/distribution/install-cli.test.ts`  
+Run: `pnpm vitest run tests/distribution/install-cli.test.ts`
+
 Expected: FAIL because the installer only has `TORG_RELEASE_BASE_URL` and one GitHub source.
 
 - [x] **Step 3: Implement one-source transactions**
@@ -227,7 +229,8 @@ Require a `skill` artifact job, exactly one Skill archive, three CLI archives, f
 
 - [x] **Step 2: Run RED**
 
-Run: `node scripts/check-release-contract.self-test.mjs`  
+Run: `node scripts/check-release-contract.self-test.mjs`
+
 Expected: FAIL with `release workflow missing Skill artifact`.
 
 - [x] **Step 3: Add Skill build job and unified publish**
@@ -314,7 +317,8 @@ The self-test fake SSH/rsync layer must prove refusal for `../../version`, missi
 
 - [x] **Step 2: Run RED**
 
-Run: `bash scripts/publish-public-distribution.self-test.sh`  
+Run: `bash scripts/publish-public-distribution.self-test.sh`
+
 Expected: FAIL because the publisher does not exist.
 
 - [x] **Step 3: Implement publisher**
@@ -362,7 +366,8 @@ Fake curl responses must prove the smoke detects missing assets, wrong content l
 
 - [x] **Step 2: Run RED**
 
-Run: `bash scripts/smoke-public-distribution.self-test.sh`  
+Run: `bash scripts/smoke-public-distribution.self-test.sh`
+
 Expected: FAIL because the smoke script is absent.
 
 - [x] **Step 3: Implement smoke and user instructions**
@@ -393,10 +398,11 @@ git commit -m "docs(distribution): document official installer"
 
 - [x] **Step 1: Run complete local verifier**
 
-Run: `ORGSPACE_TEST_CLEANUP_VOLUMES=1 bash scripts/verify-phase0.sh`  
+Run: `ORGSPACE_TEST_CLEANUP_VOLUMES=1 bash scripts/verify-phase0.sh`
+
 Expected: PASS with all existing tests plus dual-source, Skill installer, publisher, mirror smoke, and production static tests.
 
-- [ ] **Step 2: Review diff and security boundaries**
+- [x] **Step 2: Review diff and security boundaries**
 
 Run:
 
