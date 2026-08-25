@@ -55,6 +55,8 @@ export ORGSPACE_PUBLIC_DOWNLOADS_DIR="$public_downloads"
 mkdir -p "$public_downloads/v$SERVICE_VERSION"
 printf '%s\n' '#!/bin/sh' 'echo fixture installer' >"$public_downloads/install-skill.sh"
 printf '%s\n' 'fixture-checksum  fixture-asset' >"$public_downloads/v$SERVICE_VERSION/SHA256SUMS"
+chmod 755 "$public_downloads" "$public_downloads/v$SERVICE_VERSION"
+chmod 644 "$public_downloads/install-skill.sh" "$public_downloads/v$SERVICE_VERSION/SHA256SUMS"
 
 docker compose -f "$compose_file" -p "$project" config --quiet
 docker compose -f "$compose_file" -p "$project" up -d --build --wait
