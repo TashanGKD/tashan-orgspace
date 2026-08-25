@@ -56,7 +56,13 @@ case "$*" in
 esac
 EOF
 
-chmod +x "$fake_bin/curl" "$fake_bin/torg"
+cat > "$fake_bin/ssh" <<'EOF'
+#!/usr/bin/env bash
+set -eu
+printf 'ssh %s\n' "$*" >> "${ORGSPACE_TEST_SMOKE_LOG:?}"
+EOF
+
+chmod +x "$fake_bin/curl" "$fake_bin/torg" "$fake_bin/ssh"
 
 run_smoke() {
   PATH="$fake_bin:$PATH" ORGSPACE_SMOKE_TESTING=1 \
@@ -111,5 +117,12 @@ expect_failure "revoked device session remained usable" env PATH="$fake_bin:$PAT
 +8613800138000
 CorrectHorseBattery9
 EOF
+
+
+mv "$fake_bin/torg" "$fake_bin/torg.disabled"
+: > "$smoke_log"
+run_smoke --recovery-check --confirm-production >/dev/null
+grep -q 'start-tunnel.sh.*--stop.*start-tunnel.sh.*--apply' "$smoke_log"
+mv "$fake_bin/torg.disabled" "$fake_bin/torg"
 
 echo "smoke-production.self-test: PASS"

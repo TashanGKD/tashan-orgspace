@@ -74,10 +74,14 @@ EOF
     die "health version mismatch: expected $release_version, got $health_version"
 }
 
-cli_path="$(command -v torg || true)"
-[ -n "$cli_path" ] || die "torg is required on PATH"
+cli_path=""
+require_cli() {
+  cli_path="$(command -v torg || true)"
+  [ -n "$cli_path" ] || die "torg is required on PATH"
+}
 
 read_only_smoke() {
+  require_cli
   read_health
   set +e
   capabilities="$($cli_path --json capability list 2>&1)"
@@ -90,6 +94,7 @@ read_only_smoke() {
 }
 
 account_lifecycle() {
+  require_cli
   IFS= read -r phone || die "credentials stdin must contain phone and password"
   IFS= read -r password || die "credentials stdin must contain phone and password"
   case "$phone" in +[0-9]*) ;; *) die "credentials stdin phone must be E.164" ;; esac
