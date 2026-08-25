@@ -15,7 +15,8 @@
     "test": "pnpm -r test",
     "test:distribution": "vitest run tests/distribution --testTimeout=15000 && bash scripts/test-fresh-user-install.self-test.sh && bash scripts/test-fresh-user-install.sh --local-build",
     "test:production-stack": "bash tests/production-stack/run.sh",
-    "test:e2e": "tsx tests/e2e/run.ts"
+    "test:e2e": "tsx tests/e2e/run.ts",
+    "build:skill-release": "node scripts/build-skill-release.mjs --output-dir dist"
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",

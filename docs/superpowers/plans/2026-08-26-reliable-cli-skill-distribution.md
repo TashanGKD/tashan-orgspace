@@ -162,11 +162,11 @@ git commit -m "fix(distribution): add fail-closed CLI fallback"
 - Create: `tests/distribution/install-skill.test.ts`
 - Modify: `package.json`
 
-- [ ] **Step 1: Write archive and installer rejection tests**
+- [x] **Step 1: Write archive and installer rejection tests**
 
 The builder test must assert the exact tar entries and reject a non-empty output directory. The installer tests must cover unmanaged target, bad hash, duplicate checksum, symlink/archive escape, missing required Skill file, idempotent reinstall, failed upgrade preservation, relative `CODEX_HOME`, and no-argument read-only behavior.
 
-- [ ] **Step 2: Run RED**
+- [x] **Step 2: Run RED**
 
 Run:
 
@@ -176,7 +176,7 @@ pnpm vitest run tests/distribution/build-skill-release.test.ts tests/distributio
 
 Expected: FAIL because both implementation files are absent.
 
-- [ ] **Step 3: Implement deterministic builder**
+- [x] **Step 3: Implement deterministic builder**
 
 Build `tashan-orgspace-skill-v<version>.tar.gz` with top-level `tashan-orgspace/` and only:
 
@@ -192,11 +192,11 @@ scripts/install-cli.sh
 
 Emit a sibling `.sha256` file using the exact asset name.
 
-- [ ] **Step 4: Implement safe-default Skill installer**
+- [x] **Step 4: Implement safe-default Skill installer**
 
 `distribution/install-skill.sh` embeds the alpha.3 version and official base URL, defaults to help, supports `--check` and `--install`, validates checksum and exact archive layout, refuses unmanaged targets, stages under the destination parent, then atomically activates the Skill. It prints the pinned GitHub tag fallback instruction only after official transport failure.
 
-- [ ] **Step 5: Run GREEN and distribution suite**
+- [x] **Step 5: Run GREEN and distribution suite**
 
 Run:
 
@@ -207,7 +207,7 @@ pnpm test:distribution
 
 Expected: PASS with zero partial installations.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add scripts/build-skill-release.mjs distribution/install-skill.sh tests/distribution package.json
