@@ -440,7 +440,7 @@ git commit -m "test(deploy): verify production-shaped stack"
 - Create from deployer: `/home/aup/tashan-orgspace/releases/<commit>`
 - Create from deployer: `/home/aup/tashan-orgspace/current`
 - Create from ingress installer: `/etc/nginx/sites-available/orgspace.tashan.chat` on ECS
-- Create: `docs/verification/2026-08-25-public-control-plane.md`
+- Create: `docs/verification/2026-08-26-public-control-plane.md`
 
 - [x] **Step 1: Run read-only preflight**
 
@@ -474,10 +474,10 @@ scripts/smoke-production.sh --recovery-check --confirm-production
 
 Record commands, commit SHA, container versions, public HTTP status, tunnel restart evidence, redacted account lifecycle results, audit request IDs, and proof that Panshi/Ask endpoints remain healthy.
 
-- [ ] **Step 5: Commit the redacted verification report**
+- [x] **Step 5: Commit the redacted verification report**
 
 ```bash
-git add docs/verification/2026-08-25-public-control-plane.md
+git add docs/verification/2026-08-26-public-control-plane.md
 git commit -m "docs(deploy): record public control plane evidence"
 ```
 
@@ -489,7 +489,7 @@ git commit -m "docs(deploy): record public control plane evidence"
 - Modify: `skill/tashan-orgspace/release.json`
 - Modify: `skill/tashan-orgspace/SKILL.md`
 - Modify: `README.md`
-- Modify: `docs/verification/2026-08-25-public-control-plane.md`
+- Modify: `docs/verification/2026-08-26-public-control-plane.md`
 
 - [x] **Step 1: Bump one release version everywhere**
 
@@ -505,7 +505,7 @@ bash scripts/test-fresh-user-install.sh --local-build
 
 Expected: PASS; installed binary uses HTTPS production origin, no Node/Tailscale dependency, and no secret output.
 
-- [ ] **Step 3: Integrate and publish**
+- [x] **Step 3: Integrate and publish**
 
 Push the reviewed branch, merge through the repository's normal protected flow, tag the exact verified commit, and let `.github/workflows/release-cli.yml` build the three native assets and checksum manifest. Never tag a dirty or different commit.
 
@@ -513,10 +513,12 @@ Push the reviewed branch, merge through the repository's normal protected flow, 
 
 From a temporary HOME with no repository checkout, Node.js, pnpm, or Tailscale, install the public Skill, install the published CLI, authenticate to the real HTTPS service, list capabilities and organizations, revoke the test device, and confirm the old token fails. Add only redacted evidence to the verification report.
 
+Public Skill installation, published CLI installation, version/health/capability reads, and idempotent reinstall passed on 2026-08-26. Authentication, organization listing, device revocation, and old-token rejection remain open until a real test phone receives the SMS code.
+
 - [ ] **Step 5: Commit final evidence**
 
 ```bash
-git add docs/verification/2026-08-25-public-control-plane.md
+git add docs/verification/2026-08-26-public-control-plane.md
 git commit -m "docs(release): record public CLI acceptance"
 ```
 

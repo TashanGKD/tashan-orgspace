@@ -1,13 +1,13 @@
 # OrgSpace 公网控制面验证报告
 
 日期：2026-08-26  
-范围：Phase 0.5 公网控制面、AUP 独立生产栈、ECS HTTPS 入口、CLI/Skill alpha.2 发布候选。
+范围：Phase 0.5 公网控制面、AUP 独立生产栈、ECS HTTPS 入口、CLI/Skill alpha.2 公开发布。
 
 ## 结论
 
 OrgSpace Phase 0 控制面已部署到 AUP，并通过 ECS 反向隧道由 `https://orgspace.tashan.chat` 提供公网 HTTPS。最终用户链路不需要 Tailscale；Tailscale 仅用于运维 SSH。API、Web、Worker、PostgreSQL、Redis、隧道和 ECS vhost 均使用 OrgSpace 独立目录、Compose project、端口与配置。
 
-`torg 0.1.0-alpha.2` 与 Skill 的本地发布候选已通过完整验证和无系统 Node.js 的新用户安装测试。GitHub PR、标签、三平台 Release 资产及真实公开安装仍需在本报告之后完成。真实手机号注册/登录/设备撤销需要用户提供测试手机号并输入短信验证码，当前未执行，不得标记为通过。
+`torg 0.1.0-alpha.2` 与 Skill 已通过 GitHub PR 合并并发布为公开 prerelease。三平台 Release 资产、校验和、无系统 Node.js 的公开安装、重复安装、生产健康和能力发现均已通过。真实手机号注册/登录/设备撤销仍需要用户提供测试手机号并输入短信验证码，当前未执行，不得标记为通过。
 
 ## 本地验证
 
@@ -43,7 +43,15 @@ public origin: https://orgspace.tashan.chat
 
 OrgSpace secret 位于 `/home/aup/tashan-orgspace/shared/.env.production`，目录权限 `0700`、文件权限 `0600`。PostgreSQL 密码、验证码 pepper 与 Ed25519 JWT 密钥均为 OrgSpace 独立生成。阿里云短信账号、签名、模板与 endpoint 从现有受限生产配置按键名只读复制；全过程未输出值，未修改来源文件。
 
-部署器在 Tailscale SSH 多次握手不稳定后新增了 10 秒连接超时、keepalive 和单次部署 ControlMaster 复用。中断部署未写 `.deployed-commit`；成功后才原子切换 `current`。由于验证报告本身也属于发布提交，本文件不写一个会因下一次文档提交而立即过期的“最终 SHA”。合并完成后必须把 `main` 的精确 SHA 部署到 AUP，再以只读命令证明远端 `.deployed-commit`、GitHub 标签和本地 `HEAD` 三者一致。
+部署器在 Tailscale SSH 多次握手不稳定后新增了 10 秒连接超时、keepalive 和单次部署 ControlMaster 复用。中断部署未写 `.deployed-commit`；成功后才原子切换 `current`。
+
+发布 PR #1 的合并提交、公开标签解引用结果和 AUP `.deployed-commit` 三者一致：
+
+```text
+65efc4f96b0bf5dbf313149e674ea1e8394d2c7e
+```
+
+验证报告后续的纯文档提交不会改变 alpha.2 标签或已部署运行代码；运行版本仍以以上已发布提交为准。
 
 ## 公网与运行状态
 
@@ -79,6 +87,44 @@ scripts/smoke-production.sh --recovery-check --confirm-production
 
 结果：真实 autossh 进程被专属 PID 文件安全停止并重新启动，随后公网 `/v1/health` 恢复，报告 `PASS (tunnel stop/start recovery)`。脚本不使用可能误杀其他项目的 `pkill -f`。
 
+## GitHub 发布
+
+GitHub PR #1 已合并，Release workflow `32895241663` 完成。公开 prerelease：
+
+```text
+tag: v0.1.0-alpha.2
+tag commit: 65efc4f96b0bf5dbf313149e674ea1e8394d2c7e
+draft: false
+prerelease: true
+```
+
+Release 地址：<https://github.com/TashanGKD/tashan-orgspace/releases/tag/v0.1.0-alpha.2>
+
+公开资产：
+
+```text
+SHA256SUMS                                      313 bytes
+torg-v0.1.0-alpha.2-darwin-arm64.tar.gz   38,494,617 bytes
+torg-v0.1.0-alpha.2-darwin-x64.tar.gz     39,708,604 bytes
+torg-v0.1.0-alpha.2-linux-x64.tar.gz      43,750,434 bytes
+```
+
+## 公开新用户安装
+
+从 GitHub 标签 `v0.1.0-alpha.2` 的 `skill/tashan-orgspace` 安装 Skill，再由 Skill 脚本从公开 Release 安装 CLI。验收使用临时 `HOME`、`CODEX_HOME`、`XDG_DATA_HOME` 和 `TORG_BIN_DIR`，执行路径仅含系统基础目录，确认无系统 Node.js、pnpm、源码目录或 Tailscale 依赖。
+
+```text
+version=0.1.0-alpha.2
+capabilities=17
+no_system_node=true
+health_status=ok
+health_version=0.1.0-alpha.2
+torg 0.1.0-alpha.2 is installed
+torg 0.1.0-alpha.2 is already installed
+```
+
+CLI 的 `--version`、无参数安全帮助、JSON 健康检查、17 项能力发现和幂等重复安装均通过；输出未发现 token、密码或验证码。GitHub 源码归档不保留 shell 可执行位，因此 Skill 明确通过 `bash scripts/install-cli.sh --install` 调用安装器，不依赖归档的可执行权限。
+
 ## 其他项目隔离证据
 
 OrgSpace 上线前 Panshi 首页为 200。验证期间 Panshi 后续返回带 `Retry-After: 4200` 的定制维护页。只读调查确认这是另一维护流程在 2026-08-26 03:49 主动完成的操作：
@@ -91,11 +137,9 @@ OrgSpace 上线前 Panshi 首页为 200。验证期间 Panshi 后续返回带 `R
 
 因此不应由 OrgSpace 流程撤销 Panshi 的有意维护状态。部署前还发现 `ask.tashan.chat` 证书已过期；本次未修改 Ask。
 
-## 未完成验收
+## 未完成验收与产品边界
 
 以下项目必须保持未通过状态，直到获得真实证据：
 
-1. `v0.1.0-alpha.2` 尚未合并、打标签并生成三平台公开 Release 资产。
-2. 尚未从无源码、无 Node、无 Tailscale 的临时用户环境安装公开 alpha.2 Skill/CLI。
-3. 尚未使用真实手机号完成验证码注册、登录、设备列表、当前设备撤销和旧会话拒绝。
-4. 文件、任务/OKR、通知、聊天、代码运行、Docker build、常驻服务与动态用户域名属于 Phase 1+，尚未实现。
+1. 尚未使用真实手机号完成验证码注册、登录、组织列表、设备列表、当前设备撤销和旧会话拒绝；这也是 Task 9 Step 4 与 Task 10 Step 4 仍未勾选的原因。
+2. 文件、任务/OKR、通知、聊天、代码运行、Docker build、常驻服务与动态用户域名属于 Phase 1+，尚未实现。alpha.2 是公网控制面 prerelease，不代表完整产品已经完成。
