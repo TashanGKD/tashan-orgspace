@@ -13,7 +13,7 @@ Resolve paths relative to this `SKILL.md` file.
 
 1. On Windows, stop and explain that this release supports macOS arm64/x64 and Linux x64 only.
 2. Run `sh scripts/install-cli.sh --check` from this Skill directory.
-3. If the check says this installer has not installed `torg`, tell the user that the Skill will install a pinned, checksum-verified CLI in their user directory, then run `sh scripts/install-cli.sh --install`.
+3. If the check says this installer has not installed `torg`, tell the user that the Skill will install a pinned, checksum-verified CLI in their user directory, then run `sh scripts/install-cli.sh --install`. The installer tries the official `orgspace.tashan.chat` source first and starts a fresh GitHub source transaction only after a transport failure; it never falls back after an integrity failure.
 4. Never run the installer with `sudo`, copy it into a shell startup file, or set its test-only environment variables.
 5. If installation succeeds but `torg` is not on `PATH`, invoke `$HOME/.local/bin/torg` and tell the user to add `$HOME/.local/bin` to `PATH` later.
 
@@ -55,7 +55,7 @@ torg --invocation-source ai_via_cli --json device list
 torg --invocation-source ai_via_cli --json audit list --limit 25
 ```
 
-The prerelease currently covers authentication, device sessions, organizations, capability discovery, and audit reads. Files, OKR/tasks, approvals, chat, remote execution, services, databases, domains, SMS delivery, and AI employees remain planned capabilities unless the live capability endpoint says otherwise.
+The prerelease currently covers authentication (including verification-code SMS), device sessions, organizations, capability discovery, and audit reads. Files, OKR/tasks, approvals, chat, remote execution, services, databases, domains, general notification SMS, and AI employees remain planned capabilities unless the live capability endpoint says otherwise.
 
 ## Respond
 

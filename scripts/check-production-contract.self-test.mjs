@@ -81,6 +81,11 @@ services:
     tmpfs:
       - /var/cache/nginx:size=32m,uid=101,gid=101,mode=0755
       - /var/run:size=4m,uid=101,gid=101,mode=0755
+    volumes:
+      - type: bind
+        source: \${ORGSPACE_PUBLIC_DOWNLOADS_DIR:-/home/aup/tashan-orgspace/shared/public-downloads}
+        target: /usr/share/nginx/html/downloads/orgspace
+        read_only: true
 volumes:
   postgres-data:
   redis-data:
@@ -98,6 +103,16 @@ const validGateway = `server {
   location /v1/ {
     proxy_set_header X-Forwarded-For $http_x_forwarded_for;
     proxy_pass http://api:4110;
+  }
+  location = /downloads/orgspace/install-skill.sh {
+    limit_except GET { deny all; }
+    add_header Cache-Control "no-cache" always;
+    try_files $uri =404;
+  }
+  location ^~ /downloads/orgspace/v {
+    limit_except GET { deny all; }
+    add_header Cache-Control "public, max-age=31536000, immutable" always;
+    try_files $uri =404;
   }
   location / { try_files $uri $uri/ /index.html; }
 }
@@ -246,6 +261,24 @@ expectReject("host home mount", "host-control mounts are forbidden", {
     '    volumes: ["/home:/host-home:ro"]\n    networks:\n      default:\n        ipv4_address: 172.31.64.20',
   ),
 });
+expectReject("writable public downloads", "public downloads bind must be read-only", {
+  compose: validCompose.replace(
+    "        read_only: true\nvolumes:",
+    "        read_only: false\nvolumes:",
+  ),
+});
+expectReject("wrong public downloads source", "public downloads bind source must be exact", {
+  compose: validCompose.replace(
+    "/home/aup/tashan-orgspace/shared/public-downloads",
+    "/home/aup/tashan-orgspace/shared/other",
+  ),
+});
+expectReject("wrong public downloads target", "public downloads bind target must be exact", {
+  compose: validCompose.replace(
+    "/usr/share/nginx/html/downloads/orgspace",
+    "/usr/share/nginx/html",
+  ),
+});
 expectReject("development runtime", "api NODE_ENV must be production", {
   compose: validCompose.replace("NODE_ENV: production", "NODE_ENV: development"),
 });
@@ -254,6 +287,18 @@ expectReject("missing version", "api SERVICE_VERSION is required", {
 });
 expectReject("wrong API upstream", "gateway must proxy /v1 to http://api:4110", {
   gateway: validGateway.replace("http://api:4110", "http://other:4110"),
+});
+expectReject("download SPA fallback", "downloads must return 404 without SPA fallback", {
+  gateway: validGateway.replace(
+    "location ^~ /downloads/orgspace/v {",
+    "location ^~ /downloads/orgspace/v { try_files $uri /index.html; }\n  location ^~ /downloads/orgspace/versioned {",
+  ),
+});
+expectReject("download directory listing", "download directory listing must stay disabled", {
+  gateway: validGateway.replace(
+    "location ^~ /downloads/orgspace/v {",
+    "location ^~ /downloads/orgspace/v { autoindex on;",
+  ),
 });
 expectReject("wrong ECS upstream", "ECS ingress must proxy only to 127.0.0.1:14010", {
   ecsIngress: validEcsIngress.replace("127.0.0.1:14010", "127.0.0.1:14011"),

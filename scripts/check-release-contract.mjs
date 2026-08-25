@@ -4,10 +4,12 @@ import { fileURLToPath, URL } from "node:url";
 
 const RELEASE_FIELDS = [
   "apiUrl",
+  "distributionBaseUrl",
   "nodeVersion",
   "platforms",
   "repository",
   "schemaVersion",
+  "skillAsset",
   "version",
 ];
 const SUPPORTED_PLATFORMS = ["darwin-arm64", "darwin-x64", "linux-x64"];
@@ -28,7 +30,7 @@ function validateRelease(release) {
   for (const field of RELEASE_FIELDS) {
     if (!(field in release)) throw new Error(`missing release field: ${field}`);
   }
-  if (release.schemaVersion !== 1) throw new Error("release schemaVersion must be 1");
+  if (release.schemaVersion !== 2) throw new Error("release schemaVersion must be 2");
   if (typeof release.version !== "string" || !SEMVER.test(release.version)) {
     throw new Error("release version must be semver");
   }
@@ -37,6 +39,13 @@ function validateRelease(release) {
   }
   if (release.repository !== "TashanGKD/tashan-orgspace") {
     throw new Error("release repository must be TashanGKD/tashan-orgspace");
+  }
+  if (release.distributionBaseUrl !== "https://orgspace.tashan.chat/downloads/orgspace") {
+    throw new Error("release distributionBaseUrl must be the OrgSpace HTTPS download origin");
+  }
+  const expectedSkillAsset = `tashan-orgspace-skill-v${release.version}.tar.gz`;
+  if (release.skillAsset !== expectedSkillAsset) {
+    throw new Error(`invalid release Skill asset: expected ${expectedSkillAsset}`);
   }
   if (typeof release.apiUrl !== "string") {
     throw new Error("release apiUrl must be an HTTPS origin");
@@ -115,6 +124,10 @@ export function checkDistributionContract(release, workflow, installer) {
   }
   for (const required of [
     "node scripts/build-cli-release.mjs --output-dir dist",
+    "node scripts/build-skill-release.mjs --output-dir dist",
+    "name: skill",
+    `test "$(find dist -maxdepth 1 -name '*.tar.gz' -type f | wc -l)" -eq 4`,
+    `test "$(find dist -maxdepth 1 -name '*.sha256' -type f | wc -l)" -eq 4`,
     `${release.apiUrl}/v1/health`,
     "gh release create",
   ]) {
@@ -123,6 +136,9 @@ export function checkDistributionContract(release, workflow, installer) {
   const installerPattern = `  ${expectedPlatforms.join(" | ")}) ;;`;
   if (!installer.includes(installerPattern)) {
     throw new Error("installer platform allowlist mismatch");
+  }
+  if (!installer.includes("distribution_base=$(json_string distributionBaseUrl)")) {
+    throw new Error("installer must read the official distribution source from release metadata");
   }
 }
 

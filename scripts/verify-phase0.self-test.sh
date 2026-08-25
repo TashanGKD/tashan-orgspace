@@ -2,6 +2,14 @@
 set -eu
 
 repository_root="$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)"
+for required_step in \
+  'bash scripts/publish-public-distribution.self-test.sh' \
+  'bash scripts/smoke-public-distribution.self-test.sh'; do
+  grep -F "$required_step" "$repository_root/scripts/verify-phase0.sh" >/dev/null || {
+    echo "FAIL: complete verifier does not execute $required_step" >&2
+    exit 1
+  }
+done
 fixture_root="$(mktemp -d)"
 cleanup() {
   rm -rf -- "$fixture_root"

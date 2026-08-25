@@ -134,6 +134,11 @@ services:
     tmpfs:
       - /var/cache/nginx:size=32m,uid=101,gid=101,mode=0755
       - /var/run:size=4m,uid=101,gid=101,mode=0755
+    volumes:
+      - type: bind
+        source: ${ORGSPACE_PUBLIC_DOWNLOADS_DIR:-/home/aup/tashan-orgspace/shared/public-downloads}
+        target: /usr/share/nginx/html/downloads/orgspace
+        read_only: true
     security_opt:
       - no-new-privileges:true
     cap_drop:

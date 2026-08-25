@@ -125,7 +125,7 @@ validate_commit() {
 
 read_only_preflight() {
   node "$repository_root/scripts/check-production-contract.mjs" >/dev/null
-  orgspace_ssh "$aup_host" "set -eu; command -v docker >/dev/null; docker compose version >/dev/null; command -v curl >/dev/null; test -d '$remote_root' || test ! -e '$remote_root'; if ss -ltn | grep -q ':$aup_port '; then docker ps --format '{{.Names}}' | grep -q '^tashan-orgspace-prod-'; fi"
+  orgspace_ssh "$aup_host" "set -eu; command -v docker >/dev/null; docker compose version >/dev/null; command -v curl >/dev/null; test -d '$remote_root' || test ! -e '$remote_root'; if test -e '$remote_root/shared/public-downloads'; then test -d '$remote_root/shared/public-downloads'; test ! -L '$remote_root/shared/public-downloads'; fi; if ss -ltn | grep -q ':$aup_port '; then docker ps --format '{{.Names}}' | grep -q '^tashan-orgspace-prod-'; fi"
   secret_mode="$(orgspace_ssh "$aup_host" "if test -f '$secret_file'; then stat -c %a '$secret_file'; else echo missing; fi")"
   [ "$secret_mode" = "600" ] || die "remote secret file must have mode 600: $secret_file"
   echo "deploy-orgspace preflight: PASS ($aup_host $remote_root)"
@@ -161,7 +161,7 @@ apply_release() {
   staging_path="$remote_root/staging/$commit-$$"
   previous_release="$(orgspace_ssh "$aup_host" "readlink -f '$remote_root/current' 2>/dev/null || true")"
 
-  orgspace_ssh "$aup_host" "set -eu; mkdir -p '$remote_root/releases' '$remote_root/staging' '$remote_root/shared'; rm -rf '$staging_path'; mkdir -p '$staging_path'"
+  orgspace_ssh "$aup_host" "set -eu; mkdir -p '$remote_root/releases' '$remote_root/staging' '$remote_root/shared'; mkdir -p '$remote_root/shared/public-downloads'; chmod 755 '$remote_root/shared/public-downloads'; rm -rf '$staging_path'; mkdir -p '$staging_path'"
   if ! git -C "$repository_root" ls-files -z | rsync -a -e "$rsync_ssh" --from0 --files-from=- "$repository_root/" "$aup_host:$staging_path/"; then
     orgspace_ssh "$aup_host" "rm -rf '$staging_path'"
     die "tracked file sync failed: git enumeration or rsync failed; bounded staging directory was removed"

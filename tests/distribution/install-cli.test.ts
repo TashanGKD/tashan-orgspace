@@ -42,6 +42,7 @@ type FixtureOptions = {
   version?: string;
   platform?: string;
   badChecksum?: boolean;
+  duplicateChecksum?: boolean;
   missingChecksum?: boolean;
   omitEntry?: string;
   extraTopLevel?: boolean;
@@ -50,7 +51,7 @@ type FixtureOptions = {
 };
 
 function createReleaseFixture(options: FixtureOptions = {}) {
-  const version = options.version ?? "0.1.0-alpha.2";
+  const version = options.version ?? "0.1.0-alpha.3";
   const platform = options.platform ?? "darwin-arm64";
   const root = temporaryDirectory("torg-installer-release-");
   const releaseDirectory = join(root, `v${version}`);
@@ -96,7 +97,11 @@ esac
   execFileSync("tar", ["-czf", archivePath, "-C", staging, ...entries]);
   const digest = options.badChecksum ? "0".repeat(64) : sha256(archivePath);
   const checksumName = options.missingChecksum ? `other-${asset}` : asset;
-  writeFileSync(join(releaseDirectory, "SHA256SUMS"), `${digest}  ${checksumName}\n`);
+  const checksumLine = `${digest}  ${checksumName}\n`;
+  writeFileSync(
+    join(releaseDirectory, "SHA256SUMS"),
+    options.duplicateChecksum ? `${checksumLine}${checksumLine}` : checksumLine,
+  );
   return { releaseDirectory, asset, version, platform };
 }
 
@@ -118,7 +123,8 @@ function testEnvironment(fixture: ReturnType<typeof createReleaseFixture>, overr
       TORG_BIN_DIR: bin,
       TORG_INSTALL_TESTING: "1",
       TORG_INSTALL_PLATFORM: fixture.platform,
-      TORG_RELEASE_BASE_URL: `file://${fixture.releaseDirectory}`,
+      TORG_PRIMARY_RELEASE_BASE_URL: `file://${fixture.releaseDirectory}`,
+      TORG_FALLBACK_RELEASE_BASE_URL: `file://${fixture.releaseDirectory}-missing-fallback`,
       ...overrides,
     },
   };
@@ -141,7 +147,7 @@ describe("Skill CLI installer", () => {
     const target = join(context.bin, "torg");
     expect(lstatSync(target).isSymbolicLink()).toBe(true);
     expect(readlinkSync(target)).toBe(join(context.home, "data/torg/current/bin/torg"));
-    expect(execFileSync(target, ["--version"], { encoding: "utf8" })).toBe("0.1.0-alpha.2\n");
+    expect(execFileSync(target, ["--version"], { encoding: "utf8" })).toBe("0.1.0-alpha.3\n");
 
     const second = runInstaller(["--install"], context.environment);
     expect(second).toMatchObject({ status: 0, stderr: "" });
@@ -187,6 +193,57 @@ describe("Skill CLI installer", () => {
     expect(result.stderr).not.toContain("freebsd-x64");
   });
 
+  test("uses the official source without consulting an invalid fallback", () => {
+    const official = createReleaseFixture();
+    const context = testEnvironment(official, {
+      TORG_FALLBACK_RELEASE_BASE_URL: "file:///definitely-missing-orgspace-fallback",
+    });
+    const result = runInstaller(["--install"], context.environment);
+    expect(result.status).toBe(0);
+    expect(result.stdout).toContain("verified official release source");
+  });
+
+  test("falls back only after a complete official transport failure", () => {
+    const fallback = createReleaseFixture();
+    const context = testEnvironment(fallback, {
+      TORG_PRIMARY_RELEASE_BASE_URL: "file:///definitely-missing-orgspace-official",
+      TORG_FALLBACK_RELEASE_BASE_URL: `file://${fallback.releaseDirectory}`,
+    });
+    const result = runInstaller(["--install"], context.environment);
+    expect(result.status).toBe(0);
+    expect(result.stdout).toContain("verified github release source");
+  });
+
+  test.each([
+    ["checksum mismatch", { badChecksum: true }],
+    ["duplicate checksum", { duplicateChecksum: true }],
+    ["illegal archive link", { symlinkRuntime: true }],
+  ] as const)("does not hide official %s by using the fallback", (_label, options) => {
+    const official = createReleaseFixture(options);
+    const fallback = createReleaseFixture();
+    const context = testEnvironment(official, {
+      TORG_FALLBACK_RELEASE_BASE_URL: `file://${fallback.releaseDirectory}`,
+    });
+    const result = runInstaller(["--install"], context.environment);
+    expect(result.status).not.toBe(0);
+    expect(result.stderr).toContain("integrity failure from official");
+    expect(existsSync(join(context.bin, "torg"))).toBe(false);
+    expect(readdirSync(context.temp)).toEqual([]);
+  });
+
+  test("reports both sources unavailable without a partial install", () => {
+    const fixture = createReleaseFixture();
+    const context = testEnvironment(fixture, {
+      TORG_PRIMARY_RELEASE_BASE_URL: "file:///definitely-missing-orgspace-official",
+      TORG_FALLBACK_RELEASE_BASE_URL: "file:///definitely-missing-orgspace-fallback",
+    });
+    const result = runInstaller(["--install"], context.environment);
+    expect(result.status).not.toBe(0);
+    expect(result.stderr).toContain("all release sources failed: official, github");
+    expect(existsSync(join(context.bin, "torg"))).toBe(false);
+    expect(readdirSync(context.temp)).toEqual([]);
+  });
+
   test.each([
     ["checksum mismatch", { badChecksum: true }, "checksum verification failed"],
     ["missing checksum entry", { missingChecksum: true }, "checksum entry not found"],
@@ -222,14 +279,14 @@ describe("Skill CLI installer", () => {
     expect(runInstaller(["--install"], context.environment).status).toBe(0);
     const target = join(context.bin, "torg");
 
-    const badUpgrade = createReleaseFixture({ version: "0.1.0-alpha.3", badChecksum: true });
+    const badUpgrade = createReleaseFixture({ version: "0.1.0-alpha.4", badChecksum: true });
     const upgradeEnvironment = {
       ...context.environment,
-      TORG_RELEASE_BASE_URL: `file://${badUpgrade.releaseDirectory}`,
+      TORG_PRIMARY_RELEASE_BASE_URL: `file://${badUpgrade.releaseDirectory}`,
     };
-    const result = runInstaller(["--install", "--version", "0.1.0-alpha.3"], upgradeEnvironment);
+    const result = runInstaller(["--install", "--version", "0.1.0-alpha.4"], upgradeEnvironment);
     expect(result.status).not.toBe(0);
-    expect(execFileSync(target, ["--version"], { encoding: "utf8" })).toBe("0.1.0-alpha.2\n");
+    expect(execFileSync(target, ["--version"], { encoding: "utf8" })).toBe("0.1.0-alpha.3\n");
     expect(readdirSync(context.temp)).toEqual([]);
   });
 
@@ -239,12 +296,12 @@ describe("Skill CLI installer", () => {
     expect(runInstaller(["--install"], context.environment).status).toBe(0);
     const target = join(context.bin, "torg");
 
-    const upgrade = createReleaseFixture({ version: "0.1.0-alpha.3" });
-    const result = runInstaller(["--install", "--version", "0.1.0-alpha.3"], {
+    const upgrade = createReleaseFixture({ version: "0.1.0-alpha.4" });
+    const result = runInstaller(["--install", "--version", "0.1.0-alpha.4"], {
       ...context.environment,
-      TORG_RELEASE_BASE_URL: `file://${upgrade.releaseDirectory}`,
+      TORG_PRIMARY_RELEASE_BASE_URL: `file://${upgrade.releaseDirectory}`,
     });
     expect(result).toMatchObject({ status: 0, stderr: "" });
-    expect(execFileSync(target, ["--version"], { encoding: "utf8" })).toBe("0.1.0-alpha.3\n");
+    expect(execFileSync(target, ["--version"], { encoding: "utf8" })).toBe("0.1.0-alpha.4\n");
   });
 });

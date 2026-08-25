@@ -31,6 +31,8 @@ try {
   const productionSafetyGates = [
     ["check-production-contract.mjs", "check-production-contract.self-test.mjs"],
     ["deploy-orgspace.sh", "deploy-orgspace.self-test.sh"],
+    ["publish-public-distribution.sh", "publish-public-distribution.self-test.sh"],
+    ["smoke-public-distribution.sh", "smoke-public-distribution.self-test.sh"],
     ["configure-orgspace-ingress.sh", "configure-orgspace-ingress.self-test.sh"],
     ["smoke-production.sh", "smoke-production.self-test.sh"],
   ];
