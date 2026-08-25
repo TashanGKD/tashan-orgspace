@@ -43,13 +43,7 @@ public origin: https://orgspace.tashan.chat
 
 OrgSpace secret 位于 `/home/aup/tashan-orgspace/shared/.env.production`，目录权限 `0700`、文件权限 `0600`。PostgreSQL 密码、验证码 pepper 与 Ed25519 JWT 密钥均为 OrgSpace 独立生成。阿里云短信账号、签名、模板与 endpoint 从现有受限生产配置按键名只读复制；全过程未输出值，未修改来源文件。
 
-部署器在 Tailscale SSH 多次握手不稳定后新增了 10 秒连接超时、keepalive 和单次部署 ControlMaster 复用。中断部署未写 `.deployed-commit`；成功后才原子切换 `current`。2026-08-26 生产指针曾验证为：
-
-```text
-481a665cd6af975a40fe7d863a16abf08b5f5fe2
-```
-
-本报告提交后需再部署最终提交，使生产指针与发布候选完全一致。
+部署器在 Tailscale SSH 多次握手不稳定后新增了 10 秒连接超时、keepalive 和单次部署 ControlMaster 复用。中断部署未写 `.deployed-commit`；成功后才原子切换 `current`。由于验证报告本身也属于发布提交，本文件不写一个会因下一次文档提交而立即过期的“最终 SHA”。合并完成后必须把 `main` 的精确 SHA 部署到 AUP，再以只读命令证明远端 `.deployed-commit`、GitHub 标签和本地 `HEAD` 三者一致。
 
 ## 公网与运行状态
 
