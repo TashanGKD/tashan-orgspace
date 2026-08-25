@@ -226,7 +226,7 @@ git commit -m "ci(deploy): gate production contract drift"
 - Create: `scripts/deploy-orgspace.sh`
 - Create: `scripts/deploy-orgspace.self-test.sh`
 
-- [ ] **Step 1: Write adversarial deployment tests**
+- [x] **Step 1: Write adversarial deployment tests**
 
 The fake `ssh`, `rsync`, and `docker` binaries must record invocations. Assert:
 
@@ -240,13 +240,13 @@ migration/build failure does not write .deployed-commit or reload ingress
 the script includes its own path in the dirty-worktree watched set
 ```
 
-- [ ] **Step 2: Run and verify RED**
+- [x] **Step 2: Run and verify RED**
 
 Run: `bash scripts/deploy-orgspace.self-test.sh`
 
 Expected: FAIL because the deploy command does not exist.
 
-- [ ] **Step 3: Implement default read-only and explicit apply**
+- [x] **Step 3: Implement default read-only and explicit apply**
 
 The interface is:
 
@@ -259,7 +259,7 @@ scripts/deploy-orgspace.sh --rollback <commit> --confirm-production
 
 `--apply` must require `--confirm-production`, a clean tracked worktree, an exact contract, remote secret-file mode `600`, free port `44110`, and successful `docker compose config`. Sync to a commit-specific release directory, never to another project's path. Run migration before switching the current symlink; after health passes, atomically update `current`, `.deployed-commit`, and append a tab-separated deploy-history record.
 
-- [ ] **Step 4: Run self-test and shell analysis**
+- [x] **Step 4: Run self-test and shell analysis**
 
 ```bash
 bash scripts/deploy-orgspace.self-test.sh
@@ -269,7 +269,7 @@ scripts/deploy-orgspace.sh
 
 Expected: PASS; final command prints a plan and makes no remote changes.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add scripts/deploy-orgspace.sh scripts/deploy-orgspace.self-test.sh
