@@ -8,11 +8,14 @@ import { AuthError } from "../auth/auth-errors.js";
 
 const CapabilityListResponse = z.object({ items: z.array(Capability) }).strict();
 
-export async function registerCapabilityRoutes(app: FastifyInstance): Promise<void> {
+export async function registerCapabilityRoutes(
+  app: FastifyInstance,
+  options: { serviceVersion: string },
+): Promise<void> {
   app.get("/v1/health", { config: { capabilityId: "system.health.read" } }, async () =>
     HealthResponse.parse({
       status: "ok",
-      version: "0.0.0",
+      version: options.serviceVersion,
       time: new Date().toISOString(),
     }),
   );

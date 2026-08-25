@@ -26,6 +26,7 @@ async function main(): Promise<void> {
   const app = await buildApp({
     sql,
     tokenService,
+    serviceVersion: config.serviceVersion,
     phoneSender:
       config.phone.provider === "aliyun"
         ? new AliyunVerificationCodeSender(config.phone)

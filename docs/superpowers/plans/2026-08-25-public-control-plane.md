@@ -48,8 +48,11 @@
 - Modify: `apps/api/src/app.ts`
 - Modify: `apps/api/src/routes/capability-routes.ts`
 - Modify: `apps/api/test/http/api.integration.test.ts`
+- Modify: `apps/api/test/http/phone-auth.integration.test.ts`
+- Modify: `apps/cli/test/cli-api.integration.test.ts`
+- Modify: `tests/e2e/support/api-process.ts`
 
-- [ ] **Step 1: Write failing config tests**
+- [x] **Step 1: Write failing config tests**
 
 Add tests proving production rejects an empty or placeholder `SERVICE_VERSION` and accepts a SemVer build identity:
 
@@ -65,19 +68,19 @@ expect(loadConfig(productionEnvironment({ SERVICE_VERSION: "0.1.0-alpha.2" })).s
 );
 ```
 
-- [ ] **Step 2: Run the tests and verify RED**
+- [x] **Step 2: Run the tests and verify RED**
 
 Run: `pnpm --filter @tashan/api test -- src/config.test.ts`
 
 Expected: FAIL because `serviceVersion` is not loaded or validated.
 
-- [ ] **Step 3: Implement the minimal service-version contract**
+- [x] **Step 3: Implement the minimal service-version contract**
 
 Load `SERVICE_VERSION`, require it in production, reject `dev`, `unknown`, `test`, and placeholders, and pass it through `BuildAppOptions`. Change `registerCapabilityRoutes(app)` to `registerCapabilityRoutes(app, { serviceVersion })`, then return it in `HealthResponse.version` instead of the hard-coded `0.0.0`.
 
-- [ ] **Step 4: Add and run the health integration test**
+- [x] **Step 4: Add and run the health integration test**
 
-Assert `GET /v1/health` returns the injected version and a valid timestamp. Run:
+Pass the explicit test service version to every non-production `buildApp` call site in API integration, CLI integration, and E2E support. Assert `GET /v1/health` returns the injected version and a valid timestamp. Run:
 
 ```bash
 pnpm --filter @tashan/api test -- src/config.test.ts
@@ -86,11 +89,13 @@ pnpm --filter @tashan/api test:integration -- test/http/api.integration.test.ts
 
 Expected: PASS.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add apps/api/src/config.ts apps/api/src/config.test.ts apps/api/src/app.ts \
-  apps/api/src/routes/capability-routes.ts apps/api/test/http/api.integration.test.ts
+  apps/api/src/routes/capability-routes.ts apps/api/test/http/api.integration.test.ts \
+  apps/api/test/http/phone-auth.integration.test.ts apps/cli/test/cli-api.integration.test.ts \
+  tests/e2e/support/api-process.ts
 git commit -m "feat(deploy): expose production build identity"
 ```
 

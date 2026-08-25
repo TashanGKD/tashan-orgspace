@@ -50,6 +50,7 @@ beforeAll(async () => {
   app = await buildApp({
     sql,
     tokenService,
+    serviceVersion: "0.1.0-alpha.2-test",
     phoneSender: sender,
     loginRateLimiter: new AllowAllRateLimiter(),
     phoneRateLimiter: new AllowAllRateLimiter(),

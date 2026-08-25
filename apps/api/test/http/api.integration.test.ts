@@ -47,6 +47,7 @@ beforeEach(async () => {
   app = await buildApp({
     sql,
     tokenService,
+    serviceVersion: "0.1.0-alpha.2-test",
     phoneSender: sender,
     loginRateLimiter: new AllowAllRateLimiter(),
     phoneRateLimiter: new AllowAllRateLimiter(),
@@ -133,6 +134,13 @@ async function login(phone: string, device: TestDevice, password = "CorrectHorse
 }
 
 describe("Phase 0 HTTP capability surface", () => {
+  test("reports the injected service version and a valid timestamp", async () => {
+    const response = await app.inject({ method: "GET", url: "/v1/health" });
+    expect(response.statusCode).toBe(200);
+    expect(response.json()).toMatchObject({ status: "ok", version: "0.1.0-alpha.2-test" });
+    expect(Number.isNaN(Date.parse(response.json<{ time: string }>().time))).toBe(false);
+  });
+
   test("returns the stable error envelope", async () => {
     const response = await app.inject({ method: "GET", url: "/v1/auth/whoami" });
     expect(response.statusCode).toBe(401);

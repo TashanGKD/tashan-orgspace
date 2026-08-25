@@ -10,9 +10,23 @@ const validEnvironment = {
   JWT_PRIVATE_KEY: "test-private-key-material",
   JWT_PUBLIC_KEY: "test-public-key-material",
   JWT_ACTIVE_KEY_ID: "test-key-1",
+  SERVICE_VERSION: "0.0.0-development",
   PHONE_CODE_PEPPER: "test-only-phone-code-pepper",
   PHONE_PROVIDER: "disabled",
 } as const;
+
+function productionEnvironment(overrides: Record<string, string> = {}) {
+  return {
+    ...validEnvironment,
+    NODE_ENV: "production",
+    DATABASE_URL: "postgresql://orgspace@postgres:5432/orgspace",
+    REDIS_URL: "redis://redis:6379",
+    CORS_ORIGINS: "https://orgspace.tashan.chat",
+    PHONE_CODE_PEPPER: "production-phone-code-pepper-value",
+    SERVICE_VERSION: "0.1.0-alpha.2",
+    ...overrides,
+  };
+}
 
 describe("API configuration safety", () => {
   test("rejects missing signing material and wildcard CORS", () => {
@@ -49,6 +63,16 @@ describe("API configuration safety", () => {
     expect(() => loadConfig({ ...validEnvironment, PHONE_PROVIDER: "aliyun" })).toThrow(
       "ALIYUN_SMS_ACCESS_KEY_ID",
     );
+  });
+
+  test("requires a release service version in production", () => {
+    expect(() => loadConfig(productionEnvironment({ SERVICE_VERSION: "" }))).toThrow(
+      "SERVICE_VERSION is required",
+    );
+    expect(() => loadConfig(productionEnvironment({ SERVICE_VERSION: "dev" }))).toThrow(
+      "production SERVICE_VERSION must be a release version",
+    );
+    expect(loadConfig(productionEnvironment()).serviceVersion).toBe("0.1.0-alpha.2");
   });
 
   test("loads a complete independent Aliyun verification configuration", () => {

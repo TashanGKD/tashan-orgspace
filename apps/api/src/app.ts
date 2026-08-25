@@ -33,6 +33,7 @@ import { registerPhoneRoutes } from "./routes/phone-routes.js";
 export interface BuildAppOptions {
   sql: DatabaseClient;
   tokenService: AccessTokenService;
+  serviceVersion: string;
   phoneSender: VerificationCodeSender;
   loginRateLimiter: LoginRateLimiter;
   phoneRateLimiter: PhoneRateLimiter;
@@ -89,7 +90,7 @@ export async function buildApp(options: BuildAppOptions): Promise<FastifyInstanc
 
   installErrorHandler(app);
 
-  await registerCapabilityRoutes(app);
+  await registerCapabilityRoutes(app, { serviceVersion: options.serviceVersion });
   await registerAuthRoutes(app, { sql: options.sql, auth, mutations, authenticate });
   await registerPhoneRoutes(app, { phones, mutations });
   await registerDeviceRoutes(app, { sql: options.sql, mutations, authenticate });
