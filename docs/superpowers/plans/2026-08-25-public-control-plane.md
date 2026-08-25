@@ -374,7 +374,7 @@ git commit -m "test(deploy): add production recovery smoke"
 - Modify: `scripts/check-gate-self-tests.self-test.mjs`
 - Modify: `.github/workflows/ci.yml`
 
-- [ ] **Step 1: Write a failing gate-discovery self-test**
+- [x] **Step 1: Write a failing gate-discovery self-test**
 
 Add a fixture that removes each of these self-tests and assert discovery fails:
 
@@ -385,7 +385,7 @@ configure-orgspace-ingress.self-test.sh
 smoke-production.self-test.sh
 ```
 
-- [ ] **Step 2: Verify RED, wire gates, verify GREEN**
+- [x] **Step 2: Verify RED, wire gates, verify GREEN**
 
 ```bash
 node scripts/check-gate-self-tests.self-test.mjs
@@ -394,7 +394,7 @@ bash scripts/verify-phase0.sh
 
 Expected before: FAIL because new gates are not mandatory. Expected after: `verify-phase0: PASS` and every negative self-test visibly runs.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add scripts/verify-phase0.sh scripts/check-gate-self-tests.mjs \

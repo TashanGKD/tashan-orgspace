@@ -3,9 +3,15 @@ import { dirname, join, relative, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 
 function isGateFile(name) {
+  const productionSafetyGates = new Set([
+    "configure-orgspace-ingress.sh",
+    "deploy-orgspace.sh",
+    "smoke-production.sh",
+  ]);
   return (
     (/^check-.*\.mjs$/.test(name) && !name.endsWith(".self-test.mjs")) ||
-    (/^verify-.*\.sh$/.test(name) && !name.endsWith(".self-test.sh"))
+    (/^verify-.*\.sh$/.test(name) && !name.endsWith(".self-test.sh")) ||
+    productionSafetyGates.has(name)
   );
 }
 

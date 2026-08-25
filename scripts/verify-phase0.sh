@@ -20,12 +20,17 @@ run_step "pnpm test:distribution" pnpm test:distribution
 run_step "node scripts/check-capability-coverage.mjs" node scripts/check-capability-coverage.mjs
 run_step "node scripts/check-phone-auth-surface.mjs" node scripts/check-phone-auth-surface.mjs
 run_step "node scripts/check-release-contract.mjs" node scripts/check-release-contract.mjs
+run_step "node scripts/check-production-contract.mjs" node scripts/check-production-contract.mjs
 run_step "node scripts/check-gate-self-tests.mjs" node scripts/check-gate-self-tests.mjs
 run_step "node scripts/check-capability-coverage.self-test.mjs" node scripts/check-capability-coverage.self-test.mjs
 run_step "node scripts/check-phone-auth-surface.self-test.mjs" node scripts/check-phone-auth-surface.self-test.mjs
 run_step "node scripts/check-release-contract.self-test.mjs" node scripts/check-release-contract.self-test.mjs
+run_step "node scripts/check-production-contract.self-test.mjs" node scripts/check-production-contract.self-test.mjs
 run_step "node scripts/check-gate-self-tests.self-test.mjs" node scripts/check-gate-self-tests.self-test.mjs
 run_step "node scripts/check-commit-evidence.self-test.mjs" node scripts/check-commit-evidence.self-test.mjs
+run_step "bash scripts/deploy-orgspace.self-test.sh" bash scripts/deploy-orgspace.self-test.sh
+run_step "bash scripts/configure-orgspace-ingress.self-test.sh" bash scripts/configure-orgspace-ingress.self-test.sh
+run_step "bash scripts/smoke-production.self-test.sh" bash scripts/smoke-production.self-test.sh
 run_step "pnpm test:e2e" pnpm test:e2e
 
 echo "verify-phase0: PASS"
