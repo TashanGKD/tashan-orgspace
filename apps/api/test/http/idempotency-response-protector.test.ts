@@ -20,9 +20,12 @@ describe("IdempotencyResponseProtector", () => {
     const protector = new IdempotencyResponseProtector("a".repeat(32));
     const sealed = protector.seal(response);
     const value = sealed.__torg_sealed_response_v1;
+    const tampered = Buffer.from(value, "base64url");
+    const lastIndex = tampered.length - 1;
+    tampered[lastIndex] = (tampered[lastIndex] ?? 0) ^ 1;
     expect(() =>
       protector.open({
-        __torg_sealed_response_v1: `${value.slice(0, -1)}${value.endsWith("A") ? "B" : "A"}`,
+        __torg_sealed_response_v1: tampered.toString("base64url"),
       }),
     ).toThrow(/could not be decrypted/);
   });

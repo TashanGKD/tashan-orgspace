@@ -90,6 +90,25 @@ expect_failure() {
   esac
 }
 
+wait_for_log() {
+  expected="$1"
+  wait_attempt=0
+  while [ "$wait_attempt" -lt 100 ]; do
+    grep -q -- "$expected" "$transport_log" && return 0
+    wait_attempt=$((wait_attempt + 1))
+    sleep 0.02
+  done
+  echo "timed out waiting for transport log: $expected" >&2
+  if [ -f "$state_dir/autossh.log" ]; then
+    sed -n '1,80p' "$state_dir/autossh.log" >&2
+  fi
+  if [ -f "$state_dir/autossh.pid" ]; then
+    diagnostic_pid="$(cat "$state_dir/autossh.pid")"
+    ps -p "$diagnostic_pid" -o pid=,ppid=,state=,command= >&2 || true
+  fi
+  return 1
+}
+
 : > "$transport_log"
 run_tunnel >/dev/null
 run_configure >/dev/null
@@ -97,8 +116,8 @@ test ! -s "$transport_log"
 
 : > "$transport_log"
 run_tunnel --apply --confirm-production >/dev/null
-grep -q "autossh -M 0 -N" "$transport_log"
-grep -q -- "-R 127.0.0.1:14010:127.0.0.1:44110" "$transport_log"
+wait_for_log "autossh -M 0 -N"
+wait_for_log "-R 127.0.0.1:14010:127.0.0.1:44110"
 if grep -Eq -- '-R (0\.0\.0\.0|\[::\]|\*:)' "$transport_log"; then
   echo "tunnel exposed a non-loopback reverse bind" >&2
   exit 1
