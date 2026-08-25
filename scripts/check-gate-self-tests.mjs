@@ -7,6 +7,7 @@ function isGateFile(name) {
     "configure-orgspace-ingress.sh",
     "deploy-orgspace.sh",
     "publish-public-distribution.sh",
+    "smoke-public-distribution.sh",
     "smoke-production.sh",
   ]);
   return (

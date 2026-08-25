@@ -143,3 +143,17 @@ OrgSpace 上线前 Panshi 首页为 200。验证期间 Panshi 后续返回带 `R
 
 1. 尚未使用真实手机号完成验证码注册、登录、组织列表、设备列表、当前设备撤销和旧会话拒绝；这也是 Task 9 Step 4 与 Task 10 Step 4 仍未勾选的原因。
 2. 文件、任务/OKR、通知、聊天、代码运行、Docker build、常驻服务与动态用户域名属于 Phase 1+，尚未实现。alpha.2 是公网控制面 prerelease，不代表完整产品已经完成。
+
+## alpha.3 双源分发修复
+
+随后按真实新用户方法创建两个 `fork_turns=none` 子智能体；每个只知道自己的手机号和已经公开安装的 alpha.2 Skill，禁止读取仓库、服务器、历史对话或另一个用户状态。两者均在 Skill 官方 CLI 安装器下载 GitHub Release `SHA256SUMS` 时失败，未获得 CLI、未发送新短信、未创建账号。该结果推翻了“单次公开安装成功足以证明一键安装可靠”的结论。
+
+`v0.1.0-alpha.3` 因此引入：
+
+- `orgspace.tashan.chat/downloads/orgspace` 官方 HTTPS 主源；
+- GitHub 固定 tag/Release 备用源；
+- Skill 与三平台 CLI 的统一校验和；
+- 仅传输失败才回退、完整性失败立即停止的来源状态机；
+- AUP 只读静态挂载、不可变版本目录、原子发布器与公网 smoke。
+
+本节记录的是修复动机和实现范围，不是上线结论。只有 alpha.3 合并、部署、发布、镜像 smoke 和两个全新用户完整账号流程都取得真实证据后，才能标记为通过。

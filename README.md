@@ -13,17 +13,17 @@
 
 Phase 0 已实现账号注册与登录、手机号验证、设备会话与单设备撤销、组织创建与成员隔离、追加式审计、可恢复 Outbox Worker、共享 SDK、覆盖全部 17 个能力的 `torg` CLI，以及登录/组织/设备 Web 工作台。
 
-文件空间、OKR/任务、审批、聊天、代码运行、常驻服务、短信生产发送、自动 HTTPS 域名、AI 员工和 AUP 生产部署尚未进入实现范围。
+文件空间、OKR/任务、审批、聊天、代码运行、常驻服务、通用通知短信、自动 HTTPS 域名和 AI 员工尚未进入实现范围。账号验证码已接入阿里云短信，独立 Phase 0 后端已部署到 AUP。
 
 ## 为 Codex 安装 Skill
 
-公开发布后，可以直接对任意一台电脑上的 Codex 说：
+`v0.1.0-alpha.3` 发布后，推荐直接对任意一台电脑上的 Codex 说：
 
-> 请使用内置的 skill-installer，从 `TashanGKD/tashan-orgspace` 仓库的 `skill/tashan-orgspace` 安装 Skill。
+> 请把 `https://orgspace.tashan.chat/downloads/orgspace/install-skill.sh` 下载到临时文件，先查看帮助并运行 `--check`，再用 `--install` 安装 OrgSpace Skill。不要使用 `curl | sh`。
 
-Codex 会把 `tashan-orgspace` 安装到自己的 Skill 目录；新 Skill 从下一轮对话开始生效。随后只需说“使用 `$tashan-orgspace` 查看我的组织”，Skill 就会在用户目录中安装或检查带校验和的独立 `torg` CLI，不使用 `sudo`，也不要求本机预装 Node.js。
+官方安装器会从他山 HTTPS 主源下载固定版本 Skill，验证 SHA256 和归档布局后原子安装到 Codex Skill 目录；新 Skill 从下一轮对话开始生效。随后只需说“使用 `$tashan-orgspace` 查看我的组织”，Skill 就会在用户目录中安装或检查带校验和的独立 `torg` CLI，不使用 `sudo`，也不要求本机预装 Node.js。CLI 主源传输失败时才会完整切换到 GitHub Release；校验和或归档异常会直接失败，不会用备用源掩盖。
 
-当前版本是预发布版：Skill 与 CLI 可以独立安装，但这不代表 `https://orgspace.tashan.chat` 的生产登录服务已经上线。macOS arm64/x64 与 Linux x64 受支持；Windows 暂不支持。
+GitHub 备用入口是固定 tag `v0.1.0-alpha.3` 下的 `skill/tashan-orgspace`，可由 Codex 内置 `skill-installer` 安装。macOS arm64/x64 与 Linux x64 受支持；Windows 暂不支持。
 
 ## 本地验证
 
@@ -85,4 +85,4 @@ docs/       架构、运行手册、产品设计与实施计划
 
 ## 部署状态
 
-本轮发布版本为 `v0.1.0-alpha.2`。独立 Phase 0 生产后端已部署到 `https://orgspace.tashan.chat`；文件、协作、聊天和安全计算等 Phase 1+ 能力仍未发布。现有 `org.tashan.chat` 属于其他项目，不在本仓库的部署范围内。
+仓库正在准备 `v0.1.0-alpha.3` 的双源安装发布；在合并、部署、打标签和公网 smoke 完成前，生产仍运行 `v0.1.0-alpha.2`。独立 Phase 0 后端位于 `https://orgspace.tashan.chat`；文件、协作、聊天和安全计算等 Phase 1+ 能力仍未发布。现有 `org.tashan.chat` 属于其他项目，不在本仓库的部署范围内。

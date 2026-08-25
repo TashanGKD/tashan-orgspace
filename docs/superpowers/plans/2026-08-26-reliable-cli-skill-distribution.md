@@ -356,20 +356,20 @@ git commit -m "feat(distribution): publish mirror atomically"
 - Modify: `docs/verification/2026-08-26-public-control-plane.md`
 - Modify: `scripts/check-gate-self-tests.mjs`
 
-- [ ] **Step 1: Write failing smoke self-test**
+- [x] **Step 1: Write failing smoke self-test**
 
 Fake curl responses must prove the smoke detects missing assets, wrong content length, checksum mismatch, stable installer immutable caching, version file missing immutable caching, unknown path returning HTML/200, and secret-like output.
 
-- [ ] **Step 2: Run RED**
+- [x] **Step 2: Run RED**
 
 Run: `bash scripts/smoke-public-distribution.self-test.sh`  
 Expected: FAIL because the smoke script is absent.
 
-- [ ] **Step 3: Implement smoke and user instructions**
+- [x] **Step 3: Implement smoke and user instructions**
 
 The smoke reads release metadata, downloads five public files to a temporary directory, validates four hashes and response headers, asserts an unknown versioned file is 404, and prints only version/asset/hash status. README documents official installation first and pinned GitHub Skill fallback second; Skill explains CLI source selection without claiming unimplemented capabilities.
 
-- [ ] **Step 4: Run GREEN and stale-reference search**
+- [x] **Step 4: Run GREEN and stale-reference search**
 
 Run:
 
@@ -379,7 +379,7 @@ node scripts/check-gate-self-tests.mjs
 rg -n 'GitHub Release.*only|only.*GitHub Release|0\.1\.0-alpha\.2' README.md skill docs
 ```
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add scripts/smoke-public-distribution* scripts/check-gate-self-tests.mjs README.md skill/tashan-orgspace/SKILL.md docs/verification/2026-08-26-public-control-plane.md
