@@ -143,6 +143,11 @@ done
 run_configure --apply --confirm-production >/dev/null
 grep -q 'scp .*orgspace.tashan.chat.next' "$transport_log"
 grep -q "sites-available/orgspace.tashan.chat" "$transport_log"
+if grep '^ssh ' "$transport_log" | grep -qv -- '-o BatchMode=yes -o ConnectTimeout=10'; then
+  echo "ingress SSH call is missing fail-fast connection options" >&2
+  exit 1
+fi
+grep '^scp ' "$transport_log" | grep -q -- '-o BatchMode=yes -o ConnectTimeout=10'
 if grep -Eq 'sites-(available|enabled)/(ask\.tashan\.chat|org\.tashan\.chat|panshi[^/]*)' "$transport_log"; then
   echo "ingress installer touched another vhost" >&2
   exit 1

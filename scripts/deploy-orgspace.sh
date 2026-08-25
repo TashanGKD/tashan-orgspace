@@ -3,6 +3,12 @@ set -euo pipefail
 
 repository_root="$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)"
 default_contract="$repository_root/deploy/production-contract.json"
+ssh_options=(-o BatchMode=yes -o ConnectTimeout=10 -o ServerAliveInterval=15 -o ServerAliveCountMax=2)
+rsync_ssh="ssh -o BatchMode=yes -o ConnectTimeout=10 -o ServerAliveInterval=15 -o ServerAliveCountMax=2"
+
+orgspace_ssh() {
+  ssh "${ssh_options[@]}" "$@"
+}
 
 die() {
   echo "deploy-orgspace: $*" >&2
@@ -92,8 +98,8 @@ validate_commit() {
 
 read_only_preflight() {
   node "$repository_root/scripts/check-production-contract.mjs" >/dev/null
-  ssh "$aup_host" "set -eu; command -v docker >/dev/null; docker compose version >/dev/null; command -v curl >/dev/null; test -d '$remote_root' || test ! -e '$remote_root'; if ss -ltn | grep -q ':$aup_port '; then docker ps --format '{{.Names}}' | grep -q '^tashan-orgspace-prod-'; fi"
-  secret_mode="$(ssh "$aup_host" "if test -f '$secret_file'; then stat -c %a '$secret_file'; else echo missing; fi")"
+  orgspace_ssh "$aup_host" "set -eu; command -v docker >/dev/null; docker compose version >/dev/null; command -v curl >/dev/null; test -d '$remote_root' || test ! -e '$remote_root'; if ss -ltn | grep -q ':$aup_port '; then docker ps --format '{{.Names}}' | grep -q '^tashan-orgspace-prod-'; fi"
+  secret_mode="$(orgspace_ssh "$aup_host" "if test -f '$secret_file'; then stat -c %a '$secret_file'; else echo missing; fi")"
   [ "$secret_mode" = "600" ] || die "remote secret file must have mode 600: $secret_file"
   echo "deploy-orgspace preflight: PASS ($aup_host $remote_root)"
 }
@@ -108,15 +114,15 @@ restore_previous_release() {
   previous_release="$1"
   if [ -n "$previous_release" ]; then
     previous_compose="$(compose_command "$previous_release")"
-    ssh "$aup_host" "set -eu; $previous_compose up -d --remove-orphans"
+    orgspace_ssh "$aup_host" "set -eu; $previous_compose up -d --remove-orphans"
   else
     current_compose="$2"
-    ssh "$aup_host" "$current_compose down" >/dev/null 2>&1 || true
+    orgspace_ssh "$aup_host" "$current_compose down" >/dev/null 2>&1 || true
   fi
 }
 
 health_check() {
-  ssh "$aup_host" "set -eu; attempts=0; while test \"\$attempts\" -lt 30; do if body=\$(curl -fsS 'http://127.0.0.1:$aup_port$health_path'); then HEALTH=\"\$body\" node -e 'const h=JSON.parse(process.env.HEALTH);if(h.status!==\"ok\")process.exit(1)' && exit 0; fi; attempts=\$((attempts+1)); sleep 1; done; exit 1"
+  orgspace_ssh "$aup_host" "set -eu; attempts=0; while test \"\$attempts\" -lt 30; do if body=\$(curl -fsS 'http://127.0.0.1:$aup_port$health_path'); then HEALTH=\"\$body\" node -e 'const h=JSON.parse(process.env.HEALTH);if(h.status!==\"ok\")process.exit(1)' && exit 0; fi; attempts=\$((attempts+1)); sleep 1; done; exit 1"
 }
 
 apply_release() {
@@ -126,23 +132,23 @@ apply_release() {
   validate_commit "$commit"
   release_path="$remote_root/releases/$commit"
   staging_path="$remote_root/staging/$commit-$$"
-  previous_release="$(ssh "$aup_host" "readlink -f '$remote_root/current' 2>/dev/null || true")"
+  previous_release="$(orgspace_ssh "$aup_host" "readlink -f '$remote_root/current' 2>/dev/null || true")"
 
-  ssh "$aup_host" "set -eu; mkdir -p '$remote_root/releases' '$remote_root/staging' '$remote_root/shared'; rm -rf '$staging_path'; mkdir -p '$staging_path'"
-  if ! git -C "$repository_root" ls-files -z | rsync -a --from0 --files-from=- "$repository_root/" "$aup_host:$staging_path/"; then
-    ssh "$aup_host" "rm -rf '$staging_path'"
+  orgspace_ssh "$aup_host" "set -eu; mkdir -p '$remote_root/releases' '$remote_root/staging' '$remote_root/shared'; rm -rf '$staging_path'; mkdir -p '$staging_path'"
+  if ! git -C "$repository_root" ls-files -z | rsync -a -e "$rsync_ssh" --from0 --files-from=- "$repository_root/" "$aup_host:$staging_path/"; then
+    orgspace_ssh "$aup_host" "rm -rf '$staging_path'"
     die "tracked file sync failed: git enumeration or rsync failed; bounded staging directory was removed"
   fi
 
   staging_compose="$(compose_command "$staging_path")"
-  if ! ssh "$aup_host" "set -eu; cd '$staging_path'; $staging_compose config --quiet; $staging_compose build; $staging_compose run --rm migrate"; then
-    ssh "$aup_host" "rm -rf '$staging_path'"
+  if ! orgspace_ssh "$aup_host" "set -eu; cd '$staging_path'; $staging_compose config --quiet; $staging_compose build; $staging_compose run --rm migrate"; then
+    orgspace_ssh "$aup_host" "rm -rf '$staging_path'"
     die "build or migration failed; deployed commit was not changed"
   fi
 
-  ssh "$aup_host" "set -eu; test ! -e '$release_path'; mv '$staging_path' '$release_path'"
+  orgspace_ssh "$aup_host" "set -eu; test ! -e '$release_path'; mv '$staging_path' '$release_path'"
   release_compose="$(compose_command "$release_path")"
-  if ! ssh "$aup_host" "set -eu; $release_compose up -d --remove-orphans"; then
+  if ! orgspace_ssh "$aup_host" "set -eu; $release_compose up -d --remove-orphans"; then
     restore_previous_release "$previous_release" "$release_compose"
     die "production start failed; previous release was restored"
   fi
@@ -152,7 +158,7 @@ apply_release() {
   fi
 
   deployed_at="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
-  ssh "$aup_host" "set -eu; ln -sfn 'releases/$commit' '$remote_root/current.next'; mv -Tf '$remote_root/current.next' '$remote_root/current'; printf '%s\n' '$commit' > '$remote_root/.deployed-commit'; printf '%s\t%s\n' '$deployed_at' '$commit' >> '$remote_root/deploy-history.log'"
+  orgspace_ssh "$aup_host" "set -eu; ln -sfn 'releases/$commit' '$remote_root/current.next'; mv -Tf '$remote_root/current.next' '$remote_root/current'; printf '%s\n' '$commit' > '$remote_root/.deployed-commit'; printf '%s\t%s\n' '$deployed_at' '$commit' >> '$remote_root/deploy-history.log'"
   echo "deploy-orgspace: deployed $commit to $remote_root"
 }
 
@@ -161,12 +167,12 @@ rollback_release() {
   validate_commit "$commit"
   read_only_preflight
   release_path="$remote_root/releases/$commit"
-  ssh "$aup_host" "test -d '$release_path'" || die "rollback release does not exist: $commit"
+  orgspace_ssh "$aup_host" "test -d '$release_path'" || die "rollback release does not exist: $commit"
   release_compose="$(compose_command "$release_path")"
-  ssh "$aup_host" "set -eu; $release_compose config --quiet; $release_compose up -d --remove-orphans"
+  orgspace_ssh "$aup_host" "set -eu; $release_compose config --quiet; $release_compose up -d --remove-orphans"
   health_check >/dev/null || die "rollback release failed health; current pointer was not changed"
   rolled_back_at="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
-  ssh "$aup_host" "set -eu; ln -sfn 'releases/$commit' '$remote_root/current.next'; mv -Tf '$remote_root/current.next' '$remote_root/current'; printf '%s\n' '$commit' > '$remote_root/.deployed-commit'; printf '%s\t%s\trollback\n' '$rolled_back_at' '$commit' >> '$remote_root/deploy-history.log'"
+  orgspace_ssh "$aup_host" "set -eu; ln -sfn 'releases/$commit' '$remote_root/current.next'; mv -Tf '$remote_root/current.next' '$remote_root/current'; printf '%s\n' '$commit' > '$remote_root/.deployed-commit'; printf '%s\t%s\trollback\n' '$rolled_back_at' '$commit' >> '$remote_root/deploy-history.log'"
   echo "deploy-orgspace: rolled back to $commit"
 }
 

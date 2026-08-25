@@ -4,6 +4,15 @@ set -euo pipefail
 repository_root="$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)"
 contract="$repository_root/deploy/production-contract.json"
 template="$repository_root/deploy/nginx/ecs-orgspace.conf"
+ssh_options=(-o BatchMode=yes -o ConnectTimeout=10 -o ServerAliveInterval=15 -o ServerAliveCountMax=2)
+
+orgspace_ssh() {
+  ssh "${ssh_options[@]}" "$@"
+}
+
+orgspace_scp() {
+  scp "${ssh_options[@]}" "$@"
+}
 if [ -n "${ORGSPACE_INGRESS_TEMPLATE:-}" ]; then
   [ "${ORGSPACE_INGRESS_TESTING:-0}" = "1" ] || {
     echo "configure-orgspace-ingress: template override is test-only" >&2
@@ -70,31 +79,31 @@ require_clean_worktree() {
 preflight() {
   validate_template
   node "$repository_root/scripts/check-production-contract.mjs" >/dev/null
-  ssh "$ecs_host" "set -eu; command -v nginx >/dev/null; test -r '$certificate'; test -r '$certificate_key'; if ss -ltn | grep -q ':$ecs_port '; then pgrep -fa autossh | grep -q '127.0.0.1:$ecs_port:127.0.0.1:44110'; fi"
-  ssh "$aup_host" "set -eu; test -x '$remote_root/current/deploy/start-tunnel.sh'; command -v autossh >/dev/null; test -r /home/aup/.ssh/tashan_tunnel"
+  orgspace_ssh "$ecs_host" "set -eu; command -v nginx >/dev/null; test -r '$certificate'; test -r '$certificate_key'; if ss -ltn | grep -q ':$ecs_port '; then pgrep -fa autossh | grep -q '127.0.0.1:$ecs_port:127.0.0.1:44110'; fi"
+  orgspace_ssh "$aup_host" "set -eu; test -x '$remote_root/current/deploy/start-tunnel.sh'; command -v autossh >/dev/null; test -r /home/aup/.ssh/tashan_tunnel"
   echo "configure-orgspace-ingress preflight: PASS"
 }
 
 restore_vhost() {
   backup="$1"
   prior_state="$2"
-  ssh "$ecs_host" "set -eu; echo restore-orgspace-vhost >/dev/null; if test '$prior_state' = present; then cp '$backup' '$vhost'; ln -sfn '$vhost' '$enabled_vhost'; else rm -f '$vhost' '$enabled_vhost'; fi; nginx -t; nginx -s reload; rm -f '$remote_candidate' '$backup'" || true
+  orgspace_ssh "$ecs_host" "set -eu; echo restore-orgspace-vhost >/dev/null; if test '$prior_state' = present; then cp '$backup' '$vhost'; ln -sfn '$vhost' '$enabled_vhost'; else rm -f '$vhost' '$enabled_vhost'; fi; nginx -t; nginx -s reload; rm -f '$remote_candidate' '$backup'" || true
 }
 
 apply_ingress() {
   require_clean_worktree
   preflight
   backup="$vhost.backup.$$"
-  prior_state="$(ssh "$ecs_host" "if test -e '$vhost'; then cp '$vhost' '$backup'; echo present; else echo absent; fi")"
-  scp "$template" "$ecs_host:$remote_candidate"
-  if ! ssh "$ecs_host" "set -eu; mv '$remote_candidate' '$vhost'; ln -sfn '$vhost' '$enabled_vhost'; if nginx -t; then nginx -s reload; else echo restore-orgspace-vhost >/dev/null; if test '$prior_state' = present; then cp '$backup' '$vhost'; else rm -f '$vhost' '$enabled_vhost'; fi; nginx -t; nginx -s reload; exit 1; fi"; then
+  prior_state="$(orgspace_ssh "$ecs_host" "if test -e '$vhost'; then cp '$vhost' '$backup'; echo present; else echo absent; fi")"
+  orgspace_scp "$template" "$ecs_host:$remote_candidate"
+  if ! orgspace_ssh "$ecs_host" "set -eu; mv '$remote_candidate' '$vhost'; ln -sfn '$vhost' '$enabled_vhost'; if nginx -t; then nginx -s reload; else echo restore-orgspace-vhost >/dev/null; if test '$prior_state' = present; then cp '$backup' '$vhost'; else rm -f '$vhost' '$enabled_vhost'; fi; nginx -t; nginx -s reload; exit 1; fi"; then
     die "ECS nginx validation failed; prior OrgSpace vhost restored"
   fi
-  if ! ssh "$aup_host" "'$remote_root/current/deploy/start-tunnel.sh' --apply --confirm-production"; then
+  if ! orgspace_ssh "$aup_host" "'$remote_root/current/deploy/start-tunnel.sh' --apply --confirm-production"; then
     restore_vhost "$backup" "$prior_state"
     die "AUP tunnel start failed; prior OrgSpace vhost restored"
   fi
-  if ! ssh "$ecs_host" "curl -fsS 'http://127.0.0.1:$ecs_port$health_path' >/dev/null"; then
+  if ! orgspace_ssh "$ecs_host" "curl -fsS 'http://127.0.0.1:$ecs_port$health_path' >/dev/null"; then
     restore_vhost "$backup" "$prior_state"
     die "ECS loopback health failed; prior OrgSpace vhost restored"
   fi
@@ -106,7 +115,7 @@ apply_ingress() {
     restore_vhost "$backup" "$prior_state"
     die "public HTTPS health returned an invalid body; prior OrgSpace vhost restored"
   }
-  ssh "$ecs_host" "rm -f '$backup' '$remote_candidate'"
+  orgspace_ssh "$ecs_host" "rm -f '$backup' '$remote_candidate'"
   echo "configure-orgspace-ingress: active at $public_origin"
 }
 

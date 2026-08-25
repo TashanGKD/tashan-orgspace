@@ -143,6 +143,11 @@ fi
 run_deployer --apply --confirm-production >/dev/null
 grep -q '^rsync ' "$transport_log"
 grep -q '\.deployed-commit' "$transport_log"
+if grep '^ssh ' "$transport_log" | grep -qv -- '-o BatchMode=yes -o ConnectTimeout=10'; then
+  echo "deployment SSH call is missing fail-fast connection options" >&2
+  exit 1
+fi
+grep '^rsync ' "$transport_log" | grep -q -- '-e ssh -o BatchMode=yes -o ConnectTimeout=10'
 if grep -Eq '/home/aup/(panshi|cognitive-ask-platform)' "$transport_log"; then
   echo "deployment escaped its filesystem boundary" >&2
   exit 1
