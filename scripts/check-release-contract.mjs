@@ -124,6 +124,10 @@ export function checkDistributionContract(release, workflow, installer) {
   }
   for (const required of [
     "node scripts/build-cli-release.mjs --output-dir dist",
+    "node scripts/build-skill-release.mjs --output-dir dist",
+    "name: skill",
+    `test "$(find dist -maxdepth 1 -name '*.tar.gz' -type f | wc -l)" -eq 4`,
+    `test "$(find dist -maxdepth 1 -name '*.sha256' -type f | wc -l)" -eq 4`,
     `${release.apiUrl}/v1/health`,
     "gh release create",
   ]) {
@@ -132,6 +136,9 @@ export function checkDistributionContract(release, workflow, installer) {
   const installerPattern = `  ${expectedPlatforms.join(" | ")}) ;;`;
   if (!installer.includes(installerPattern)) {
     throw new Error("installer platform allowlist mismatch");
+  }
+  if (!installer.includes("distribution_base=$(json_string distributionBaseUrl)")) {
+    throw new Error("installer must read the official distribution source from release metadata");
   }
 }
 

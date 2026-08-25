@@ -29,10 +29,17 @@ const workflow = `
           platform: linux-x64
       - run: node scripts/build-cli-release.mjs --output-dir dist
       - run: node scripts/build-skill-release.mjs --output-dir dist
+      - run: test "$(find dist -maxdepth 1 -name '*.tar.gz' -type f | wc -l)" -eq 4
+      - run: test "$(find dist -maxdepth 1 -name '*.sha256' -type f | wc -l)" -eq 4
+        name: skill
       - run: curl https://orgspace.tashan.chat/v1/health
       - run: gh release create
 `;
-const installer = "case $platform in\n  darwin-arm64 | darwin-x64 | linux-x64) ;;\nesac\n";
+const installer = `distribution_base=$(json_string distributionBaseUrl)
+case $platform in
+  darwin-arm64 | darwin-x64 | linux-x64) ;;
+esac
+`;
 
 function changed(value, update) {
   return Object.assign(clone(value), update);
@@ -67,6 +74,19 @@ assert.throws(
 assert.throws(
   () => checkDistributionContract(release, workflow, installer.replace(" | linux-x64", "")),
   /installer platform allowlist mismatch/,
+);
+assert.throws(
+  () =>
+    checkDistributionContract(
+      release,
+      workflow.replace("      - run: node scripts/build-skill-release.mjs --output-dir dist\n", ""),
+      installer,
+    ),
+  /release workflow missing: node scripts\/build-skill-release\.mjs/,
+);
+assert.throws(
+  () => checkDistributionContract(release, workflow.replace("-eq 4", "-eq 3"), installer),
+  /release workflow missing: test.*tar\.gz/,
 );
 assert.throws(
   () => checkReleaseContract(release, { version: "0.1.0-alpha.2" }, skillRelease),

@@ -221,20 +221,20 @@ git commit -m "feat(distribution): package installable Skill"
 - Modify: `scripts/check-release-contract.mjs`
 - Modify: `scripts/check-release-contract.self-test.mjs`
 
-- [ ] **Step 1: Add failing workflow assertions**
+- [x] **Step 1: Add failing workflow assertions**
 
 Require a `skill` artifact job, exactly one Skill archive, three CLI archives, four `.sha256` inputs, and one sorted `SHA256SUMS`. Assert `gh release create` includes the Skill archive.
 
-- [ ] **Step 2: Run RED**
+- [x] **Step 2: Run RED**
 
 Run: `node scripts/check-release-contract.self-test.mjs`  
 Expected: FAIL with `release workflow missing Skill artifact`.
 
-- [ ] **Step 3: Add Skill build job and unified publish**
+- [x] **Step 3: Add Skill build job and unified publish**
 
 Build the Skill archive once on Ubuntu after verification, upload it as `skill`, download `cli-*` plus `skill`, require four archives/four checksum fragments, validate all four, and publish all archives with `SHA256SUMS`.
 
-- [ ] **Step 4: Run GREEN**
+- [x] **Step 4: Run GREEN**
 
 Run:
 
@@ -244,7 +244,7 @@ node scripts/check-release-contract.mjs
 pnpm exec prettier --check .github/workflows/release-cli.yml
 ```
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add .github/workflows/release-cli.yml scripts/check-release-contract.mjs scripts/check-release-contract.self-test.mjs
