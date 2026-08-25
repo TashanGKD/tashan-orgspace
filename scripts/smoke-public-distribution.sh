@@ -40,8 +40,7 @@ header_value() {
   name=$1
   file=$2
   awk -v wanted="$name" '
-    BEGIN { IGNORECASE = 1 }
-    $0 ~ "^" wanted ":" {
+    index(tolower($0), tolower(wanted) ":") == 1 {
       sub(/^[^:]+:[[:space:]]*/, ""); sub(/\r$/, ""); value = $0
     }
     END { print value }
