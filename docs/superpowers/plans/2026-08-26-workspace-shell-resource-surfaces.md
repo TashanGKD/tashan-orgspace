@@ -133,23 +133,23 @@ git commit -m "feat(platform): bind list and detail surfaces"
 - Create: `apps/web/src/platform/shell/shell-state.ts`
 - Modify: `apps/web/src/styles.css`
 
-- [ ] **Step 1: Write RED shell journey tests**
+- [x] **Step 1: Write RED shell journey tests**
 
 Cover explicit 216→64px collapse, device-local preference, organization/personal/global navigation groups, role-filtered admin links, mobile bottom navigation, More sheet, Escape close, active-route labeling, organization loading/forbidden and no horizontal overflow at 320px.
 
-- [ ] **Step 2: Implement the fixed-height desktop shell**
+- [x] **Step 2: Implement the fixed-height desktop shell**
 
 Use `100dvh`, a non-scrolling 216/64px sidebar, a compact top header and one scrolling main region. Keep the existing organization provider and session boundaries. Navigation uses Lucide line icons and T1 active states, not emoji or copied dance-os labels.
 
-- [ ] **Step 3: Implement mobile navigation**
+- [x] **Step 3: Implement mobile navigation**
 
 Show at most five high-frequency destinations in the bottom bar and put the remainder in an accessible left Sheet. Preserve safe-area padding and the same deep-link routes as desktop.
 
-- [ ] **Step 4: Run responsive and accessibility verification**
+- [x] **Step 4: Run responsive and accessibility verification**
 
 Run Web unit tests at desktop/mobile media queries, keyboard navigation tests, reduced-motion tests, typecheck and build.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add apps/web/src/platform/shell apps/web/src/styles.css

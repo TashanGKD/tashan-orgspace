@@ -1,3 +1,22 @@
+import {
+  Blocks,
+  Building2,
+  CalendarDays,
+  CircleUserRound,
+  ClipboardCheck,
+  FileText,
+  FolderOpen,
+  Gauge,
+  HardDrive,
+  ListTodo,
+  MessageCircle,
+  ScrollText,
+  Server,
+  Settings2,
+  Target,
+  Users,
+  type LucideIcon,
+} from "lucide-react";
 import { NavLink } from "react-router";
 
 import { OrganizationId } from "@tashan/contracts";
@@ -6,7 +25,29 @@ import { productModules, type ProductModule } from "../modules/module-catalog.js
 
 type MembershipRole = "org_owner" | "org_admin" | "member";
 
-function moduleHref(module: ProductModule, organizationId: string): string {
+const moduleIcons: Readonly<Record<string, LucideIcon>> = {
+  "global.my-work": ClipboardCheck,
+  "global.account": CircleUserRound,
+  "personal.overview": Gauge,
+  "personal.files": FolderOpen,
+  "personal.runtime": Blocks,
+  "personal.services": Server,
+  "personal.usage": HardDrive,
+  "organization.home": Building2,
+  "organization.tasks": ListTodo,
+  "organization.okr": Target,
+  "organization.approvals": ClipboardCheck,
+  "organization.meetings": CalendarDays,
+  "organization.files": FolderOpen,
+  "organization.messages": MessageCircle,
+  "organization.runtime": Blocks,
+  "organization.services": Server,
+  "organization.members": Users,
+  "organization.audit": ScrollText,
+  "organization.policies": Settings2,
+};
+
+export function moduleHref(module: ProductModule, organizationId: string): string {
   if (module.context !== "organization") return module.route;
   return module.route.replace(
     ":organizationId",
@@ -14,19 +55,37 @@ function moduleHref(module: ProductModule, organizationId: string): string {
   );
 }
 
-function ModuleLink({ module, organizationId }: { module: ProductModule; organizationId: string }) {
+function ModuleLink({
+  collapsed,
+  module,
+  organizationId,
+}: {
+  collapsed: boolean;
+  module: ProductModule;
+  organizationId: string;
+}) {
+  const Icon = moduleIcons[module.id] ?? FileText;
+  const accessibleLabel =
+    module.status === "coming_soon" ? `${module.label} 即将上线` : module.label;
   return (
-    <NavLink to={moduleHref(module, organizationId)}>
-      <span>{module.label}</span>
-      {module.status === "coming_soon" ? <small aria-label="即将上线">即将上线</small> : null}
+    <NavLink
+      aria-label={accessibleLabel}
+      title={collapsed ? module.label : undefined}
+      to={moduleHref(module, organizationId)}
+    >
+      <Icon aria-hidden className="navigation-icon" size={16} />
+      {collapsed ? null : <span>{module.label}</span>}
+      {module.status === "coming_soon" && !collapsed ? <small aria-hidden>即将上线</small> : null}
     </NavLink>
   );
 }
 
 export function Navigation({
+  collapsed = false,
   organizationId,
   role,
 }: {
+  collapsed?: boolean;
   organizationId: string;
   role: MembershipRole;
 }) {
@@ -54,9 +113,14 @@ export function Navigation({
     <nav aria-label="主导航" className="workspace-navigation">
       {groups.map((group) => (
         <section key={group.label} aria-label={group.label}>
-          <p>{group.label}</p>
+          {collapsed ? null : <p>{group.label}</p>}
           {group.items.map((module) => (
-            <ModuleLink key={module.id} module={module} organizationId={organizationId} />
+            <ModuleLink
+              collapsed={collapsed}
+              key={module.id}
+              module={module}
+              organizationId={organizationId}
+            />
           ))}
         </section>
       ))}

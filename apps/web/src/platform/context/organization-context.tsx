@@ -5,11 +5,16 @@ import { useParams } from "react-router";
 import type { MembershipSummary, OrganizationSummary } from "@tashan/contracts";
 import type { OrgSpaceClient } from "@tashan/sdk";
 
-type MembershipRole = MembershipSummary["role"];
+export type MembershipRole = MembershipSummary["role"];
 type OrganizationContextValue =
   | { status: "loading" }
   | { status: "forbidden" }
-  | { status: "ready"; organization: OrganizationSummary; role: MembershipRole };
+  | {
+      status: "ready";
+      organization: OrganizationSummary;
+      organizations: readonly OrganizationSummary[];
+      role: MembershipRole;
+    };
 
 const OrganizationContext = createContext<OrganizationContextValue | undefined>(undefined);
 
@@ -51,7 +56,12 @@ export function OrganizationProvider({
       return { status: "loading" };
     }
     if (organization === undefined || membership === undefined) return { status: "forbidden" };
-    return { status: "ready", organization, role: membership.role };
+    return {
+      status: "ready",
+      organization,
+      organizations: organizations.data?.items ?? [],
+      role: membership.role,
+    };
   }, [membership, members.isPending, organization, organizations.isPending]);
 
   return <OrganizationContext.Provider value={value}>{children}</OrganizationContext.Provider>;
