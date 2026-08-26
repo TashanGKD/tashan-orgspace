@@ -1,0 +1,38 @@
+[
+  {
+    "resourceType": "organization",
+    "context": "global",
+    "listRoute": "/",
+    "detailRoute": "/org/:organizationId/home",
+    "listCapability": "organization.list",
+    "readCapability": "organization.list",
+    "actions": [{ "capabilityId": "organization.create", "confirmation": "required" }]
+  },
+  {
+    "resourceType": "device",
+    "context": "global",
+    "listRoute": "/account",
+    "detailRoute": "/account/devices/:deviceId",
+    "listCapability": "device.list",
+    "readCapability": "device.list",
+    "actions": [{ "capabilityId": "device.revoke", "confirmation": "required" }]
+  },
+  {
+    "resourceType": "organization-member",
+    "context": "organization",
+    "listRoute": "/org/:organizationId/admin/members",
+    "detailRoute": "/org/:organizationId/admin/members/:accountId",
+    "listCapability": "organization.member.list",
+    "readCapability": "organization.member.list",
+    "actions": [{ "capabilityId": "organization.member.add", "confirmation": "required" }]
+  },
+  {
+    "resourceType": "audit-event",
+    "context": "organization",
+    "listRoute": "/org/:organizationId/admin/audit",
+    "detailRoute": "/org/:organizationId/admin/audit/:eventId",
+    "listCapability": "audit.list",
+    "readCapability": "audit.list",
+    "actions": []
+  }
+]

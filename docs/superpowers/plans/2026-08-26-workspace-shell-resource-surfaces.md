@@ -74,11 +74,11 @@ git commit -m "feat(web): add OrgSpace UI primitives"
 - Modify: `scripts/check-gate-self-tests.self-test.mjs`
 - Modify: `scripts/verify-phase0.sh`
 
-- [ ] **Step 1: Write RED contract and pathology tests**
+- [x] **Step 1: Write RED contract and pathology tests**
 
 Reject duplicate resource types/routes, missing list/read capability, list routes without matching detail routes, organization routes without `:organizationId`, mutation actions without CLI bindings, unknown capability IDs and a `coming_soon` surface claiming active actions.
 
-- [ ] **Step 2: Implement the strict resource surface schema**
+- [x] **Step 2: Implement the strict resource surface schema**
 
 Use this exact shape:
 
@@ -99,11 +99,11 @@ type ResourceSurface = {
 
 Phase 0 organization, member, device and audit objects receive real surfaces; future modules remain in `product-modules.json` as coming soon without fake capabilities.
 
-- [ ] **Step 3: Implement the executable drift gate and negative self-test**
+- [x] **Step 3: Implement the executable drift gate and negative self-test**
 
 The gate compares capability registry, resource surfaces, Web routes, CLI bindings and Skill references. The self-test removes one detail route, changes one confirmation level and adds one unknown capability; each mutation must be rejected.
 
-- [ ] **Step 4: Wire the gate into the complete verifier**
+- [x] **Step 4: Wire the gate into the complete verifier**
 
 Run:
 
@@ -113,7 +113,7 @@ node scripts/check-resource-surface-coverage.mjs
 bash scripts/verify-phase0.self-test.sh
 ```
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/capabilities apps/web/src/resource-surfaces.json apps/web/src/platform/resources scripts/check-resource-surface-coverage* scripts/check-gate-self-tests* scripts/verify-phase0.sh
