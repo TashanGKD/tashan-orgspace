@@ -91,7 +91,7 @@ function renderApp(sdk: OrgSpaceClient, path = "/") {
 async function login(sdk: OrgSpaceClient): Promise<void> {
   const user = userEvent.setup();
   renderApp(sdk);
-  await screen.findByRole("heading", { name: "登录组织空间" });
+  await screen.findByRole("heading", { name: "登录" });
   await user.type(screen.getByLabelText("手机号"), "13800138000");
   await user.type(screen.getByLabelText("密码"), "CorrectHorseBattery9");
   await user.click(screen.getByRole("button", { name: "登录" }));
@@ -103,7 +103,7 @@ describe("routed Phase 0 Web", () => {
     const sdk = client({ refresh: vi.fn().mockResolvedValue({}) });
     renderApp(sdk);
     expect(screen.getByText("正在恢复安全会话…")).toBeVisible();
-    expect(screen.queryByRole("heading", { name: "登录组织空间" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "登录" })).not.toBeInTheDocument();
     expect(await screen.findByRole("heading", { name: "组织首页" })).toBeVisible();
     expect(screen.getByRole("link", { name: /任务.*即将上线/ })).toBeVisible();
   });
@@ -118,7 +118,7 @@ describe("routed Phase 0 Web", () => {
     });
     renderApp(sdk);
     const user = userEvent.setup();
-    await screen.findByRole("heading", { name: "登录组织空间" });
+    await screen.findByRole("heading", { name: "登录" });
     await user.type(screen.getByLabelText("手机号"), "13800138000");
     await user.type(screen.getByLabelText("密码"), "IncorrectPassword9");
     await user.click(screen.getByRole("button", { name: "登录" }));
@@ -153,7 +153,7 @@ describe("routed Phase 0 Web", () => {
     const sdk = client();
     renderApp(sdk);
     const user = userEvent.setup();
-    await screen.findByRole("heading", { name: "登录组织空间" });
+    await screen.findByRole("heading", { name: "登录" });
     await user.click(screen.getByRole("tab", { name: "创建账号" }));
     await user.type(screen.getByLabelText("手机号"), "13800138000");
     await user.click(screen.getByRole("button", { name: "发送验证码" }));

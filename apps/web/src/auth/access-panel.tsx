@@ -1,5 +1,7 @@
 import { useEffect, useState, type FormEvent } from "react";
 
+import { pageCopy } from "../content/user-facing-copy.js";
+
 type Mode = "login" | "register" | "password_reset";
 
 interface VerificationResult {
@@ -29,9 +31,9 @@ interface AccessPanelProps {
 }
 
 const modeCopy = {
-  login: { title: "登录组织空间", note: "使用手机号和密码，以你的真实身份继续。" },
-  register: { title: "创建个人账号", note: "验证手机号后立即建立当前设备会话。" },
-  password_reset: { title: "重置账号密码", note: "完成后所有旧设备会话都会失效。" },
+  login: { title: "登录", note: "使用手机号和密码登录" },
+  register: { title: "创建账号", note: "使用手机号创建账号" },
+  password_reset: { title: "重置密码", note: "重置后，其他设备需要重新登录" },
 } as const;
 
 export function AccessPanel({
@@ -91,28 +93,15 @@ export function AccessPanel({
   return (
     <main className="access-layout">
       <section className="access-manifesto" aria-labelledby="product-title">
-        <p className="eyebrow">TASHAN · ORGANIZATION OS</p>
-        <h1 id="product-title">
-          组织的工作，
-          <br />
-          应当有清晰的归属。
-        </h1>
-        <p className="manifesto-copy">
-          一个手机号对应一个真实成员。每台设备分别建立会话，每次操作都在明确的个人或组织边界内发生。
-        </p>
+        <h1 id="product-title">{pageCopy.login.heading}</h1>
+        <p className="manifesto-copy">{pageCopy.login.description}</p>
         <dl className="access-principles">
-          <div>
-            <dt>01</dt>
-            <dd>真实人员，唯一身份</dd>
-          </div>
-          <div>
-            <dt>02</dt>
-            <dd>多台设备，分别记录</dd>
-          </div>
-          <div>
-            <dt>03</dt>
-            <dd>组织边界，默认私密</dd>
-          </div>
+          {pageCopy.login.principles.map((principle, index) => (
+            <div key={principle}>
+              <dt>{String(index + 1).padStart(2, "0")}</dt>
+              <dd>{principle}</dd>
+            </div>
+          ))}
         </dl>
       </section>
 
@@ -120,7 +109,6 @@ export function AccessPanel({
         <div className="seal" aria-hidden="true">
           他山
         </div>
-        <p className="section-index">成员入口 / MEMBER ACCESS</p>
         <nav className="access-mode-tabs" aria-label="账号入口" role="tablist">
           <button
             aria-selected={mode === "login"}

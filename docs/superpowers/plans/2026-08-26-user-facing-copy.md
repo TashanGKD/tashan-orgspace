@@ -175,7 +175,7 @@ git commit -m "feat(web): add user-facing copy registry"
 - Modify: `apps/web/src/platform/shell/app-shell.test.tsx`
 - Modify: `apps/web/src/product-modules.json`
 
-- [ ] **Step 1: Write RED assertions for direct login and roadmap text**
+- [x] **Step 1: Write RED assertions for direct login and roadmap text**
 
 Add to `access-panel.test.tsx`:
 
@@ -193,7 +193,7 @@ expect(screen.getByText("此功能暂未开放")).toBeVisible();
 expect(screen.queryByText(/产品边界|服务器操作/)).not.toBeInTheDocument();
 ```
 
-- [ ] **Step 2: Run targeted tests and verify RED**
+- [x] **Step 2: Run targeted tests and verify RED**
 
 Run:
 
@@ -203,7 +203,7 @@ pnpm --filter @tashan/web test -- access-panel.test.tsx app-shell.test.tsx
 
 Expected: FAIL on the old architecture-oriented strings.
 
-- [ ] **Step 3: Replace login copy from the approved source**
+- [x] **Step 3: Replace login copy from the approved source**
 
 Import `pageCopy` in `access-panel.tsx`. Set the main heading and description from `pageCopy.login`; render the three principle rows from `pageCopy.login.principles`. Change mode notes to:
 
@@ -217,7 +217,7 @@ const modeCopy = {
 
 Remove `TASHAN · ORGANIZATION OS`, `成员入口 / MEMBER ACCESS`, and the architecture manifesto from visible content.
 
-- [ ] **Step 4: Replace roadmap copy and simplify module descriptions**
+- [x] **Step 4: Replace roadmap copy and simplify module descriptions**
 
 In `coming-soon-page.tsx`, remove `PRODUCT ROADMAP` and the system explanation. Render only the module name, `即将上线`, its direct description, `pageCopy.comingSoon`, and the return link.
 
@@ -234,7 +234,7 @@ Rewrite the non-direct entries in `product-modules.json`:
 
 Keep the existing IDs, routes, roles and capability arrays unchanged.
 
-- [ ] **Step 5: Run GREEN and commit**
+- [x] **Step 5: Run GREEN and commit**
 
 Run the two targeted test files, then commit:
 

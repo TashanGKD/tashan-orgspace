@@ -42,6 +42,8 @@ describe("application shell", () => {
     );
     expect(screen.getByRole("heading", { name: "任务" })).toBeVisible();
     expect(screen.getByText("即将上线")).toBeVisible();
+    expect(screen.getByText("此功能暂未开放")).toBeVisible();
+    expect(screen.queryByText(/产品边界|服务器操作/)).not.toBeInTheDocument();
     expect(screen.queryByRole("button")).not.toBeInTheDocument();
     expect(screen.queryByRole("form")).not.toBeInTheDocument();
   });

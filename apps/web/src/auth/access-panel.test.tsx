@@ -20,6 +20,14 @@ function actions() {
 }
 
 describe("AccessPanel", () => {
+  test("uses direct product copy instead of architecture language", () => {
+    render(<AccessPanel {...actions()} />);
+    expect(screen.getByRole("heading", { name: "他山组织空间" })).toBeVisible();
+    expect(screen.getByText("登录后查看你加入的组织")).toBeVisible();
+    expect(screen.getByText("手机号登录")).toBeVisible();
+    expect(screen.queryByText(/真实人员|组织边界/)).not.toBeInTheDocument();
+  });
+
   test("switching modes preserves phone but clears password and verification code", async () => {
     const props = actions();
     const user = userEvent.setup();
@@ -84,7 +92,7 @@ describe("AccessPanel", () => {
       code: "123456",
       newPassword: "AnotherStrongPassword9",
     });
-    expect(await screen.findByRole("heading", { name: "登录组织空间" })).toBeVisible();
+    expect(await screen.findByRole("heading", { name: "登录" })).toBeVisible();
     expect(screen.getByLabelText("手机号")).toHaveValue("13800138000");
   });
 });
