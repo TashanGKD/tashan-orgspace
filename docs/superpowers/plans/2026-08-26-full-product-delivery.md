@@ -41,6 +41,8 @@ The following are complete and form the starting point:
 - Create: `apps/web/src/platform/resources/resource-action-bar.tsx`
 - Create: `apps/web/src/platform/resources/resource-states.tsx`
 - Create: `apps/web/src/platform/resources/resource-surfaces.test.tsx`
+- Create: `apps/web/src/design-system/tokens.css`
+- Create: `apps/web/src/design-system/primitives/`
 - Create: `scripts/check-resource-surface-coverage.mjs`
 - Create: `scripts/check-resource-surface-coverage.self-test.mjs`
 - Modify: `apps/web/src/platform/shell/app-shell.tsx`
@@ -69,7 +71,7 @@ Tests must reject duplicate routes, list-without-detail modules, actions lacking
 
 - [ ] **Step 3: Implement the shared shell and resource components**
 
-Deliver space switching, module navigation, desktop list/detail split, mobile nested navigation, global command entry, capability-driven actions and stable deep links without changing existing Phase 0 authorization.
+Deliver T1 Calm Organization UI with a 216/64px explicit collapsible sidebar, mobile bottom navigation plus More sheet, space switching, desktop list/detail split, mobile nested navigation, global command entry, capability-driven actions and stable deep links without changing existing Phase 0 authorization. Use CSS tokens and independently authored primitives; do not copy the internal-license `dance-os` code or homepage-v2 legacy gradients.
 
 - [ ] **Step 4: Wire the executable parity gate**
 

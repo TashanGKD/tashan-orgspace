@@ -10,6 +10,7 @@
 - 本地基础设施运行手册：[`docs/runbooks/local-development.md`](docs/runbooks/local-development.md)
 - 完整前端蓝图：[`docs/superpowers/specs/2026-08-26-full-product-frontend-blueprint.md`](docs/superpowers/specs/2026-08-26-full-product-frontend-blueprint.md)
 - 完整产品交付计划：[`docs/superpowers/plans/2026-08-26-full-product-delivery.md`](docs/superpowers/plans/2026-08-26-full-product-delivery.md)
+- 工作台与通用列表详情实施计划：[`docs/superpowers/plans/2026-08-26-workspace-shell-resource-surfaces.md`](docs/superpowers/plans/2026-08-26-workspace-shell-resource-surfaces.md)
 
 ## 当前能力
 
@@ -74,14 +75,15 @@ docs/       架构、运行手册、产品设计与实施计划
 
 ## 关键文档
 
-| 文档                                                                                                                                           | 用途                   |
-| ---------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------- |
-| [`docs/architecture/phase0-security-foundation.md`](docs/architecture/phase0-security-foundation.md)                                           | 已实现的安全与分发边界 |
-| [`docs/runbooks/local-development.md`](docs/runbooks/local-development.md)                                                                     | 本地基础设施运行手册   |
-| [`docs/superpowers/specs/2026-08-18-tashan-orgspace-design.md`](docs/superpowers/specs/2026-08-18-tashan-orgspace-design.md)                   | 产品与技术总设计       |
-| [`docs/superpowers/specs/2026-08-18-skill-cli-distribution-design.md`](docs/superpowers/specs/2026-08-18-skill-cli-distribution-design.md)     | Skill/CLI 分发设计     |
-| [`docs/superpowers/specs/2026-08-26-full-product-frontend-blueprint.md`](docs/superpowers/specs/2026-08-26-full-product-frontend-blueprint.md) | 完整前端与统一对象交互 |
-| [`docs/superpowers/plans/2026-08-26-full-product-delivery.md`](docs/superpowers/plans/2026-08-26-full-product-delivery.md)                     | 完整产品全栈交付顺序   |
+| 文档                                                                                                                                               | 用途                   |
+| -------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------- |
+| [`docs/architecture/phase0-security-foundation.md`](docs/architecture/phase0-security-foundation.md)                                               | 已实现的安全与分发边界 |
+| [`docs/runbooks/local-development.md`](docs/runbooks/local-development.md)                                                                         | 本地基础设施运行手册   |
+| [`docs/superpowers/specs/2026-08-18-tashan-orgspace-design.md`](docs/superpowers/specs/2026-08-18-tashan-orgspace-design.md)                       | 产品与技术总设计       |
+| [`docs/superpowers/specs/2026-08-18-skill-cli-distribution-design.md`](docs/superpowers/specs/2026-08-18-skill-cli-distribution-design.md)         | Skill/CLI 分发设计     |
+| [`docs/superpowers/specs/2026-08-26-full-product-frontend-blueprint.md`](docs/superpowers/specs/2026-08-26-full-product-frontend-blueprint.md)     | 完整前端与统一对象交互 |
+| [`docs/superpowers/plans/2026-08-26-full-product-delivery.md`](docs/superpowers/plans/2026-08-26-full-product-delivery.md)                         | 完整产品全栈交付顺序   |
+| [`docs/superpowers/plans/2026-08-26-workspace-shell-resource-surfaces.md`](docs/superpowers/plans/2026-08-26-workspace-shell-resource-surfaces.md) | 工作台基础实施计划     |
 
 ## 环境变量
 
