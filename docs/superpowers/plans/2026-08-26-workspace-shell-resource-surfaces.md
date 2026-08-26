@@ -181,9 +181,9 @@ Use homepage-v2-inspired search/filter chips and list/grid toggles, translated t
 
 Use a sticky header, scrollable content, relationship/attachment/activity slots and sticky footer actions. Capability and state metadata control presentation; server responses remain the final authorization truth.
 
-- [ ] **Step 4: Run GREEN and visual state snapshots**
+- [x] **Step 4: Run GREEN and visual state snapshots**
 
-Automated component states, typecheck and production build are green. Desktop/mobile browser screenshots remain deliberately pending until the components are mounted on real Phase 0 pages in Task 6.
+Automated component states, typecheck and production build are green. Desktop/mobile browser screenshots were captured from real Phase 0 pages during Task 6.
 
 Render every state in tests, run typecheck/build and capture desktop/mobile screenshots for manual inspection. Do not label screenshot generation as browser interaction acceptance until keyboard and click journeys are exercised.
 
@@ -241,11 +241,11 @@ git commit -m "feat(web): migrate Phase 0 resource views"
 **Files:**
 - Create: `docs/verification/workspace-shell-resource-surfaces.md`
 
-- [ ] **Step 1: Run real browser journeys**
+- [x] **Step 1: Run real browser journeys**
 
 Exercise login, organization switching, sidebar collapse/reload, mobile More navigation, member list/detail, audit list/detail, device revoke confirmation, forbidden organization and keyboard-only navigation.
 
-- [ ] **Step 2: Inspect visual quality at required widths**
+- [x] **Step 2: Inspect visual quality at required widths**
 
 Capture and inspect 1440px, 1024px, 768px and 390px layouts. Verify no clipped labels, accidental horizontal scroll, fake clickable rows, color-only states, gradient/glass effects or unreadable dense sections.
 
