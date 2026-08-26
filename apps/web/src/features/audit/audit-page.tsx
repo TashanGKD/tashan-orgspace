@@ -181,7 +181,7 @@ export function AuditPage({
   return (
     <ResourceListPage
       description={pageCopy.audit.description}
-      title="组织审计"
+      title="操作记录"
       view={view}
       toolbar={
         <ResourceListToolbar

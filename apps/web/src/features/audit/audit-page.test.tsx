@@ -38,7 +38,8 @@ test("lists organization audit actions in user language", async () => {
       </MemoryRouter>
     </QueryClientProvider>,
   );
-  expect(await screen.findByText("添加组织成员")).toBeVisible();
+  expect(await screen.findByRole("heading", { name: "操作记录" })).toBeVisible();
+  expect(screen.getByText("添加组织成员")).toBeVisible();
   expect(screen.getByText("网页")).toBeVisible();
   expect(screen.queryByText(requestId)).not.toBeInTheDocument();
   expect(screen.getByRole("link", { name: /添加组织成员.*成功/ })).toHaveAttribute(

@@ -19,7 +19,7 @@ describe("application shell", () => {
     );
     expect(screen.getByRole("link", { name: /任务.*即将上线/ })).toBeVisible();
     expect(screen.queryByRole("link", { name: "成员与角色" })).not.toBeInTheDocument();
-    expect(screen.queryByRole("link", { name: "组织审计" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "操作记录" })).not.toBeInTheDocument();
   });
 
   test("shows administration only to an organization administrator", () => {
@@ -29,7 +29,7 @@ describe("application shell", () => {
       </MemoryRouter>,
     );
     expect(screen.getByRole("link", { name: "成员与角色" })).toBeVisible();
-    expect(screen.getByRole("link", { name: "组织审计" })).toBeVisible();
+    expect(screen.getByRole("link", { name: "操作记录" })).toBeVisible();
   });
 
   test("coming-soon pages are inert", () => {

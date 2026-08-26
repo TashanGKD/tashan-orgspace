@@ -176,7 +176,7 @@
   },
   {
     "id": "organization.audit",
-    "label": "组织审计",
+    "label": "操作记录",
     "description": "查看组织操作记录",
     "context": "organization",
     "status": "available",
