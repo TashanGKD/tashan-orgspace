@@ -19,6 +19,7 @@ function organizationResourceRoute(
 
 export const routes = {
   login: "/login",
+  organizations: "/organizations",
   account: "/account",
   device: (deviceId: string) => `/account/devices/${encodeURIComponent(DeviceId.parse(deviceId))}`,
   myWork: "/my-work",

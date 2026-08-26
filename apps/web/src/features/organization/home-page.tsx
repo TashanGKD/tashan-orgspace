@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Building2, Plus } from "lucide-react";
-import { useState, type FormEvent } from "react";
+import { useRef, useState, type FormEvent } from "react";
 import { useNavigate } from "react-router";
 
 import type { OrgSpaceClient } from "@tashan/sdk";
@@ -27,6 +27,7 @@ export function OrganizationHomePage({
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [name, setName] = useState("");
+  const submitLocked = useRef(false);
   const organizations = useQuery({
     queryKey: ["organizations"],
     queryFn: ({ signal }) => sdk.listOrganizations(signal),
@@ -40,10 +41,15 @@ export function OrganizationHomePage({
       navigate(routes.organizationHome(result.organization.id));
     },
     onError: feedback.showError,
+    onSettled: () => {
+      submitLocked.current = false;
+    },
   });
 
   function submit(event: FormEvent<HTMLFormElement>): void {
     event.preventDefault();
+    if (submitLocked.current) return;
+    submitLocked.current = true;
     feedback.clear();
     createOrganization.mutate();
   }
@@ -52,9 +58,9 @@ export function OrganizationHomePage({
     <ResourceListPage
       description="从同一组织工作台进入成员、工作、文件、运行环境与审计记录。"
       primaryAction={
-        <Button form="create-organization" type="submit">
+        <Button disabled={createOrganization.isPending} form="create-organization" type="submit">
           <Plus aria-hidden size={16} />
-          创建组织
+          {createOrganization.isPending ? "正在创建…" : "创建组织"}
         </Button>
       }
       title="组织首页"
@@ -90,7 +96,12 @@ export function OrganizationHomePage({
             ))}
           </select>
         </label>
-        <form className="resource-inline-form" id="create-organization" onSubmit={submit}>
+        <form
+          aria-label="创建组织"
+          className="resource-inline-form"
+          id="create-organization"
+          onSubmit={submit}
+        >
           <label>
             新组织名称
             <input required value={name} onChange={(event) => setName(event.target.value)} />

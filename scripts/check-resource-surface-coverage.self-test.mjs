@@ -23,6 +23,7 @@ const input = {
       actions: [{ capabilityId: "device.revoke", confirmation: "required" }],
     },
   ],
+  routeSource: 'const deviceSurface = resourceSurface("device");',
 };
 
 const clone = (value) => JSON.parse(JSON.stringify(value));
@@ -38,6 +39,13 @@ missingSkill.skill = missingSkill.skill.filter((id) => id !== "device.revoke");
 assert.throws(
   () => checkResourceSurfaceCoverage(missingSkill),
   /missing Skill capability: device.revoke/,
+);
+
+const unmountedRoute = clone(input);
+unmountedRoute.routeSource = "const deviceSurface = undefined;";
+assert.throws(
+  () => checkResourceSurfaceCoverage(unmountedRoute),
+  /resource routes are not mounted from registry: device/,
 );
 
 const weakerConfirmation = clone(input);

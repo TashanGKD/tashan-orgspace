@@ -6,7 +6,7 @@ const surfaces = [
   {
     resourceType: "organization",
     context: "global",
-    listRoute: "/",
+    listRoute: "/organizations",
     detailRoute: "/org/:organizationId/home",
     listCapability: "organization.list",
     readCapability: "organization.list",
@@ -56,7 +56,9 @@ describe("resource surface registry", () => {
     );
     const duplicateRoute = clone();
     duplicateRoute[1] = { ...duplicateRoute[1]!, listRoute: duplicateRoute[0]!.listRoute };
-    expect(() => parseResourceSurfaces(duplicateRoute)).toThrow(/duplicate list route: \//);
+    expect(() => parseResourceSurfaces(duplicateRoute)).toThrow(
+      /duplicate list route: \/organizations/,
+    );
   });
 
   test("rejects organization surfaces without organization context in both routes", () => {

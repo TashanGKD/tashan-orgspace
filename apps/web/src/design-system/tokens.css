@@ -210,6 +210,30 @@ body,
   font-weight: 700;
 }
 
+.org-dialog {
+  position: fixed;
+  z-index: 90;
+  top: 50%;
+  left: 50%;
+  width: min(calc(100% - 2rem), 30rem);
+  max-height: calc(100dvh - 2rem);
+  overflow-y: auto;
+  transform: translate(-50%, -50%);
+  border: 1px solid var(--org-border);
+  border-radius: var(--org-radius-lg);
+  padding: var(--org-space-6);
+  background: var(--org-surface-primary);
+  box-shadow: var(--org-shadow-drawer);
+  animation: org-fade-in var(--org-motion-fast) ease-out;
+}
+
+.org-dialog-title {
+  margin: 0;
+  color: var(--org-text-primary);
+  font-size: 1.1rem;
+  font-weight: 750;
+}
+
 .org-menu-content {
   z-index: 100;
   min-width: 12rem;

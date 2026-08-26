@@ -97,12 +97,13 @@ function validateResource(resource) {
   return value;
 }
 
-export function checkResourceSurfaceCoverage({ server, cli, web, skill, resources }) {
+export function checkResourceSurfaceCoverage({ server, cli, web, skill, resources, routeSource }) {
   if (!Array.isArray(server)) throw new Error("server capabilities must be an array");
   const cliRecord = requireRecord("CLI bindings", cli);
   if (!Array.isArray(web)) throw new Error("Web surfaces must be an array");
   if (!Array.isArray(skill)) throw new Error("Skill capabilities must be an array");
   if (!Array.isArray(resources)) throw new Error("resource surfaces must be an array");
+  if (typeof routeSource !== "string") throw new Error("Web route source must be a string");
 
   const serverMap = new Map();
   for (const rawCapability of server) {
@@ -143,6 +144,10 @@ export function checkResourceSurfaceCoverage({ server, cli, web, skill, resource
   );
 
   for (const resource of parsedResources) {
+    const mountToken = `resourceSurface("${resource.resourceType}")`;
+    if (!routeSource.includes(mountToken)) {
+      throw new Error(`resource routes are not mounted from registry: ${resource.resourceType}`);
+    }
     const capabilityIds = [
       resource.listCapability,
       resource.readCapability,
@@ -198,6 +203,7 @@ export function checkRepositoryResourceSurfaces(repositoryRoot) {
     web: readJson(resolve(repositoryRoot, "apps/web/src/capability-surfaces.json")),
     skill: skillDocument.capabilities,
     resources: readJson(resolve(repositoryRoot, "apps/web/src/resource-surfaces.json")),
+    routeSource: readFileSync(resolve(repositoryRoot, "apps/web/src/app.tsx"), "utf8"),
   });
 }
 

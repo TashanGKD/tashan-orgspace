@@ -2,7 +2,7 @@
   {
     "resourceType": "organization",
     "context": "global",
-    "listRoute": "/",
+    "listRoute": "/organizations",
     "detailRoute": "/org/:organizationId/home",
     "listCapability": "organization.list",
     "readCapability": "organization.list",

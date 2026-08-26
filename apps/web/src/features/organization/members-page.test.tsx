@@ -1,5 +1,5 @@
 import { QueryClientProvider } from "@tanstack/react-query";
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router";
 import { afterEach, describe, expect, test, vi } from "vitest";
@@ -98,5 +98,20 @@ describe("MembersPage", () => {
     await screen.findByRole("heading", { name: "成员与角色" });
     expect(screen.queryByLabelText("账号 ID")).not.toBeInTheDocument();
     expect(sdk.addMember).not.toHaveBeenCalled();
+  });
+
+  test("locks duplicate member submissions before React can rerender pending state", async () => {
+    const sdk = {
+      listMembers: vi.fn().mockResolvedValue({ items: [] }),
+      addMember: vi.fn().mockImplementation(() => new Promise(() => undefined)),
+    } as unknown as OrgSpaceClient;
+    renderPage(sdk);
+    const user = userEvent.setup();
+    await user.type(await screen.findByLabelText("账号 ID"), targetAccountId);
+    const form = screen.getByLabelText("账号 ID").closest("form");
+    if (form === null) throw new Error("member form missing");
+    fireEvent.submit(form);
+    fireEvent.submit(form);
+    await waitFor(() => expect(sdk.addMember).toHaveBeenCalledTimes(1));
   });
 });

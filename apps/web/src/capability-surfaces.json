@@ -31,7 +31,7 @@
   },
   {
     "capabilityId": "auth.logout",
-    "route": "/org/:organizationId/home",
+    "route": "/organizations",
     "action": "logout",
     "test": "apps/web/src/platform/shell/app-shell.test.tsx"
   },
@@ -55,7 +55,7 @@
   },
   {
     "capabilityId": "organization.list",
-    "route": "/org/:organizationId/home",
+    "route": "/organizations",
     "action": "organization-list",
     "test": "apps/web/src/app.test.tsx"
   },

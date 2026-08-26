@@ -1,4 +1,4 @@
-import { useInfiniteQuery } from "@tanstack/react-query";
+import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { ScrollText } from "lucide-react";
 import { useMemo, useState } from "react";
 
@@ -25,6 +25,30 @@ const resultTone = {
 
 function valueOrUnavailable(value: string | null | undefined): string {
   return value === null || value === undefined || value === "" ? "未记录" : value;
+}
+
+async function findAuditEvent(
+  sdk: OrgSpaceClient,
+  organizationId: string,
+  eventId: string,
+  signal: AbortSignal,
+): Promise<AuditEvent | null> {
+  let cursor: string | undefined;
+  const seenCursors = new Set<string>();
+  while (true) {
+    const page = await sdk.listAuditEvents(
+      { organizationId, limit: 100, ...(cursor === undefined ? {} : { cursor }) },
+      signal,
+    );
+    const event = page.items.find((candidate) => candidate.id === eventId);
+    if (event !== undefined) return event;
+    if (page.nextCursor === null) return null;
+    if (seenCursors.has(page.nextCursor)) {
+      return null;
+    }
+    seenCursors.add(page.nextCursor);
+    cursor = page.nextCursor;
+  }
 }
 
 function AuditDetail({ event }: { event: AuditEvent }) {
@@ -108,6 +132,12 @@ export function AuditPage({
         signal,
       ),
     getNextPageParam: (page) => page.nextCursor ?? undefined,
+    enabled: selectedEventId === undefined,
+  });
+  const auditDetail = useQuery({
+    queryKey: ["organization", organizationId, "audit", "detail", selectedEventId],
+    enabled: selectedEventId !== undefined,
+    queryFn: ({ signal }) => findAuditEvent(sdk, organizationId, selectedEventId ?? "", signal),
   });
   const events = useMemo(
     () => [
@@ -128,16 +158,19 @@ export function AuditPage({
     );
   }, [activeFilter, events, query]);
 
-  if (audit.isPending) return <ResourceState resourceLabel="审计记录" state="loading" />;
-  if (audit.isError) return <ResourceState resourceLabel="审计记录" state="fatal-error" />;
   if (selectedEventId !== undefined) {
-    const selected = events.find((event) => event.id === selectedEventId);
-    return selected ? (
-      <AuditDetail event={selected} />
+    if (auditDetail.isPending) return <ResourceState resourceLabel="审计记录" state="loading" />;
+    if (auditDetail.isError || auditDetail.data === null) {
+      return <ResourceState resourceLabel="审计记录" state="fatal-error" />;
+    }
+    return auditDetail.data ? (
+      <AuditDetail event={auditDetail.data} />
     ) : (
       <ResourceState resourceLabel="审计记录" state="fatal-error" />
     );
   }
+  if (audit.isPending) return <ResourceState resourceLabel="审计记录" state="loading" />;
+  if (audit.isError) return <ResourceState resourceLabel="审计记录" state="fatal-error" />;
 
   return (
     <ResourceListPage

@@ -6,7 +6,13 @@ import { Link } from "react-router";
 import type { DeviceSummary } from "@tashan/contracts";
 import type { OrgSpaceClient } from "@tashan/sdk";
 
-import { Button } from "../../design-system/primitives/index.js";
+import {
+  Button,
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogTitle,
+} from "../../design-system/primitives/index.js";
 import { ResourceActionBar } from "../../platform/resources/resource-action-bar.js";
 import { ResourceDetailPage } from "../../platform/resources/resource-detail-page.js";
 import { ResourceListPage } from "../../platform/resources/resource-list-page.js";
@@ -196,25 +202,20 @@ function RevokeConfirmation({
   onConfirm(): void;
 }) {
   return candidate === undefined ? null : (
-    <div className="dialog-backdrop" role="presentation">
-      <section
-        aria-labelledby="revoke-title"
-        aria-modal="true"
-        className="confirm-dialog"
-        role="dialog"
-      >
+    <Dialog open onOpenChange={(open) => !open && onCancel()}>
+      <DialogContent className="confirm-dialog">
         <p className="section-index">DEVICE REVOCATION</p>
-        <h3 id="revoke-title">撤销 {candidate.name}？</h3>
+        <DialogTitle>撤销 {candidate.name}？</DialogTitle>
         <p>该设备上的全部会话将立即失效，不影响你的其他设备。</p>
         <div className="dialog-actions">
-          <Button variant="quiet" onClick={onCancel}>
-            取消
-          </Button>
+          <DialogClose asChild>
+            <Button variant="quiet">取消</Button>
+          </DialogClose>
           <Button variant="danger" onClick={onConfirm}>
             确认撤销
           </Button>
         </div>
-      </section>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 }

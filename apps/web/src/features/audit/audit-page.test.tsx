@@ -89,3 +89,78 @@ test("renders an audit detail without exposing raw before-after payloads", async
   expect(screen.getByText(/敏感字段只展示服务端脱敏后的审计摘要/)).toBeVisible();
   expect(screen.queryByText("must-not-render")).not.toBeInTheDocument();
 });
+
+test("follows audit pagination when a copied detail URL points beyond the first page", async () => {
+  const olderEventId = "f27afaa3-858f-46f5-b01a-4c702b5ce1c6";
+  const event = {
+    id: olderEventId,
+    capabilityId: "organization.member.add",
+    result: "success",
+    requestId,
+    actorSource: "web",
+    occurredAt: "2026-08-18T00:00:00.000Z",
+    objectType: "membership",
+    objectId: "membership-1",
+    serverIp: "203.0.113.10",
+    device: null,
+  };
+  const sdk = {
+    listAuditEvents: vi
+      .fn()
+      .mockResolvedValueOnce({ items: [], nextCursor: "older-page" })
+      .mockResolvedValueOnce({ items: [event], nextCursor: null }),
+  } as unknown as OrgSpaceClient;
+  render(
+    <QueryClientProvider client={createWebQueryClient()}>
+      <MemoryRouter>
+        <AuditPage organizationId={organizationId} sdk={sdk} selectedEventId={olderEventId} />
+      </MemoryRouter>
+    </QueryClientProvider>,
+  );
+  expect(await screen.findByRole("heading", { name: "organization.member.add" })).toBeVisible();
+  expect(sdk.listAuditEvents).toHaveBeenNthCalledWith(
+    1,
+    { organizationId, limit: 100 },
+    expect.any(AbortSignal),
+  );
+  expect(sdk.listAuditEvents).toHaveBeenNthCalledWith(
+    2,
+    { organizationId, limit: 100, cursor: "older-page" },
+    expect.any(AbortSignal),
+  );
+});
+
+test("stops safely when audit pagination repeats a cursor", async () => {
+  const missingEventId = "de9b9ba8-2f33-4f76-a749-59be28bd4df7";
+  const sdk = {
+    listAuditEvents: vi
+      .fn()
+      .mockResolvedValueOnce({ items: [], nextCursor: "repeated" })
+      .mockResolvedValueOnce({ items: [], nextCursor: "repeated" }),
+  } as unknown as OrgSpaceClient;
+  render(
+    <QueryClientProvider client={createWebQueryClient()}>
+      <MemoryRouter>
+        <AuditPage organizationId={organizationId} sdk={sdk} selectedEventId={missingEventId} />
+      </MemoryRouter>
+    </QueryClientProvider>,
+  );
+  expect(await screen.findByText("审计记录加载失败")).toBeVisible();
+  expect(sdk.listAuditEvents).toHaveBeenCalledTimes(2);
+});
+
+test("shows a stable not-found state after the final audit page", async () => {
+  const missingEventId = "de9b9ba8-2f33-4f76-a749-59be28bd4df7";
+  const sdk = {
+    listAuditEvents: vi.fn().mockResolvedValue({ items: [], nextCursor: null }),
+  } as unknown as OrgSpaceClient;
+  render(
+    <QueryClientProvider client={createWebQueryClient()}>
+      <MemoryRouter>
+        <AuditPage organizationId={organizationId} sdk={sdk} selectedEventId={missingEventId} />
+      </MemoryRouter>
+    </QueryClientProvider>,
+  );
+  expect(await screen.findByText("审计记录加载失败")).toBeVisible();
+  expect(sdk.listAuditEvents).toHaveBeenCalledTimes(1);
+});

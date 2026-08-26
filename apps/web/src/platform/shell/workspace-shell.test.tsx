@@ -1,3 +1,6 @@
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
+
 import { QueryClientProvider } from "@tanstack/react-query";
 import { cleanup, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
@@ -68,6 +71,12 @@ function renderShell(role: "org_owner" | "org_admin" | "member" = "member") {
 }
 
 describe("responsive workspace shell", () => {
+  test("has one authoritative desktop header rule instead of a legacy override", () => {
+    const css = readFileSync(resolve(import.meta.dirname, "../../styles.css"), "utf8");
+    expect(css.match(/^\.workspace-header \{/gm)).toHaveLength(1);
+    expect(css).not.toContain("min-height: 5.5rem");
+  });
+
   test("collapses explicitly and restores the device-local preference", async () => {
     const user = userEvent.setup();
     const first = renderShell();

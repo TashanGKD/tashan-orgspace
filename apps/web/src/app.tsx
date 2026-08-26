@@ -22,9 +22,27 @@ import {
   useFeedback,
 } from "./platform/feedback/feedback-context.js";
 import { productModules } from "./platform/modules/module-catalog.js";
+import { resourceSurface } from "./platform/resources/resource-surfaces.js";
 import { routes } from "./platform/routing/route-paths.js";
 import { AppShell } from "./platform/shell/app-shell.js";
 import { SessionProvider, useSession } from "./platform/session/session-context.js";
+
+const organizationSurface = resourceSurface("organization");
+const deviceSurface = resourceSurface("device");
+const memberSurface = resourceSurface("organization-member");
+const auditSurface = resourceSurface("audit-event");
+
+function organizationRelativeRoute(route: string): string {
+  const prefix = "/org/:organizationId/";
+  if (!route.startsWith(prefix)) throw new Error(`not an organization route: ${route}`);
+  return route.slice(prefix.length);
+}
+
+function accountRelativeRoute(route: string): string {
+  const prefix = `${deviceSurface.listRoute}/`;
+  if (!route.startsWith(prefix)) throw new Error(`not an account detail route: ${route}`);
+  return route.slice(prefix.length);
+}
 
 function LoginFlow() {
   const session = useSession();
@@ -57,19 +75,8 @@ function LoginFlow() {
   );
 }
 
-function RootRedirect({ sdk }: { sdk: OrgSpaceClient }) {
-  const organizations = useQuery({
-    queryKey: ["organizations"],
-    queryFn: ({ signal }) => sdk.listOrganizations(signal),
-  });
-  if (organizations.isPending) return <p>正在加载组织…</p>;
-  const first = organizations.data?.items[0];
-  return (
-    <Navigate
-      replace
-      to={first === undefined ? routes.account : routes.organizationHome(first.id)}
-    />
-  );
+function RootRedirect() {
+  return <Navigate replace to={organizationSurface.listRoute} />;
 }
 
 function OrganizationArea({ sdk }: { sdk: OrgSpaceClient }) {
@@ -122,10 +129,63 @@ function AccountShellRoutes({ sdk }: { sdk: OrgSpaceClient }) {
     <AppShell displayName={session.account.displayName} onLogout={logout}>
       <Routes>
         <Route index element={<AccountRoute sdk={sdk} />} />
-        <Route path="devices/:deviceId" element={<AccountRoute sdk={sdk} />} />
-        <Route path="*" element={<Navigate replace to="/account" />} />
+        <Route
+          path={accountRelativeRoute(deviceSurface.detailRoute)}
+          element={<AccountRoute sdk={sdk} />}
+        />
+        <Route path="*" element={<Navigate replace to={deviceSurface.listRoute} />} />
       </Routes>
     </AppShell>
+  );
+}
+
+function OrganizationListShell({
+  organizationId,
+  sdk,
+}: {
+  organizationId: string;
+  sdk: OrgSpaceClient;
+}) {
+  const session = useSession();
+  const feedback = useFeedback();
+  if (session.status !== "authenticated") return null;
+
+  async function logout(): Promise<void> {
+    feedback.clear();
+    try {
+      await session.logout();
+    } catch (error) {
+      feedback.showError(error);
+    }
+  }
+
+  return (
+    <AppShell displayName={session.account.displayName} onLogout={logout}>
+      <OrganizationHomePage organizationId={organizationId} sdk={sdk} />
+    </AppShell>
+  );
+}
+
+function OrganizationsArea({ sdk }: { sdk: OrgSpaceClient }) {
+  const session = useSession();
+  const organizations = useQuery({
+    queryKey: ["organizations"],
+    queryFn: ({ signal }) => sdk.listOrganizations(signal),
+  });
+  if (session.status !== "authenticated") return null;
+  if (organizations.isPending) return <p>正在加载组织…</p>;
+  const firstOrganization = organizations.data?.items[0];
+  if (firstOrganization === undefined) {
+    return <OrganizationHomePage organizationId="" sdk={sdk} />;
+  }
+  return (
+    <OrganizationProvider
+      accountId={session.account.id}
+      organizationId={firstOrganization.id}
+      sdk={sdk}
+    >
+      <OrganizationListShell organizationId={firstOrganization.id} sdk={sdk} />
+    </OrganizationProvider>
   );
 }
 
@@ -170,13 +230,18 @@ function OrganizationRoutes({ sdk, displayName }: { sdk: OrgSpaceClient; display
   return (
     <AppShell displayName={displayName} onLogout={logout}>
       <Routes>
-        <Route index element={<Navigate replace to="home" />} />
         <Route
-          path="home"
+          index
+          element={
+            <Navigate replace to={organizationRelativeRoute(organizationSurface.detailRoute)} />
+          }
+        />
+        <Route
+          path={organizationRelativeRoute(organizationSurface.detailRoute)}
           element={<OrganizationHomePage organizationId={organizationId} sdk={sdk} />}
         />
         <Route
-          path="admin/members/:accountId?"
+          path={organizationRelativeRoute(memberSurface.listRoute)}
           element={
             <RequireOrganizationRole roles={["org_owner", "org_admin"]}>
               <MembersRoute organizationId={organizationId} sdk={sdk} />
@@ -184,7 +249,23 @@ function OrganizationRoutes({ sdk, displayName }: { sdk: OrgSpaceClient; display
           }
         />
         <Route
-          path="admin/audit/:eventId?"
+          path={organizationRelativeRoute(memberSurface.detailRoute)}
+          element={
+            <RequireOrganizationRole roles={["org_owner", "org_admin"]}>
+              <MembersRoute organizationId={organizationId} sdk={sdk} />
+            </RequireOrganizationRole>
+          }
+        />
+        <Route
+          path={organizationRelativeRoute(auditSurface.listRoute)}
+          element={
+            <RequireOrganizationRole roles={["org_owner", "org_admin"]}>
+              <AuditRoute organizationId={organizationId} sdk={sdk} />
+            </RequireOrganizationRole>
+          }
+        />
+        <Route
+          path={organizationRelativeRoute(auditSurface.detailRoute)}
           element={
             <RequireOrganizationRole roles={["org_owner", "org_admin"]}>
               <AuditRoute organizationId={organizationId} sdk={sdk} />
@@ -203,7 +284,12 @@ function OrganizationRoutes({ sdk, displayName }: { sdk: OrgSpaceClient; display
             />
           );
         })}
-        <Route path="*" element={<Navigate replace to="home" />} />
+        <Route
+          path="*"
+          element={
+            <Navigate replace to={organizationRelativeRoute(organizationSurface.detailRoute)} />
+          }
+        />
       </Routes>
     </AppShell>
   );
@@ -212,8 +298,9 @@ function OrganizationRoutes({ sdk, displayName }: { sdk: OrgSpaceClient; display
 function AuthenticatedRoutes({ sdk }: { sdk: OrgSpaceClient }) {
   return (
     <Routes>
-      <Route path="/" element={<RootRedirect sdk={sdk} />} />
-      <Route path="/account/*" element={<AccountArea sdk={sdk} />} />
+      <Route path="/" element={<RootRedirect />} />
+      <Route path={organizationSurface.listRoute} element={<OrganizationsArea sdk={sdk} />} />
+      <Route path={`${deviceSurface.listRoute}/*`} element={<AccountArea sdk={sdk} />} />
       <Route path="/org/:organizationId/*" element={<OrganizationArea sdk={sdk} />} />
       <Route path="*" element={<Navigate replace to="/" />} />
     </Routes>

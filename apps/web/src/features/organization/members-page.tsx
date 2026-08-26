@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { UserRoundPlus, Users } from "lucide-react";
-import { useMemo, useState, type FormEvent } from "react";
+import { useMemo, useRef, useState, type FormEvent } from "react";
 
 import type { MembershipSummary } from "@tashan/contracts";
 import type { OrgSpaceClient } from "@tashan/sdk";
@@ -80,6 +80,7 @@ export function MembersPage({
   const [query, setQuery] = useState("");
   const [activeFilter, setActiveFilter] = useState("all");
   const [view, setView] = useState<ResourceView>("list");
+  const submitLocked = useRef(false);
   const members = useQuery({
     queryKey: ["organization", organizationId, "members"],
     queryFn: ({ signal }) => sdk.listMembers(organizationId, signal),
@@ -92,6 +93,9 @@ export function MembersPage({
       await queryClient.invalidateQueries({
         queryKey: ["organization", organizationId, "members"],
       });
+    },
+    onSettled: () => {
+      submitLocked.current = false;
     },
   });
   const visibleMembers = useMemo(() => {
@@ -107,6 +111,8 @@ export function MembersPage({
 
   function submit(event: FormEvent<HTMLFormElement>): void {
     event.preventDefault();
+    if (submitLocked.current) return;
+    submitLocked.current = true;
     addMember.mutate();
   }
 
@@ -126,9 +132,9 @@ export function MembersPage({
       description="组织工作默认对管理员透明；成员身份、角色与状态在同一资源视图中管理。"
       primaryAction={
         canManage ? (
-          <Button form="add-organization-member" type="submit">
+          <Button disabled={addMember.isPending} form="add-organization-member" type="submit">
             <UserRoundPlus aria-hidden size={16} />
-            添加成员
+            {addMember.isPending ? "正在添加…" : "添加成员"}
           </Button>
         ) : null
       }
@@ -140,7 +146,6 @@ export function MembersPage({
           filters={[
             { id: "all", label: "全部" },
             { id: "active", label: "正常" },
-            { id: "suspended", label: "已停用" },
           ]}
           onFilterChange={setActiveFilter}
           onQueryChange={setQuery}

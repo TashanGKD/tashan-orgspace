@@ -1,0 +1,39 @@
+import { QueryClientProvider } from "@tanstack/react-query";
+import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import { MemoryRouter } from "react-router";
+import { afterEach, expect, test, vi } from "vitest";
+
+import type { OrgSpaceClient } from "@tashan/sdk";
+
+import { createWebQueryClient } from "../../platform/data/query-client.js";
+import { FeedbackProvider } from "../../platform/feedback/feedback-context.js";
+import { OrganizationHomePage } from "./home-page.js";
+
+afterEach(cleanup);
+
+const organizationId = "95d5579d-a32d-4650-aec4-318ff3a55df1";
+
+test("locks duplicate organization submissions before pending state rerenders", async () => {
+  const sdk = {
+    listOrganizations: vi.fn().mockResolvedValue({
+      items: [{ id: organizationId, name: "他山协会", status: "active" }],
+    }),
+    createOrganization: vi.fn().mockImplementation(() => new Promise(() => undefined)),
+  } as unknown as OrgSpaceClient;
+  render(
+    <QueryClientProvider client={createWebQueryClient()}>
+      <FeedbackProvider>
+        <MemoryRouter>
+          <OrganizationHomePage organizationId={organizationId} sdk={sdk} />
+        </MemoryRouter>
+      </FeedbackProvider>
+    </QueryClientProvider>,
+  );
+  const user = userEvent.setup();
+  await user.type(await screen.findByLabelText("新组织名称"), "重复提交测试");
+  const form = screen.getByRole("form", { name: "创建组织" });
+  fireEvent.submit(form);
+  fireEvent.submit(form);
+  await waitFor(() => expect(sdk.createOrganization).toHaveBeenCalledTimes(1));
+});

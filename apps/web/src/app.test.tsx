@@ -136,6 +136,11 @@ describe("routed Phase 0 Web", () => {
     expect(await screen.findByRole("navigation", { name: "主导航" })).toBeVisible();
     expect(screen.getByRole("heading", { name: "账号与设备" })).toBeVisible();
     await user.click(await screen.findByRole("button", { name: "撤销 MacBook Air" }));
+    const dialog = screen.getByRole("dialog", { name: "撤销 MacBook Air？" });
+    expect(dialog).toContainElement(document.activeElement as HTMLElement | null);
+    await user.keyboard("{Escape}");
+    expect(screen.queryByRole("dialog", { name: "撤销 MacBook Air？" })).not.toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "撤销 MacBook Air" }));
     await user.click(screen.getByRole("button", { name: "确认撤销" }));
     expect(await screen.findByText("设备已撤销")).toBeVisible();
     expect(sdk.revokeDevice).toHaveBeenCalledWith(

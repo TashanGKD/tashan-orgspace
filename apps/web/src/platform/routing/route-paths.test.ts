@@ -6,6 +6,7 @@ const organizationId = "95d5579d-a32d-4650-aec4-318ff3a55df1";
 
 describe("organization route builders", () => {
   test("builds an encoded route only after validating the organization ID", () => {
+    expect(routes.organizations).toBe("/organizations");
     expect(routes.organizationHome(organizationId)).toBe(`/org/${organizationId}/home`);
   });
 
