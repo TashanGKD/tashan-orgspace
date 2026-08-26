@@ -20,9 +20,11 @@ function mutationKey(): string {
 export function OrganizationHomePage({
   organizationId,
   sdk,
+  showOrganizationDetails = false,
 }: {
   organizationId: string;
   sdk: OrgSpaceClient;
+  showOrganizationDetails?: boolean;
 }) {
   const feedback = useFeedback();
   const navigate = useNavigate();
@@ -54,6 +56,9 @@ export function OrganizationHomePage({
     feedback.clear();
     createOrganization.mutate();
   }
+  const currentOrganization = organizations.data?.items.find(
+    (organization) => organization.id === organizationId,
+  );
 
   return (
     <ResourceListPage
@@ -81,6 +86,21 @@ export function OrganizationHomePage({
           title={organization.name}
         />
       ))}
+      {showOrganizationDetails && currentOrganization ? (
+        <section className="resource-create-section" aria-labelledby="organization-info-title">
+          <h2 id="organization-info-title">组织信息</h2>
+          <dl className="resource-definition-list">
+            <div>
+              <dt>组织名称</dt>
+              <dd>{currentOrganization.name}</dd>
+            </div>
+            <div>
+              <dt>组织 ID</dt>
+              <dd className="tabular-nums">{currentOrganization.id}</dd>
+            </div>
+          </dl>
+        </section>
+      ) : null}
       <section className="resource-create-section" aria-labelledby="organization-create-title">
         <h2 id="organization-create-title">切换或创建组织</h2>
         <label>

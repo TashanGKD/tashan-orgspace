@@ -39,6 +39,7 @@ test("lists organization audit actions in user language", async () => {
     </QueryClientProvider>,
   );
   expect(await screen.findByRole("heading", { name: "操作记录" })).toBeVisible();
+  expect(screen.getByRole("searchbox", { name: "搜索操作记录" })).toBeVisible();
   expect(screen.getByText("添加组织成员")).toBeVisible();
   expect(screen.getByText("网页")).toBeVisible();
   expect(screen.queryByText(requestId)).not.toBeInTheDocument();
@@ -150,7 +151,7 @@ test("stops safely when audit pagination repeats a cursor", async () => {
       </MemoryRouter>
     </QueryClientProvider>,
   );
-  expect(await screen.findByText("审计记录加载失败")).toBeVisible();
+  expect(await screen.findByText("操作记录加载失败")).toBeVisible();
   expect(sdk.listAuditEvents).toHaveBeenCalledTimes(2);
 });
 
@@ -166,6 +167,6 @@ test("shows a stable not-found state after the final audit page", async () => {
       </MemoryRouter>
     </QueryClientProvider>,
   );
-  expect(await screen.findByText("审计记录加载失败")).toBeVisible();
+  expect(await screen.findByText("操作记录加载失败")).toBeVisible();
   expect(sdk.listAuditEvents).toHaveBeenCalledTimes(1);
 });

@@ -238,7 +238,13 @@ function OrganizationRoutes({ sdk, displayName }: { sdk: OrgSpaceClient; display
         />
         <Route
           path={organizationRelativeRoute(organizationSurface.detailRoute)}
-          element={<OrganizationHomePage organizationId={organizationId} sdk={sdk} />}
+          element={
+            <OrganizationHomePage
+              showOrganizationDetails
+              organizationId={organizationId}
+              sdk={sdk}
+            />
+          }
         />
         <Route
           path={organizationRelativeRoute(memberSurface.listRoute)}
@@ -312,7 +318,7 @@ function AppContent({ sdk }: { sdk: OrgSpaceClient }) {
   return (
     <div className="app-frame">
       <GlobalFeedback />
-      {session.status === "restoring" ? <p>正在恢复安全会话…</p> : null}
+      {session.status === "restoring" ? <p>正在登录…</p> : null}
       {session.status === "anonymous" ? <LoginFlow /> : null}
       {session.status === "authenticated" ? <AuthenticatedRoutes sdk={sdk} /> : null}
     </div>

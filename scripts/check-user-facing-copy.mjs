@@ -14,6 +14,7 @@ const prohibitedPhrases = [
   "DEVICE REVOCATION",
   "02 / DEVICES",
   "01 / ORGANIZATION",
+  "正在恢复安全会话",
 ];
 
 function requireRecord(label, value) {
@@ -47,6 +48,12 @@ export function checkUserFacingCopy({ capabilities, auditLabels, sources }) {
     const label = labels[capabilityId];
     if (typeof label !== "string" || label.trim() === "" || label === capabilityId) {
       throw new Error(`audit label must be human-readable: ${capabilityId}`);
+    }
+    if (label !== label.trim()) {
+      throw new Error(`audit label must not contain surrounding whitespace: ${capabilityId}`);
+    }
+    if (/^\p{ASCII}+$/u.test(label)) {
+      throw new Error(`audit label must contain user-facing language: ${capabilityId}`);
     }
   }
   for (const labelId of labelIds) {
@@ -85,7 +92,7 @@ function discoverSources(root, current = root) {
     if (
       entry.isFile() &&
       !entry.name.includes(".test.") &&
-      (/\.tsx?$/.test(entry.name) || entry.name.endsWith(".json"))
+      /\.(?:tsx?|json|css|html)$/.test(entry.name)
     ) {
       sources.push({
         path: relative(root, path).split(sep).join("/"),
@@ -108,7 +115,13 @@ export function checkRepositoryUserFacingCopy(repositoryRoot) {
     auditLabels: JSON.parse(
       readFileSync(resolve(webSourceRoot, "content/audit-action-labels.json"), "utf8"),
     ),
-    sources: discoverSources(webSourceRoot),
+    sources: [
+      ...discoverSources(webSourceRoot),
+      {
+        path: "index.html",
+        text: readFileSync(resolve(repositoryRoot, "apps/web/index.html"), "utf8"),
+      },
+    ],
   });
 }
 

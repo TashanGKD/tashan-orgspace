@@ -39,3 +39,23 @@ test("locks duplicate organization submissions before pending state rerenders", 
   fireEvent.submit(form);
   await waitFor(() => expect(sdk.createOrganization).toHaveBeenCalledTimes(1));
 });
+
+test("keeps the organization ID on the organization detail surface", async () => {
+  const sdk = {
+    listOrganizations: vi.fn().mockResolvedValue({
+      items: [{ id: organizationId, name: "他山协会", status: "active" }],
+    }),
+    createOrganization: vi.fn(),
+  } as unknown as OrgSpaceClient;
+  render(
+    <QueryClientProvider client={createWebQueryClient()}>
+      <FeedbackProvider>
+        <MemoryRouter>
+          <OrganizationHomePage showOrganizationDetails organizationId={organizationId} sdk={sdk} />
+        </MemoryRouter>
+      </FeedbackProvider>
+    </QueryClientProvider>,
+  );
+  expect(await screen.findByRole("heading", { name: "组织信息" })).toBeVisible();
+  expect(screen.getByText(organizationId)).toBeVisible();
+});

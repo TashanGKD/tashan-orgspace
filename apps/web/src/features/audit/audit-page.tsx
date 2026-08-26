@@ -165,18 +165,18 @@ export function AuditPage({
   }, [activeFilter, events, query]);
 
   if (selectedEventId !== undefined) {
-    if (auditDetail.isPending) return <ResourceState resourceLabel="审计记录" state="loading" />;
+    if (auditDetail.isPending) return <ResourceState resourceLabel="操作记录" state="loading" />;
     if (auditDetail.isError || auditDetail.data === null) {
-      return <ResourceState resourceLabel="审计记录" state="fatal-error" />;
+      return <ResourceState resourceLabel="操作记录" state="fatal-error" />;
     }
     return auditDetail.data ? (
       <AuditDetail event={auditDetail.data} />
     ) : (
-      <ResourceState resourceLabel="审计记录" state="fatal-error" />
+      <ResourceState resourceLabel="操作记录" state="fatal-error" />
     );
   }
-  if (audit.isPending) return <ResourceState resourceLabel="审计记录" state="loading" />;
-  if (audit.isError) return <ResourceState resourceLabel="审计记录" state="fatal-error" />;
+  if (audit.isPending) return <ResourceState resourceLabel="操作记录" state="loading" />;
+  if (audit.isError) return <ResourceState resourceLabel="操作记录" state="fatal-error" />;
 
   return (
     <ResourceListPage
@@ -196,12 +196,12 @@ export function AuditPage({
           onQueryChange={setQuery}
           onViewChange={setView}
           query={query}
-          resourceLabel="审计记录"
+          resourceLabel="操作记录"
           view={view}
         />
       }
     >
-      {visibleEvents.length === 0 ? <ResourceState resourceLabel="审计记录" state="empty" /> : null}
+      {visibleEvents.length === 0 ? <ResourceState resourceLabel="操作记录" state="empty" /> : null}
       {visibleEvents.map((event) => (
         <ResourceRow
           href={routes.organizationAuditEvent(organizationId, event.id)}

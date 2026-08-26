@@ -103,6 +103,28 @@ describe("MembersPage", () => {
     expect(sdk.addMember).not.toHaveBeenCalled();
   });
 
+  test("shows every contract member status in user language", async () => {
+    const sdk = {
+      listMembers: vi.fn().mockResolvedValue({
+        items: [
+          { accountId, displayName: "停用成员", role: "member", status: "suspended" },
+          {
+            accountId: targetAccountId,
+            displayName: "移除成员",
+            role: "member",
+            status: "removed",
+          },
+        ],
+      }),
+      addMember: vi.fn(),
+    } as unknown as OrgSpaceClient;
+    renderPage(sdk);
+    expect(await screen.findByRole("link", { name: /停用成员.*已停用/ })).toBeVisible();
+    expect(screen.getByRole("link", { name: /移除成员.*已移除/ })).toBeVisible();
+    expect(screen.queryByText("suspended")).not.toBeInTheDocument();
+    expect(screen.queryByText("removed")).not.toBeInTheDocument();
+  });
+
   test("locks duplicate member submissions before React can rerender pending state", async () => {
     const sdk = {
       listMembers: vi.fn().mockResolvedValue({ items: [] }),

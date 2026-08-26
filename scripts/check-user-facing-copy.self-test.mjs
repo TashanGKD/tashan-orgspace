@@ -34,4 +34,27 @@ assert.throws(
   /audit label must be human-readable: organization.member.add/,
 );
 
+const english = clone(valid);
+english.auditLabels["organization.member.add"] = "ORGANIZATION MEMBER ADD";
+assert.throws(
+  () => checkUserFacingCopy(english),
+  /audit label must contain user-facing language: organization.member.add/,
+);
+
+const trailing = clone(valid);
+trailing.auditLabels["organization.member.add"] = "organization.member.add ";
+assert.throws(
+  () => checkUserFacingCopy(trailing),
+  /audit label must not contain surrounding whitespace: organization.member.add/,
+);
+
+assert.throws(
+  () =>
+    checkUserFacingCopy({
+      ...valid,
+      sources: [{ path: "page.tsx", text: "正在恢复安全会话…" }],
+    }),
+  /prohibited user-facing phrase: 正在恢复安全会话/,
+);
+
 console.log("check-user-facing-copy.self-test: PASS");

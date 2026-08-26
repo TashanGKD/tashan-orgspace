@@ -120,7 +120,7 @@ describe("routed Phase 0 Web", () => {
   test("restores a cookie session into the organization home without login flicker", async () => {
     const sdk = client({ refresh: vi.fn().mockResolvedValue({}) });
     renderApp(sdk);
-    expect(screen.getByText("正在恢复安全会话…")).toBeVisible();
+    expect(screen.getByText("正在登录…")).toBeVisible();
     expect(screen.queryByRole("heading", { name: "登录" })).not.toBeInTheDocument();
     expect(await screen.findByRole("heading", { name: "组织首页" })).toBeVisible();
     expect(screen.getByRole("link", { name: /任务.*即将上线/ })).toBeVisible();

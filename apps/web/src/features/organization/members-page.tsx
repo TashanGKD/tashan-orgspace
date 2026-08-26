@@ -26,6 +26,16 @@ const roleLabels = {
   org_admin: "组织管理员",
   member: "普通成员",
 } as const;
+const membershipStatusLabels: Readonly<Record<MembershipSummary["status"], string>> = {
+  active: "正常",
+  suspended: "已停用",
+  removed: "已移除",
+};
+const membershipStatusTones = {
+  active: "success",
+  suspended: "warning",
+  removed: "neutral",
+} as const;
 
 function MemberDetail({ member }: { member: MembershipSummary }) {
   return (
@@ -43,7 +53,7 @@ function MemberDetail({ member }: { member: MembershipSummary }) {
         </dl>
       }
       eyebrow="组织成员"
-      subtitle={`${roleLabels[member.role]} · ${member.status === "active" ? "正常" : member.status}`}
+      subtitle={`${roleLabels[member.role]} · ${membershipStatusLabels[member.status]}`}
       title={member.displayName}
     >
       <dl className="resource-definition-list">
@@ -165,8 +175,8 @@ export function MembersPage({
           leading={<Users aria-hidden size={17} />}
           metadata={[roleLabels[membership.role]]}
           status={{
-            label: membership.status === "active" ? "正常" : membership.status,
-            tone: membership.status === "active" ? "success" : "warning",
+            label: membershipStatusLabels[membership.status],
+            tone: membershipStatusTones[membership.status],
           }}
           title={membership.displayName}
         />
