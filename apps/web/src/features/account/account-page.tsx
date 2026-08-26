@@ -202,7 +202,6 @@ function RevokeConfirmation({
   return candidate === undefined ? null : (
     <Dialog open onOpenChange={(open) => !open && onCancel()}>
       <DialogContent className="confirm-dialog">
-        <p className="section-index">DEVICE REVOCATION</p>
         <DialogTitle>撤销 {candidate.name}？</DialogTitle>
         <p>{pageCopy.devices.revokeConsequence}</p>
         <div className="dialog-actions">

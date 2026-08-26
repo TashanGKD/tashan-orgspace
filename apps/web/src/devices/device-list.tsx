@@ -28,7 +28,6 @@ export function DeviceList({ items, busyDeviceId, onRevoke }: DeviceListProps) {
     <section className="workspace-card device-card" aria-labelledby="device-title">
       <div className="card-heading">
         <div>
-          <p className="section-index">02 / DEVICES</p>
           <h2 id="device-title">登录设备</h2>
         </div>
         <span className="count-mark">{String(items.length).padStart(2, "0")}</span>
@@ -65,7 +64,6 @@ export function DeviceList({ items, busyDeviceId, onRevoke }: DeviceListProps) {
             className="confirm-dialog"
             role="dialog"
           >
-            <p className="section-index">DEVICE REVOCATION</p>
             <h3 id="revoke-title">撤销 {candidate.name}？</h3>
             <p>{pageCopy.devices.revokeConsequence}</p>
             <div className="dialog-actions">

@@ -11,6 +11,9 @@ const prohibitedPhrases = [
   "组织边界，默认私密",
   "以你的真实身份",
   "全部会话将立即失效",
+  "DEVICE REVOCATION",
+  "02 / DEVICES",
+  "01 / ORGANIZATION",
 ];
 
 function requireRecord(label, value) {

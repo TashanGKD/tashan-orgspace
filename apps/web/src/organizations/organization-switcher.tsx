@@ -32,7 +32,6 @@ export function OrganizationSwitcher({
     <section className="workspace-card organization-card" aria-labelledby="organization-title">
       <div className="card-heading">
         <div>
-          <p className="section-index">01 / ORGANIZATION</p>
           <h2 id="organization-title">组织</h2>
         </div>
         <span className="count-mark">{String(items.length).padStart(2, "0")}</span>
