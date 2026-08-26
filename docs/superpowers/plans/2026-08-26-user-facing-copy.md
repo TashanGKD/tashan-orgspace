@@ -326,7 +326,7 @@ git commit -m "feat(web): simplify organization and device copy"
 - Modify: `apps/web/src/features/audit/audit-page.tsx`
 - Modify: `apps/web/src/features/audit/audit-page.test.tsx`
 
-- [ ] **Step 1: Write RED audit-language tests**
+- [x] **Step 1: Write RED audit-language tests**
 
 For an event with `capabilityId: "organization.member.add"` and `actorSource: "web"`, assert:
 
@@ -344,7 +344,7 @@ expect(screen.getByText("organization.member.add")).toBeVisible();
 expect(screen.getByText(requestId)).toBeVisible();
 ```
 
-- [ ] **Step 2: Run the audit test and verify RED**
+- [x] **Step 2: Run the audit test and verify RED**
 
 Run:
 
@@ -354,7 +354,7 @@ pnpm --filter @tashan/web test -- audit-page.test.tsx
 
 Expected: FAIL because the capability ID and actor source are still displayed raw.
 
-- [ ] **Step 3: Apply audit action and source labels**
+- [x] **Step 3: Apply audit action and source labels**
 
 Import `auditActionLabel`, `auditActorSourceLabel`, and `pageCopy`. Use the human action for list-row and detail titles. Use the translated actor source in list metadata and details. Keep the raw capability ID in detail under `操作 ID`.
 
@@ -366,11 +366,11 @@ metadata={[auditActorSourceLabel(event.actorSource), event.occurredAt]}
 
 Update search filtering so a query matches the human action label as well as the raw capability ID and request ID.
 
-- [ ] **Step 4: Remove explanatory audit prose**
+- [x] **Step 4: Remove explanatory audit prose**
 
 Use `pageCopy.audit.description`. Change the detail eyebrow to `操作详情`. Replace the redaction paragraph with `部分敏感信息已隐藏` and keep request ID, object ID, IP and device fields in details.
 
-- [ ] **Step 5: Run GREEN and commit**
+- [x] **Step 5: Run GREEN and commit**
 
 Run the audit tests and Web typecheck, then commit:
 

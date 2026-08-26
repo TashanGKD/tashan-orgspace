@@ -5,6 +5,11 @@ import { useMemo, useState } from "react";
 import type { AuditEvent } from "@tashan/contracts";
 import type { OrgSpaceClient } from "@tashan/sdk";
 
+import {
+  auditActionLabel,
+  auditActorSourceLabel,
+  pageCopy,
+} from "../../content/user-facing-copy.js";
 import { Button, StatusBadge, type StatusTone } from "../../design-system/primitives/index.js";
 import { ResourceDetailPage } from "../../platform/resources/resource-detail-page.js";
 import { ResourceListPage } from "../../platform/resources/resource-list-page.js";
@@ -54,9 +59,9 @@ async function findAuditEvent(
 function AuditDetail({ event }: { event: AuditEvent }) {
   return (
     <ResourceDetailPage
-      eyebrow="组织审计事件"
+      eyebrow="操作详情"
       subtitle={event.occurredAt}
-      title={event.capabilityId}
+      title={auditActionLabel(event.capabilityId)}
       relationships={
         <dl className="resource-definition-list">
           <div>
@@ -81,13 +86,13 @@ function AuditDetail({ event }: { event: AuditEvent }) {
           </div>
         </dl>
       }
-      activity={
-        <p className="resource-redaction-notice">
-          前后状态已记录；敏感字段只展示服务端脱敏后的审计摘要。
-        </p>
-      }
+      activity={<p className="resource-redaction-notice">部分敏感信息已隐藏</p>}
     >
       <dl className="resource-definition-list">
+        <div>
+          <dt>操作 ID</dt>
+          <dd>{event.capabilityId}</dd>
+        </div>
         <div>
           <dt>结果</dt>
           <dd>
@@ -100,7 +105,7 @@ function AuditDetail({ event }: { event: AuditEvent }) {
         </div>
         <div>
           <dt>操作来源</dt>
-          <dd>{event.actorSource}</dd>
+          <dd>{auditActorSourceLabel(event.actorSource)}</dd>
         </div>
       </dl>
     </ResourceDetailPage>
@@ -153,6 +158,7 @@ export function AuditPage({
       (event) =>
         (activeFilter === "all" || event.result === activeFilter) &&
         (normalizedQuery === "" ||
+          auditActionLabel(event.capabilityId).toLocaleLowerCase().includes(normalizedQuery) ||
           event.capabilityId.toLocaleLowerCase().includes(normalizedQuery) ||
           event.requestId.toLocaleLowerCase().includes(normalizedQuery)),
     );
@@ -174,7 +180,7 @@ export function AuditPage({
 
   return (
     <ResourceListPage
-      description="记录谁在何时、通过哪台设备、以何种客户端执行了什么能力。"
+      description={pageCopy.audit.description}
       title="组织审计"
       view={view}
       toolbar={
@@ -201,9 +207,9 @@ export function AuditPage({
           href={routes.organizationAuditEvent(organizationId, event.id)}
           key={event.id}
           leading={<ScrollText aria-hidden size={17} />}
-          metadata={[event.actorSource, event.requestId, event.occurredAt]}
+          metadata={[auditActorSourceLabel(event.actorSource), event.occurredAt]}
           status={{ label: resultLabel[event.result], tone: resultTone[event.result] }}
-          title={event.capabilityId}
+          title={auditActionLabel(event.capabilityId)}
         />
       ))}
       {audit.hasNextPage ? (

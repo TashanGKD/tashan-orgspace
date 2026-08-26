@@ -14,14 +14,14 @@ const organizationId = "95d5579d-a32d-4650-aec4-318ff3a55df1";
 const requestId = "bb310eb3-d828-4c4b-99fa-7e0f510cdb90";
 const eventId = "6b9b7979-af04-4da6-bc92-e702ad302acb";
 
-test("lists organization audit actions and their request IDs", async () => {
+test("lists organization audit actions in user language", async () => {
   const sdk = {
     listAuditEvents: vi.fn().mockResolvedValue({
       items: [
         {
           id: eventId,
-          capabilityId: "organization.create",
-          action: "organization.create",
+          capabilityId: "organization.member.add",
+          action: "organization.member.add",
           result: "success",
           requestId,
           actorSource: "web",
@@ -38,9 +38,10 @@ test("lists organization audit actions and their request IDs", async () => {
       </MemoryRouter>
     </QueryClientProvider>,
   );
-  expect(await screen.findByText("organization.create")).toBeVisible();
-  expect(screen.getByText(requestId)).toBeVisible();
-  expect(screen.getByRole("link", { name: /organization.create.*成功/ })).toHaveAttribute(
+  expect(await screen.findByText("添加组织成员")).toBeVisible();
+  expect(screen.getByText("网页")).toBeVisible();
+  expect(screen.queryByText(requestId)).not.toBeInTheDocument();
+  expect(screen.getByRole("link", { name: /添加组织成员.*成功/ })).toHaveAttribute(
     "href",
     `/org/${organizationId}/admin/audit/${eventId}`,
   );
@@ -84,9 +85,11 @@ test("renders an audit detail without exposing raw before-after payloads", async
       </MemoryRouter>
     </QueryClientProvider>,
   );
-  expect(await screen.findByRole("heading", { name: "organization.create" })).toBeVisible();
+  expect(await screen.findByRole("heading", { name: "创建组织" })).toBeVisible();
+  expect(screen.getByText("organization.create")).toBeVisible();
+  expect(screen.getByText(requestId)).toBeVisible();
   expect(screen.getByText("203.0.113.10")).toBeVisible();
-  expect(screen.getByText(/敏感字段只展示服务端脱敏后的审计摘要/)).toBeVisible();
+  expect(screen.getByText("部分敏感信息已隐藏")).toBeVisible();
   expect(screen.queryByText("must-not-render")).not.toBeInTheDocument();
 });
 
@@ -117,7 +120,8 @@ test("follows audit pagination when a copied detail URL points beyond the first 
       </MemoryRouter>
     </QueryClientProvider>,
   );
-  expect(await screen.findByRole("heading", { name: "organization.member.add" })).toBeVisible();
+  expect(await screen.findByRole("heading", { name: "添加组织成员" })).toBeVisible();
+  expect(screen.getByText("organization.member.add")).toBeVisible();
   expect(sdk.listAuditEvents).toHaveBeenNthCalledWith(
     1,
     { organizationId, limit: 100 },
