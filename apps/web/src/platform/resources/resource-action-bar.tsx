@@ -23,7 +23,7 @@ export function ResourceActionBar({
     );
   }
   return (
-    <div aria-label="资源操作" className="resource-action-bar" role="group">
+    <div aria-label="可用操作" className="resource-action-bar" role="group">
       {actions.map((action) => (
         <Button
           disabled={mode === "readonly"}

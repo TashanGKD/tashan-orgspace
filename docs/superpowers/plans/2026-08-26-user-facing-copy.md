@@ -386,7 +386,7 @@ git commit -m "feat(web): humanize audit event labels"
 - Create: `scripts/check-user-facing-copy.self-test.mjs`
 - Modify: `scripts/verify-phase0.sh`
 
-- [ ] **Step 1: Write the gate with explicit prohibited phrases**
+- [x] **Step 1: Write the gate with explicit prohibited phrases**
 
 Export `checkUserFacingCopy({ capabilities, auditLabels, sources })`. It must reject:
 
@@ -406,7 +406,7 @@ It must also compare the sorted capability IDs with the sorted keys of `audit-ac
 
 Repository source discovery must scan production `.tsx` files and `product-modules.json`, exclude `*.test.*`, and refuse symlinked source files.
 
-- [ ] **Step 2: Write three real negative self-tests**
+- [x] **Step 2: Write three real negative self-tests**
 
 Create `check-user-facing-copy.self-test.mjs` with:
 
@@ -425,7 +425,7 @@ raw.auditLabels["organization.member.add"] = "organization.member.add";
 assert.throws(() => checkUserFacingCopy(raw), /audit label must be human-readable/);
 ```
 
-- [ ] **Step 3: Run the gate and self-test**
+- [x] **Step 3: Run the gate and self-test**
 
 Run:
 
@@ -437,7 +437,7 @@ node scripts/check-gate-self-tests.mjs
 
 Expected: the negative self-test passes and gate count increases from 14 to 15.
 
-- [ ] **Step 4: Wire the gate into the full verifier**
+- [x] **Step 4: Wire the gate into the full verifier**
 
 Add before `check-production-contract` in `verify-phase0.sh`:
 
@@ -446,7 +446,7 @@ run_step "node scripts/check-user-facing-copy.mjs" node scripts/check-user-facin
 run_step "node scripts/check-user-facing-copy.self-test.mjs" node scripts/check-user-facing-copy.self-test.mjs
 ```
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add scripts/check-user-facing-copy* scripts/verify-phase0.sh

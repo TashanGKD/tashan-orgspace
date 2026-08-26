@@ -1,5 +1,7 @@
 import { useState } from "react";
 
+import { pageCopy } from "../content/user-facing-copy.js";
+
 interface DeviceItem {
   id: string;
   name: string;
@@ -65,7 +67,7 @@ export function DeviceList({ items, busyDeviceId, onRevoke }: DeviceListProps) {
           >
             <p className="section-index">DEVICE REVOCATION</p>
             <h3 id="revoke-title">撤销 {candidate.name}？</h3>
-            <p>该设备上的全部会话将立即失效，不影响你的其他设备。</p>
+            <p>{pageCopy.devices.revokeConsequence}</p>
             <div className="dialog-actions">
               <button className="text-action" type="button" onClick={() => setCandidate(undefined)}>
                 取消
