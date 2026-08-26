@@ -5,6 +5,7 @@ import { useNavigate } from "react-router";
 
 import type { OrgSpaceClient } from "@tashan/sdk";
 
+import { pageCopy } from "../../content/user-facing-copy.js";
 import { Button } from "../../design-system/primitives/index.js";
 import { useFeedback } from "../../platform/feedback/feedback-context.js";
 import { ResourceListPage } from "../../platform/resources/resource-list-page.js";
@@ -56,7 +57,7 @@ export function OrganizationHomePage({
 
   return (
     <ResourceListPage
-      description="从同一组织工作台进入成员、工作、文件、运行环境与审计记录。"
+      description={pageCopy.organization.description}
       primaryAction={
         <Button disabled={createOrganization.isPending} form="create-organization" type="submit">
           <Plus aria-hidden size={16} />
@@ -72,7 +73,7 @@ export function OrganizationHomePage({
           href={routes.organizationHome(organization.id)}
           key={organization.id}
           leading={<Building2 aria-hidden size={17} />}
-          metadata={[organization.id]}
+          metadata={[]}
           status={{
             label: organization.id === organizationId ? "当前组织" : "可访问",
             tone: organization.id === organizationId ? "info" : "success",

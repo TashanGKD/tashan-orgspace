@@ -31,6 +31,8 @@ test("locks duplicate organization submissions before pending state rerenders", 
     </QueryClientProvider>,
   );
   const user = userEvent.setup();
+  expect(await screen.findByText("查看和创建组织")).toBeVisible();
+  expect(screen.queryByText(organizationId)).not.toBeInTheDocument();
   await user.type(await screen.findByLabelText("新组织名称"), "重复提交测试");
   const form = screen.getByRole("form", { name: "创建组织" });
   fireEvent.submit(form);

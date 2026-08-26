@@ -5,6 +5,8 @@ import { useParams } from "react-router";
 import type { MembershipSummary, OrganizationSummary } from "@tashan/contracts";
 import type { OrgSpaceClient } from "@tashan/sdk";
 
+import { pageCopy } from "../../content/user-facing-copy.js";
+
 export type MembershipRole = MembershipSummary["role"];
 type OrganizationContextValue =
   | { status: "loading" }
@@ -88,7 +90,7 @@ export function RequireOrganizationRole({
   const organization = useOrganization();
   if (organization.status === "loading") return <p>正在确认组织权限…</p>;
   if (organization.status === "forbidden" || !roles.includes(organization.role)) {
-    return <p>你没有访问此页面的权限</p>;
+    return <p>{pageCopy.forbiddenPage}</p>;
   }
   return children;
 }

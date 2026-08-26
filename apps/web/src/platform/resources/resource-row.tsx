@@ -25,11 +25,13 @@ function RowContent({
       {leading ? <span className="resource-row-leading">{leading}</span> : null}
       <span className="resource-row-copy">
         <strong>{title}</strong>
-        <span className="resource-row-metadata">
-          {metadata.map((item) => (
-            <span key={item}>{item}</span>
-          ))}
-        </span>
+        {metadata.length > 0 ? (
+          <span className="resource-row-metadata">
+            {metadata.map((item) => (
+              <span key={item}>{item}</span>
+            ))}
+          </span>
+        ) : null}
       </span>
       <StatusBadge tone={status.tone}>{status.label}</StatusBadge>
       {trailing ? <span className="resource-row-trailing">{trailing}</span> : null}

@@ -5,6 +5,7 @@ import { useMemo, useRef, useState, type FormEvent } from "react";
 import type { MembershipSummary } from "@tashan/contracts";
 import type { OrgSpaceClient } from "@tashan/sdk";
 
+import { pageCopy } from "../../content/user-facing-copy.js";
 import { Button } from "../../design-system/primitives/index.js";
 import { ResourceDetailPage } from "../../platform/resources/resource-detail-page.js";
 import { ResourceListPage } from "../../platform/resources/resource-list-page.js";
@@ -129,7 +130,7 @@ export function MembersPage({
 
   return (
     <ResourceListPage
-      description="组织工作默认对管理员透明；成员身份、角色与状态在同一资源视图中管理。"
+      description={pageCopy.members.description}
       primaryAction={
         canManage ? (
           <Button disabled={addMember.isPending} form="add-organization-member" type="submit">
@@ -162,7 +163,7 @@ export function MembersPage({
           href={routes.organizationMember(organizationId, membership.accountId)}
           key={membership.id ?? membership.accountId}
           leading={<Users aria-hidden size={17} />}
-          metadata={[roleLabels[membership.role], membership.accountId]}
+          metadata={[roleLabels[membership.role]]}
           status={{
             label: membership.status === "active" ? "正常" : membership.status,
             tone: membership.status === "active" ? "success" : "warning",

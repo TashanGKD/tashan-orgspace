@@ -47,6 +47,8 @@ describe("MembersPage", () => {
     } as unknown as OrgSpaceClient;
     renderPage(sdk);
     expect(await screen.findByText("用户8000")).toBeVisible();
+    expect(screen.getByText("查看和添加组织成员")).toBeVisible();
+    expect(screen.queryByText(accountId)).not.toBeInTheDocument();
     expect(screen.getByRole("link", { name: /用户8000.*正常/ })).toHaveAttribute(
       "href",
       `/org/${organizationId}/admin/members/${accountId}`,
@@ -85,6 +87,7 @@ describe("MembersPage", () => {
     } as unknown as OrgSpaceClient;
     renderPage(sdk, true, accountId);
     expect(await screen.findByRole("heading", { name: "用户8000" })).toBeVisible();
+    expect(screen.getByText(accountId)).toBeVisible();
     expect(screen.getByText("组织管理员")).toBeVisible();
     expect(screen.getByText("2026-08-20T00:00:00.000Z")).toBeVisible();
   });

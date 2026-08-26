@@ -2,6 +2,7 @@ import { MotionConfig, motion } from "framer-motion";
 import { useState, type ReactNode } from "react";
 import { useLocation } from "react-router";
 
+import { pageCopy } from "../../content/user-facing-copy.js";
 import { useOrganization } from "../context/organization-context.js";
 import { MobileNavigation } from "./mobile-navigation.js";
 import { readSidebarCollapsed, writeSidebarCollapsed } from "./shell-state.js";
@@ -22,7 +23,7 @@ export function AppShell({
   const organization = useOrganization();
   const location = useLocation();
   if (organization.status === "loading") return <p>正在加载组织…</p>;
-  if (organization.status === "forbidden") return <p>无法访问该组织</p>;
+  if (organization.status === "forbidden") return <p>{pageCopy.forbiddenOrganization}</p>;
 
   function updateCollapsed(next: boolean): void {
     writeSidebarCollapsed(next);

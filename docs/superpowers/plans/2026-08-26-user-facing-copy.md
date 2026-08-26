@@ -255,7 +255,7 @@ git commit -m "feat(web): simplify access and roadmap copy"
 - Modify: `apps/web/src/platform/shell/app-shell.tsx`
 - Modify: `apps/web/src/platform/context/organization-context.tsx`
 
-- [ ] **Step 1: Write RED tests for direct descriptions and list density**
+- [x] **Step 1: Write RED tests for direct descriptions and list density**
 
 Add assertions:
 
@@ -272,7 +272,7 @@ expect(screen.queryByText("0.1.0-alpha.3")).not.toBeInTheDocument();
 
 The member and organization detail tests must continue to assert that IDs remain available after opening details.
 
-- [ ] **Step 2: Run targeted tests and verify RED**
+- [x] **Step 2: Run targeted tests and verify RED**
 
 Run:
 
@@ -282,7 +282,7 @@ pnpm --filter @tashan/web test -- home-page.test.tsx members-page.test.tsx app.t
 
 Expected: FAIL on old descriptions and UUID metadata.
 
-- [ ] **Step 3: Use direct page copy and remove technical list metadata**
+- [x] **Step 3: Use direct page copy and remove technical list metadata**
 
 Import `pageCopy` in the three pages. Apply:
 
@@ -307,11 +307,11 @@ metadata={[device.os, device.lastSeenAt]}
 
 Keep account ID, architecture and client version in their existing detail pages.
 
-- [ ] **Step 4: Simplify permission and revoke messages**
+- [x] **Step 4: Simplify permission and revoke messages**
 
 Use `pageCopy.forbiddenOrganization` in `app-shell.tsx`, `pageCopy.forbiddenPage` in `organization-context.tsx`, and `pageCopy.devices.revokeConsequence` in the revoke dialog. Keep the dialog title and actions unchanged.
 
-- [ ] **Step 5: Run GREEN and commit**
+- [x] **Step 5: Run GREEN and commit**
 
 Run the targeted tests plus Web typecheck, then commit:
 

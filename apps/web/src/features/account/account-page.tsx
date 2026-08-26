@@ -6,6 +6,7 @@ import { Link } from "react-router";
 import type { DeviceSummary } from "@tashan/contracts";
 import type { OrgSpaceClient } from "@tashan/sdk";
 
+import { pageCopy } from "../../content/user-facing-copy.js";
 import {
   Button,
   Dialog,
@@ -138,10 +139,7 @@ export function AccountPage({
   return (
     <section className="standalone-resource-page">
       <Link to="/">返回组织空间</Link>
-      <ResourceListPage
-        description="一个真实人员可以在多台机器上登录；每台机器使用独立设备会话。"
-        title="账号与设备"
-      >
+      <ResourceListPage description={pageCopy.devices.description} title="账号与设备">
         {devices.data.items.length === 0 ? (
           <ResourceState resourceLabel="设备" state="empty" />
         ) : null}
@@ -156,7 +154,7 @@ export function AccountPage({
                   <Laptop aria-hidden size={17} />
                 )
               }
-              metadata={[device.os, device.architecture, device.clientVersion, device.lastSeenAt]}
+              metadata={[device.os, device.lastSeenAt]}
               status={deviceStatus(device)}
               title={device.name}
             />
@@ -206,7 +204,7 @@ function RevokeConfirmation({
       <DialogContent className="confirm-dialog">
         <p className="section-index">DEVICE REVOCATION</p>
         <DialogTitle>撤销 {candidate.name}？</DialogTitle>
-        <p>该设备上的全部会话将立即失效，不影响你的其他设备。</p>
+        <p>{pageCopy.devices.revokeConsequence}</p>
         <div className="dialog-actions">
           <DialogClose asChild>
             <Button variant="quiet">取消</Button>

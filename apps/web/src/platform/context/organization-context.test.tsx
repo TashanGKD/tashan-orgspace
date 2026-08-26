@@ -119,7 +119,7 @@ describe("organization boundary", () => {
         <p>组织审计内容</p>
       </RequireOrganizationRole>,
     );
-    expect(await screen.findByText("你没有访问此页面的权限")).toBeVisible();
+    expect(await screen.findByText("你没有权限查看此页面")).toBeVisible();
     expect(screen.queryByText("组织审计内容")).not.toBeInTheDocument();
     expect(client.listAuditEvents).not.toHaveBeenCalled();
   });

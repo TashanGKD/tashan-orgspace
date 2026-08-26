@@ -50,8 +50,26 @@ function client(overrides: Record<string, unknown> = {}): OrgSpaceClient {
     }),
     listDevices: vi.fn().mockResolvedValue({
       items: [
-        { id: currentDeviceId, name: "当前 MacBook", current: true, revokedAt: null },
-        { id: otherDeviceId, name: "MacBook Air", current: false, revokedAt: null },
+        {
+          id: currentDeviceId,
+          name: "当前 MacBook",
+          os: "macOS",
+          architecture: "arm64",
+          clientVersion: "0.1.0-alpha.3",
+          lastSeenAt: "2026-08-19T00:00:00.000Z",
+          current: true,
+          revokedAt: null,
+        },
+        {
+          id: otherDeviceId,
+          name: "MacBook Air",
+          os: "macOS",
+          architecture: "arm64",
+          clientVersion: "0.1.0-alpha.3",
+          lastSeenAt: "2026-08-18T00:00:00.000Z",
+          current: false,
+          revokedAt: null,
+        },
       ],
     }),
     revokeDevice: vi
@@ -135,6 +153,8 @@ describe("routed Phase 0 Web", () => {
     await user.click(screen.getByRole("link", { name: "账号与设备" }));
     expect(await screen.findByRole("navigation", { name: "主导航" })).toBeVisible();
     expect(screen.getByRole("heading", { name: "账号与设备" })).toBeVisible();
+    expect(screen.getByText("查看和管理登录设备")).toBeVisible();
+    expect(screen.queryByText("0.1.0-alpha.3")).not.toBeInTheDocument();
     await user.click(await screen.findByRole("button", { name: "撤销 MacBook Air" }));
     const dialog = screen.getByRole("dialog", { name: "撤销 MacBook Air？" });
     expect(dialog).toContainElement(document.activeElement as HTMLElement | null);
