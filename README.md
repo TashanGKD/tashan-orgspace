@@ -8,6 +8,8 @@
 - Phase 0 实施计划：[`docs/superpowers/plans/2026-08-18-phase0-security-foundation.md`](docs/superpowers/plans/2026-08-18-phase0-security-foundation.md)
 - Phase 0 安全架构：[`docs/architecture/phase0-security-foundation.md`](docs/architecture/phase0-security-foundation.md)
 - 本地基础设施运行手册：[`docs/runbooks/local-development.md`](docs/runbooks/local-development.md)
+- 完整前端蓝图：[`docs/superpowers/specs/2026-08-26-full-product-frontend-blueprint.md`](docs/superpowers/specs/2026-08-26-full-product-frontend-blueprint.md)
+- 完整产品交付计划：[`docs/superpowers/plans/2026-08-26-full-product-delivery.md`](docs/superpowers/plans/2026-08-26-full-product-delivery.md)
 
 ## 当前能力
 
@@ -72,12 +74,14 @@ docs/       架构、运行手册、产品设计与实施计划
 
 ## 关键文档
 
-| 文档                                                                                                                                       | 用途                   |
-| ------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------- |
-| [`docs/architecture/phase0-security-foundation.md`](docs/architecture/phase0-security-foundation.md)                                       | 已实现的安全与分发边界 |
-| [`docs/runbooks/local-development.md`](docs/runbooks/local-development.md)                                                                 | 本地基础设施运行手册   |
-| [`docs/superpowers/specs/2026-08-18-tashan-orgspace-design.md`](docs/superpowers/specs/2026-08-18-tashan-orgspace-design.md)               | 产品与技术总设计       |
-| [`docs/superpowers/specs/2026-08-18-skill-cli-distribution-design.md`](docs/superpowers/specs/2026-08-18-skill-cli-distribution-design.md) | Skill/CLI 分发设计     |
+| 文档                                                                                                                                           | 用途                   |
+| ---------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------- |
+| [`docs/architecture/phase0-security-foundation.md`](docs/architecture/phase0-security-foundation.md)                                           | 已实现的安全与分发边界 |
+| [`docs/runbooks/local-development.md`](docs/runbooks/local-development.md)                                                                     | 本地基础设施运行手册   |
+| [`docs/superpowers/specs/2026-08-18-tashan-orgspace-design.md`](docs/superpowers/specs/2026-08-18-tashan-orgspace-design.md)                   | 产品与技术总设计       |
+| [`docs/superpowers/specs/2026-08-18-skill-cli-distribution-design.md`](docs/superpowers/specs/2026-08-18-skill-cli-distribution-design.md)     | Skill/CLI 分发设计     |
+| [`docs/superpowers/specs/2026-08-26-full-product-frontend-blueprint.md`](docs/superpowers/specs/2026-08-26-full-product-frontend-blueprint.md) | 完整前端与统一对象交互 |
+| [`docs/superpowers/plans/2026-08-26-full-product-delivery.md`](docs/superpowers/plans/2026-08-26-full-product-delivery.md)                     | 完整产品全栈交付顺序   |
 
 ## 环境变量
 
@@ -85,4 +89,4 @@ docs/       架构、运行手册、产品设计与实施计划
 
 ## 部署状态
 
-仓库正在准备 `v0.1.0-alpha.3` 的双源安装发布；在合并、部署、打标签和公网 smoke 完成前，生产仍运行 `v0.1.0-alpha.2`。独立 Phase 0 后端位于 `https://orgspace.tashan.chat`；文件、协作、聊天和安全计算等 Phase 1+ 能力仍未发布。现有 `org.tashan.chat` 属于其他项目，不在本仓库的部署范围内。
+当前公开 prerelease 为 `v0.1.0-alpha.3`，独立 Phase 0 后端已部署到 `https://orgspace.tashan.chat`，官方 Skill/CLI 镜像和 GitHub 备用 Release 均已发布。文件、协作、聊天和安全计算等 Phase 1+ 能力仍未发布。现有 `org.tashan.chat` 属于其他项目，不在本仓库的部署范围内。
