@@ -1,0 +1,19 @@
+{
+  "system.health.read": "系统健康检查",
+  "capability.list": "查看可用功能",
+  "capability.describe": "查看功能说明",
+  "auth.verification.send": "发送验证码",
+  "auth.password.reset": "重置密码",
+  "auth.register": "创建账号",
+  "auth.login": "登录",
+  "auth.refresh": "更新登录状态",
+  "auth.logout": "退出登录",
+  "auth.whoami": "查看当前账号",
+  "device.list": "查看登录设备",
+  "device.revoke": "撤销设备",
+  "organization.list": "查看组织",
+  "organization.create": "创建组织",
+  "organization.member.list": "查看组织成员",
+  "organization.member.add": "添加组织成员",
+  "audit.list": "查看操作记录"
+}

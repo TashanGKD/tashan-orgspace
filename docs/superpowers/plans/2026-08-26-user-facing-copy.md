@@ -26,7 +26,7 @@
 - Create: `apps/web/src/content/user-facing-copy.ts`
 - Create: `apps/web/src/content/user-facing-copy.test.ts`
 
-- [ ] **Step 1: Write the failing copy-contract test**
+- [x] **Step 1: Write the failing copy-contract test**
 
 Create `apps/web/src/content/user-facing-copy.test.ts`:
 
@@ -67,7 +67,7 @@ describe("user-facing copy", () => {
 });
 ```
 
-- [ ] **Step 2: Run the test and verify RED**
+- [x] **Step 2: Run the test and verify RED**
 
 Run:
 
@@ -77,7 +77,7 @@ pnpm --filter @tashan/web test -- user-facing-copy.test.ts
 
 Expected: FAIL because `user-facing-copy.ts` does not exist.
 
-- [ ] **Step 3: Add the complete audit label registry**
+- [x] **Step 3: Add the complete audit label registry**
 
 Create `apps/web/src/content/audit-action-labels.json` with all 17 existing IDs:
 
@@ -103,7 +103,7 @@ Create `apps/web/src/content/audit-action-labels.json` with all 17 existing IDs:
 }
 ```
 
-- [ ] **Step 4: Implement the copy module**
+- [x] **Step 4: Implement the copy module**
 
 Create `apps/web/src/content/user-facing-copy.ts`:
 
@@ -148,7 +148,7 @@ export function auditActorSourceLabel(source: string): string {
 }
 ```
 
-- [ ] **Step 5: Run GREEN and commit**
+- [x] **Step 5: Run GREEN and commit**
 
 Run:
 
