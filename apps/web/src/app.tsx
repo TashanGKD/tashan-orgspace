@@ -104,6 +104,52 @@ function AccountRoute({ sdk }: { sdk: OrgSpaceClient }) {
   return <AccountPage sdk={sdk} selectedDeviceId={deviceId} />;
 }
 
+function AccountShellRoutes({ sdk }: { sdk: OrgSpaceClient }) {
+  const session = useSession();
+  const feedback = useFeedback();
+  if (session.status !== "authenticated") return null;
+
+  async function logout(): Promise<void> {
+    feedback.clear();
+    try {
+      await session.logout();
+    } catch (error) {
+      feedback.showError(error);
+    }
+  }
+
+  return (
+    <AppShell displayName={session.account.displayName} onLogout={logout}>
+      <Routes>
+        <Route index element={<AccountRoute sdk={sdk} />} />
+        <Route path="devices/:deviceId" element={<AccountRoute sdk={sdk} />} />
+        <Route path="*" element={<Navigate replace to="/account" />} />
+      </Routes>
+    </AppShell>
+  );
+}
+
+function AccountArea({ sdk }: { sdk: OrgSpaceClient }) {
+  const session = useSession();
+  const organizations = useQuery({
+    queryKey: ["organizations"],
+    queryFn: ({ signal }) => sdk.listOrganizations(signal),
+  });
+  if (session.status !== "authenticated") return null;
+  if (organizations.isPending) return <p>正在加载组织…</p>;
+  const firstOrganization = organizations.data?.items[0];
+  if (firstOrganization === undefined) return <AccountRoute sdk={sdk} />;
+  return (
+    <OrganizationProvider
+      accountId={session.account.id}
+      organizationId={firstOrganization.id}
+      sdk={sdk}
+    >
+      <AccountShellRoutes sdk={sdk} />
+    </OrganizationProvider>
+  );
+}
+
 function OrganizationRoutes({ sdk, displayName }: { sdk: OrgSpaceClient; displayName: string }) {
   const session = useSession();
   const feedback = useFeedback();
@@ -167,8 +213,7 @@ function AuthenticatedRoutes({ sdk }: { sdk: OrgSpaceClient }) {
   return (
     <Routes>
       <Route path="/" element={<RootRedirect sdk={sdk} />} />
-      <Route path="/account/devices/:deviceId?" element={<AccountRoute sdk={sdk} />} />
-      <Route path="/account" element={<AccountRoute sdk={sdk} />} />
+      <Route path="/account/*" element={<AccountArea sdk={sdk} />} />
       <Route path="/org/:organizationId/*" element={<OrganizationArea sdk={sdk} />} />
       <Route path="*" element={<Navigate replace to="/" />} />
     </Routes>

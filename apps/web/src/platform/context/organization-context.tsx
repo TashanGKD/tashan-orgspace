@@ -21,13 +21,16 @@ const OrganizationContext = createContext<OrganizationContextValue | undefined>(
 export function OrganizationProvider({
   accountId,
   children,
+  organizationId: organizationIdOverride,
   sdk,
 }: {
   accountId: string;
   children: ReactNode;
+  organizationId?: string | undefined;
   sdk: OrgSpaceClient;
 }) {
-  const { organizationId } = useParams<{ organizationId: string }>();
+  const { organizationId: routeOrganizationId } = useParams<{ organizationId: string }>();
+  const organizationId = organizationIdOverride ?? routeOrganizationId;
   const queryClient = useQueryClient();
   const previousId = useRef<string | undefined>(undefined);
 

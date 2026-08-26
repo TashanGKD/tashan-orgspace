@@ -1186,6 +1186,17 @@ button:not(:disabled):hover {
   gap: var(--org-space-2);
 }
 
+.resource-list-page[data-view="grid"] .resource-list-content {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 22rem), 1fr));
+  align-items: start;
+}
+
+.resource-list-page[data-view="grid"] .resource-inline-form,
+.resource-list-page[data-view="grid"] .resource-state,
+.resource-list-page[data-view="grid"] .resource-list-content > .org-button {
+  grid-column: 1 / -1;
+}
+
 .resource-row {
   position: relative;
   display: grid;

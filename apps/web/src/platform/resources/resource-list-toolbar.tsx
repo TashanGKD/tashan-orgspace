@@ -31,6 +31,7 @@ export function ResourceListToolbar({
         <span className="sr-only">搜索{resourceLabel}</span>
         <input
           aria-label={`搜索${resourceLabel}`}
+          placeholder={`搜索${resourceLabel}`}
           type="search"
           value={query}
           onChange={(event) => onQueryChange(event.currentTarget.value)}

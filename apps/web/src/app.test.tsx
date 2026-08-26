@@ -133,6 +133,8 @@ describe("routed Phase 0 Web", () => {
     await login(sdk);
     const user = userEvent.setup();
     await user.click(screen.getByRole("link", { name: "账号与设备" }));
+    expect(await screen.findByRole("navigation", { name: "主导航" })).toBeVisible();
+    expect(screen.getByRole("heading", { name: "账号与设备" })).toBeVisible();
     await user.click(await screen.findByRole("button", { name: "撤销 MacBook Air" }));
     await user.click(screen.getByRole("button", { name: "确认撤销" }));
     expect(await screen.findByText("设备已撤销")).toBeVisible();

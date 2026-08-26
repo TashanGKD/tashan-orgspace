@@ -133,6 +133,7 @@ export function MembersPage({
         ) : null
       }
       title="成员与角色"
+      view={view}
       toolbar={
         <ResourceListToolbar
           activeFilter={activeFilter}

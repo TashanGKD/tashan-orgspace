@@ -143,6 +143,7 @@ export function AuditPage({
     <ResourceListPage
       description="记录谁在何时、通过哪台设备、以何种客户端执行了什么能力。"
       title="组织审计"
+      view={view}
       toolbar={
         <ResourceListToolbar
           activeFilter={activeFilter}

@@ -52,6 +52,11 @@ describe("MembersPage", () => {
       `/org/${organizationId}/admin/members/${accountId}`,
     );
     const user = userEvent.setup();
+    await user.click(screen.getByRole("button", { name: "网格视图" }));
+    expect(screen.getByRole("heading", { name: "成员与角色" }).closest("section")).toHaveAttribute(
+      "data-view",
+      "grid",
+    );
     await user.type(screen.getByLabelText("账号 ID"), targetAccountId);
     await user.selectOptions(screen.getByLabelText("组织角色"), "member");
     await user.click(screen.getByRole("button", { name: "添加成员" }));

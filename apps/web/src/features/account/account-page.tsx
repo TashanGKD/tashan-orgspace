@@ -111,7 +111,7 @@ export function AccountPage({
   if (selectedDeviceId !== undefined) {
     const selected = devices.data.items.find((device) => device.id === selectedDeviceId);
     return (
-      <main className="standalone-resource-page">
+      <section className="standalone-resource-page">
         <Link to={routes.account}>返回设备列表</Link>
         {selected ? (
           <DeviceDetail busy={revoke.isPending} device={selected} onRevoke={setCandidate} />
@@ -125,12 +125,12 @@ export function AccountPage({
             if (candidate) revoke.mutate(candidate.id);
           }}
         />
-      </main>
+      </section>
     );
   }
 
   return (
-    <main className="standalone-resource-page">
+    <section className="standalone-resource-page">
       <Link to="/">返回组织空间</Link>
       <ResourceListPage
         description="一个真实人员可以在多台机器上登录；每台机器使用独立设备会话。"
@@ -182,7 +182,7 @@ export function AccountPage({
           if (candidate) revoke.mutate(candidate.id);
         }}
       />
-    </main>
+    </section>
   );
 }
 

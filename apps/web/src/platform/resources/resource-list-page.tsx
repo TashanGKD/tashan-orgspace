@@ -7,6 +7,7 @@ export function ResourceListPage({
   summary,
   title,
   toolbar,
+  view = "list",
 }: {
   children: ReactNode;
   description?: string;
@@ -14,9 +15,10 @@ export function ResourceListPage({
   summary?: ReactNode;
   title: string;
   toolbar?: ReactNode;
+  view?: "list" | "grid";
 }) {
   return (
-    <section className="resource-list-page">
+    <section className="resource-list-page" data-view={view}>
       <header className="resource-page-heading">
         <div>
           <h1>{title}</h1>
