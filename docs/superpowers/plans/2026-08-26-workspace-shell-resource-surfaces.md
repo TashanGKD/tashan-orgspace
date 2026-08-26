@@ -31,19 +31,19 @@
 - Modify: `pnpm-lock.yaml`
 - Modify: `apps/web/src/styles.css`
 
-- [ ] **Step 1: Write RED primitive behavior tests**
+- [x] **Step 1: Write RED primitive behavior tests**
 
 Assert keyboard focus, disabled state, accessible names, Escape-close for sheets, outside-click close for menus, status text beyond color and reduced-motion behavior. Tests must fail because the primitives do not exist.
 
-- [ ] **Step 2: Add the minimal dependencies**
+- [x] **Step 2: Add the minimal dependencies**
 
 Add exactly `@radix-ui/react-dialog@1.1.23`, `@radix-ui/react-dropdown-menu@2.1.24`, `@radix-ui/react-slot@1.3.3`, `lucide-react@1.34.0`, `framer-motion@13.1.1`, `clsx@2.1.1` and `class-variance-authority@0.7.1`. Do not add Tailwind, shadcn generators, bundled third-party fonts or Recharts in this task.
 
-- [ ] **Step 3: Implement tokens and primitives**
+- [x] **Step 3: Implement tokens and primitives**
 
 Define exact CSS variables for T1 primary/deep/soft, warm/deep, neutral surfaces, borders, text, focus, success/warning/error/info, 4px spacing scale, 6/10/14px radii, subtle shadows and 160/200/220ms motion. Implement primitives as local source files around Radix behavior.
 
-- [ ] **Step 4: Run GREEN and production build**
+- [x] **Step 4: Run GREEN and production build**
 
 Run:
 
@@ -53,7 +53,7 @@ pnpm --filter @tashan/web typecheck
 pnpm --filter @tashan/web build
 ```
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add apps/web/package.json apps/web/src/design-system apps/web/src/styles.css pnpm-lock.yaml

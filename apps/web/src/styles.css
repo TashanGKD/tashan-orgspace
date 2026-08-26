@@ -1,3 +1,5 @@
+@import "./design-system/tokens.css";
+
 :root {
   color: #1b1b17;
   background: #e9e5da;
