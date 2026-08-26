@@ -9,7 +9,8 @@ Branch: `codex/full-product-blueprint`
 - Web tests: 14 files, 73 tests passed.
 - Repository pre-commit gate: format, lint, workspace typecheck, workspace tests, 14 gate registrations and all negative self-tests passed.
 - Production Web build completed; the known Vite chunk-size warning remains non-blocking.
-- The complete `scripts/verify-phase0.sh` result is recorded after the final browser-tested commit.
+- `ORGSPACE_TEST_CLEANUP_VOLUMES=1 bash scripts/verify-phase0.sh` passed on browser-tested code commit `b6624aa` plus verification-doc commit `7f5bd55`.
+- Complete verifier evidence: 73 Web tests, 29 distribution tests, fresh-user installation without system Node.js, 17 capability surfaces, 4 resource surfaces, 14 registered gates and negative self-tests, 4 isolated production-stack tests and 4 end-to-end tests.
 
 ## Real browser journey
 

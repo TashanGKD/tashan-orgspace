@@ -219,7 +219,7 @@ Reuse the generic surfaces without changing API contracts. Audit detail shows tr
 
 Future module entries remain visible as a roadmap only where product navigation requires them; they cannot masquerade as working list/detail pages or bind nonexistent capabilities.
 
-- [ ] **Step 4: Run complete Phase 0 regression**
+- [x] **Step 4: Run complete Phase 0 regression**
 
 Run:
 
@@ -249,7 +249,7 @@ Exercise login, organization switching, sidebar collapse/reload, mobile More nav
 
 Capture and inspect 1440px, 1024px, 768px and 390px layouts. Verify no clipped labels, accidental horizontal scroll, fake clickable rows, color-only states, gradient/glass effects or unreadable dense sections.
 
-- [ ] **Step 3: Run all repository and parity gates**
+- [x] **Step 3: Run all repository and parity gates**
 
 Run the complete verifier on the exact commit and record command outputs separately from browser evidence.
 
