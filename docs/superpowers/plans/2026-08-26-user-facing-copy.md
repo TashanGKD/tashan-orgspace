@@ -459,7 +459,7 @@ git commit -m "ci(web): enforce user-facing copy"
 - Create: `docs/verification/user-facing-copy.md`
 - Modify: `docs/superpowers/plans/2026-08-26-user-facing-copy.md`
 
-- [ ] **Step 1: Run all automated verification**
+- [x] **Step 1: Run all automated verification**
 
 Run:
 
@@ -472,7 +472,7 @@ ORGSPACE_TEST_CLEANUP_VOLUMES=1 bash scripts/verify-phase0.sh
 
 Record Web test counts, 15-gate coverage, production-stack and E2E results separately.
 
-- [ ] **Step 2: Run real browser journeys**
+- [x] **Step 2: Run real browser journeys**
 
 Using the isolated local production stack, verify at 1440px and 390px:
 
@@ -484,15 +484,15 @@ Using the isolated local production stack, verify at 1440px and 390px:
 - revoke dialog explains that the device must log in again;
 - coming-soon page says only `此功能暂未开放` in addition to its direct module description.
 
-- [ ] **Step 3: Scan rendered and source text**
+- [x] **Step 3: Scan rendered and source text**
 
 Run the copy gate, then use browser DOM snapshots to confirm none of the prohibited phrases appear in rendered pages. Do not treat source scanning alone as visual or browser acceptance.
 
-- [ ] **Step 4: Capture and inspect screenshots**
+- [x] **Step 4: Capture and inspect screenshots**
 
 Capture organization home, member list, audit list and mobile organization home. Inspect line wrapping, empty metadata gaps, heading hierarchy and whether shorter copy leaves awkward blank space.
 
-- [ ] **Step 5: Write evidence and commit**
+- [x] **Step 5: Write evidence and commit**
 
 Write `docs/verification/user-facing-copy.md` with the exact commit, automated commands, browser journeys, screenshot paths and any remaining wording debt. Mark all completed plan checkboxes and commit:
 
