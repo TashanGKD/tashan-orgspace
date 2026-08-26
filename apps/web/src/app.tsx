@@ -82,6 +82,28 @@ function OrganizationArea({ sdk }: { sdk: OrgSpaceClient }) {
   );
 }
 
+function MembersRoute({ organizationId, sdk }: { organizationId: string; sdk: OrgSpaceClient }) {
+  const { accountId } = useParams<{ accountId?: string }>();
+  return (
+    <MembersPage
+      canManage
+      organizationId={organizationId}
+      sdk={sdk}
+      selectedAccountId={accountId}
+    />
+  );
+}
+
+function AuditRoute({ organizationId, sdk }: { organizationId: string; sdk: OrgSpaceClient }) {
+  const { eventId } = useParams<{ eventId?: string }>();
+  return <AuditPage organizationId={organizationId} sdk={sdk} selectedEventId={eventId} />;
+}
+
+function AccountRoute({ sdk }: { sdk: OrgSpaceClient }) {
+  const { deviceId } = useParams<{ deviceId?: string }>();
+  return <AccountPage sdk={sdk} selectedDeviceId={deviceId} />;
+}
+
 function OrganizationRoutes({ sdk, displayName }: { sdk: OrgSpaceClient; displayName: string }) {
   const session = useSession();
   const feedback = useFeedback();
@@ -108,18 +130,18 @@ function OrganizationRoutes({ sdk, displayName }: { sdk: OrgSpaceClient; display
           element={<OrganizationHomePage organizationId={organizationId} sdk={sdk} />}
         />
         <Route
-          path="admin/members"
+          path="admin/members/:accountId?"
           element={
             <RequireOrganizationRole roles={["org_owner", "org_admin"]}>
-              <MembersPage canManage organizationId={organizationId} sdk={sdk} />
+              <MembersRoute organizationId={organizationId} sdk={sdk} />
             </RequireOrganizationRole>
           }
         />
         <Route
-          path="admin/audit"
+          path="admin/audit/:eventId?"
           element={
             <RequireOrganizationRole roles={["org_owner", "org_admin"]}>
-              <AuditPage organizationId={organizationId} sdk={sdk} />
+              <AuditRoute organizationId={organizationId} sdk={sdk} />
             </RequireOrganizationRole>
           }
         />
@@ -145,7 +167,8 @@ function AuthenticatedRoutes({ sdk }: { sdk: OrgSpaceClient }) {
   return (
     <Routes>
       <Route path="/" element={<RootRedirect sdk={sdk} />} />
-      <Route path="/account" element={<AccountPage sdk={sdk} />} />
+      <Route path="/account/devices/:deviceId?" element={<AccountRoute sdk={sdk} />} />
+      <Route path="/account" element={<AccountRoute sdk={sdk} />} />
       <Route path="/org/:organizationId/*" element={<OrganizationArea sdk={sdk} />} />
       <Route path="*" element={<Navigate replace to="/" />} />
     </Routes>

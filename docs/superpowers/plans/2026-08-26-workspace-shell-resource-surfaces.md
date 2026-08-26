@@ -169,23 +169,25 @@ git commit -m "feat(web): build responsive workspace shell"
 - Create: `apps/web/src/platform/resources/resource-components.test.tsx`
 - Modify: `apps/web/src/styles.css`
 
-- [ ] **Step 1: Write RED component-state tests**
+- [x] **Step 1: Write RED component-state tests**
 
 Require loading, empty, partial-error, fatal-error, forbidden, readonly and version-conflict states. List rows must be keyboard-openable only when interactive; detail drawer must retain list context, trap focus and expose a stable full-page link.
 
-- [ ] **Step 2: Implement the calm list language**
+- [x] **Step 2: Implement the calm list language**
 
 Use homepage-v2-inspired search/filter chips and list/grid toggles, translated to T1 tokens. Rows use a 3px status rail plus text/dot status, tabular numeric metadata, subtle hover surface and no heavy card shadow.
 
-- [ ] **Step 3: Implement detail and action regions**
+- [x] **Step 3: Implement detail and action regions**
 
 Use a sticky header, scrollable content, relationship/attachment/activity slots and sticky footer actions. Capability and state metadata control presentation; server responses remain the final authorization truth.
 
 - [ ] **Step 4: Run GREEN and visual state snapshots**
 
+Automated component states, typecheck and production build are green. Desktop/mobile browser screenshots remain deliberately pending until the components are mounted on real Phase 0 pages in Task 6.
+
 Render every state in tests, run typecheck/build and capture desktop/mobile screenshots for manual inspection. Do not label screenshot generation as browser interaction acceptance until keyboard and click journeys are exercised.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add apps/web/src/platform/resources apps/web/src/styles.css
@@ -205,15 +207,15 @@ git commit -m "feat(web): add resource list and detail views"
 - Modify: `apps/web/src/platform/routing/route-paths.test.ts`
 - Modify: `apps/web/src/product-modules.json`
 
-- [ ] **Step 1: Write RED Phase 0 list/detail route tests**
+- [x] **Step 1: Write RED Phase 0 list/detail route tests**
 
 Require member list→member detail, device list→device detail, audit list→event detail and organization list→organization detail deep links. Preserve all current role and unknown-organization rejections.
 
-- [ ] **Step 2: Migrate account, member and audit pages**
+- [x] **Step 2: Migrate account, member and audit pages**
 
 Reuse the generic surfaces without changing API contracts. Audit detail shows trusted device/network context and redacted state only. Device/member actions preserve current confirmation and idempotency behavior.
 
-- [ ] **Step 3: Replace coming-soon presentation**
+- [x] **Step 3: Replace coming-soon presentation**
 
 Future module entries remain visible as a roadmap only where product navigation requires them; they cannot masquerade as working list/detail pages or bind nonexistent capabilities.
 
@@ -227,7 +229,7 @@ pnpm --filter @tashan/web build
 ORGSPACE_TEST_CLEANUP_VOLUMES=1 bash scripts/verify-phase0.sh
 ```
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add apps/web/src

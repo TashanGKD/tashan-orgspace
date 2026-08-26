@@ -1,10 +1,15 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Building2, Plus } from "lucide-react";
 import { useState, type FormEvent } from "react";
 import { useNavigate } from "react-router";
 
 import type { OrgSpaceClient } from "@tashan/sdk";
 
+import { Button } from "../../design-system/primitives/index.js";
 import { useFeedback } from "../../platform/feedback/feedback-context.js";
+import { ResourceListPage } from "../../platform/resources/resource-list-page.js";
+import { ResourceRow } from "../../platform/resources/resource-row.js";
+import { ResourceState } from "../../platform/resources/resource-states.js";
 import { routes } from "../../platform/routing/route-paths.js";
 
 function mutationKey(): string {
@@ -44,14 +49,33 @@ export function OrganizationHomePage({
   }
 
   return (
-    <>
-      <section className="workspace-intro">
-        <p className="eyebrow">ORGANIZATION CONTROL DESK</p>
-        <h1>组织首页</h1>
-        <p>当前版本已接通账号、设备、组织成员和审计；其他模块按路线图逐步开放。</p>
-      </section>
-      <section className="workspace-card">
-        <h2>切换或创建组织</h2>
+    <ResourceListPage
+      description="从同一组织工作台进入成员、工作、文件、运行环境与审计记录。"
+      primaryAction={
+        <Button form="create-organization" type="submit">
+          <Plus aria-hidden size={16} />
+          创建组织
+        </Button>
+      }
+      title="组织首页"
+    >
+      {organizations.isPending ? <ResourceState resourceLabel="组织" state="loading" /> : null}
+      {organizations.isError ? <ResourceState resourceLabel="组织" state="fatal-error" /> : null}
+      {organizations.data?.items.map((organization) => (
+        <ResourceRow
+          href={routes.organizationHome(organization.id)}
+          key={organization.id}
+          leading={<Building2 aria-hidden size={17} />}
+          metadata={[organization.id]}
+          status={{
+            label: organization.id === organizationId ? "当前组织" : "可访问",
+            tone: organization.id === organizationId ? "info" : "success",
+          }}
+          title={organization.name}
+        />
+      ))}
+      <section className="resource-create-section" aria-labelledby="organization-create-title">
+        <h2 id="organization-create-title">切换或创建组织</h2>
         <label>
           当前组织
           <select
@@ -66,16 +90,16 @@ export function OrganizationHomePage({
             ))}
           </select>
         </label>
-        <form className="inline-form" onSubmit={submit}>
+        <form className="resource-inline-form" id="create-organization" onSubmit={submit}>
           <label>
             新组织名称
             <input required value={name} onChange={(event) => setName(event.target.value)} />
           </label>
-          <button disabled={createOrganization.isPending} type="submit">
-            {createOrganization.isPending ? "正在创建…" : "创建组织"}
-          </button>
+          <span className="resource-form-hint">
+            新建后你将成为组织所有者，可继续配置成员和额度。
+          </span>
         </form>
       </section>
-    </>
+    </ResourceListPage>
   );
 }
