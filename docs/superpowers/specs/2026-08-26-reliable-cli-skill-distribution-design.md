@@ -176,6 +176,6 @@ scripts/publish-public-distribution.sh
 
 ## 10. 非目标与后续演进
 
-本轮不实现文件、任务/OKR、聊天、代码执行、Docker、常驻服务或动态域名，也不把 alpha prerelease 宣称为完整产品。
+本轮不实现文件、任务/OKR、聊天，也不把 alpha prerelease 宣称为完整产品。代码执行、Docker 构建、常驻服务、数据库、用户网站和动态用户域名是导航可见的延期方向；Skill/CLI 不得为这些方向提供绕过平台边界的替代路径。
 
 未来迁移到 OSS/CDN 时保持公开 URL、版本目录、校验和和安装器状态机不变，只替换 gateway 后面的静态存储实现。稳定 URL 不允许直接指向可变的未版本化 CLI 资产。
