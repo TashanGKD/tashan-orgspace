@@ -236,9 +236,21 @@ function AccountArea({ sdk }: { sdk: OrgSpaceClient }) {
     queryFn: ({ signal }) => sdk.listOrganizations(signal),
   });
   if (session.status !== "authenticated") return null;
-  if (organizations.isPending) return <p>正在加载组织…</p>;
+  if (organizations.isPending) {
+    return (
+      <AccountOnlyFrame>
+        <ResourceState resourceLabel="组织" state="loading" />
+      </AccountOnlyFrame>
+    );
+  }
   const firstOrganization = organizations.data?.items[0];
-  if (firstOrganization === undefined) return <AccountRoute sdk={sdk} />;
+  if (firstOrganization === undefined) {
+    return (
+      <AccountOnlyFrame>
+        <AccountRoute sdk={sdk} />
+      </AccountOnlyFrame>
+    );
+  }
   return (
     <OrganizationProvider
       accountId={session.account.id}

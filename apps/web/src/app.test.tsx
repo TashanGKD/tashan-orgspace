@@ -208,6 +208,21 @@ describe("routed Phase 0 Web", () => {
     expect(screen.getByRole("button", { name: "退出登录" })).toBeVisible();
   });
 
+  test("keeps the account page inside the account-only shell without an organization", async () => {
+    const sdk = client({
+      listOrganizations: vi.fn().mockResolvedValue({ items: [] }),
+    });
+    renderApp(sdk, "/account");
+    const user = userEvent.setup();
+    await screen.findByRole("heading", { name: "登录" });
+    await user.type(screen.getByLabelText("手机号"), "13800138000");
+    await user.type(screen.getByLabelText("密码"), "CorrectHorseBattery9");
+    await user.click(screen.getByRole("button", { name: "登录" }));
+    expect(await screen.findByRole("heading", { name: "账号与设备" })).toBeVisible();
+    expect(screen.getByRole("img", { name: "他山组织空间" })).toBeVisible();
+    expect(screen.getByRole("button", { name: "退出登录" })).toBeVisible();
+  });
+
   test("shows the API reason when organization creation is rejected", async () => {
     const sdk = client({
       createOrganization: vi

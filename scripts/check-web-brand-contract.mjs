@@ -203,8 +203,13 @@ export function checkWebBrandContract(repositoryRoot) {
     }
   }
 
-  for (const path of listSourceFiles(sourceRoot)) {
+  const scannedSourceFiles = [...listSourceFiles(sourceRoot), resolve(webRoot, "index.html")];
+  for (const path of scannedSourceFiles) {
     const source = readFileSync(path, "utf8");
+    const legacyColor = source.match(/#(?:171714|1b1b17|b53527|84251d|f5f1e7|e9e5da|4fa8aa)\b/i);
+    if (legacyColor) {
+      throw new Error(`legacy visual color in ${relative(root, path)}: ${legacyColor[0]}`);
+    }
     if (/https?:\/\/(?:preview2\.tashan\.ac\.cn|[^\s"']*homepage-v2)/i.test(source)) {
       throw new Error(`remote brand hotlink in ${relative(root, path)}`);
     }

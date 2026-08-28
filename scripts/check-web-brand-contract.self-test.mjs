@@ -29,6 +29,7 @@ const imports = [
 
 function makeFixture() {
   const root = mkdtempSync(join(tmpdir(), "orgspace-brand-gate-"));
+  const webRoot = resolve(root, "apps/web");
   const sourceRoot = resolve(root, "apps/web/src");
   const designSystem = resolve(sourceRoot, "design-system");
   const publicBrand = resolve(root, "apps/web/public/media/brand");
@@ -57,6 +58,7 @@ function makeFixture() {
     );
   }
   writeFileSync(resolve(sourceRoot, "styles.css"), `${imports}\n`);
+  writeFileSync(resolve(webRoot, "index.html"), '<meta name="theme-color" content="#0e2e4f" />\n');
   return root;
 }
 
@@ -129,6 +131,13 @@ rejectMutation((root) => {
   const path = resolve(root, "apps/web/src/design-system/global.css");
   writeFileSync(path, ".legacy { color: #b53527; }\n");
 }, /legacy visual color.*#b53527/);
+
+rejectMutation((root) => {
+  writeFileSync(
+    resolve(root, "apps/web/index.html"),
+    '<meta name="theme-color" content="#171714" />\n',
+  );
+}, /legacy visual color.*#171714/);
 
 rejectMutation((root) => {
   const manifestPath = resolve(root, "apps/web/src/design-system/brand-assets.json");
