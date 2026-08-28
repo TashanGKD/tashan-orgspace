@@ -24,6 +24,8 @@ run_step "node scripts/check-resource-surface-coverage.mjs" node scripts/check-r
 run_step "node scripts/check-user-facing-copy.mjs" node scripts/check-user-facing-copy.mjs
 run_step "node scripts/check-web-brand-contract.mjs" node scripts/check-web-brand-contract.mjs
 run_step "node scripts/check-production-contract.mjs" node scripts/check-production-contract.mjs
+run_step "node scripts/check-deferred-product-scope.mjs" node scripts/check-deferred-product-scope.mjs
+run_step "node scripts/check-deferred-product-scope.self-test.mjs" node scripts/check-deferred-product-scope.self-test.mjs
 run_step "node scripts/check-gate-self-tests.mjs" node scripts/check-gate-self-tests.mjs
 run_step "node scripts/check-capability-coverage.self-test.mjs" node scripts/check-capability-coverage.self-test.mjs
 run_step "node scripts/check-phone-auth-surface.self-test.mjs" node scripts/check-phone-auth-surface.self-test.mjs

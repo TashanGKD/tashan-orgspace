@@ -1,5 +1,7 @@
 # Tashan OrgSpace 产品与技术总设计
 
+<!-- DEFERRED_PRODUCT_SCOPE: general-compute,user-web-hosting -->
+
 > 日期：2026-08-18
 > 产品名：Tashan OrgSpace / 他山组织空间
 > 仓库：`tashan-orgspace`

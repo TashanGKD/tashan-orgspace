@@ -1,5 +1,7 @@
 # Tashan OrgSpace 完整前端蓝图
 
+<!-- DEFERRED_PRODUCT_SCOPE: general-compute,user-web-hosting -->
+
 - 日期：2026-08-26
 - 状态：待用户最终确认线稿
 - 适用范围：完整 v1 Web 工作台，以及与 API、CLI、Skill 的统一交互契约

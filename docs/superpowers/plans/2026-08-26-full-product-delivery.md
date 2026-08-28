@@ -1,5 +1,7 @@
 # Tashan OrgSpace Full Product Delivery Implementation Plan
 
+<!-- DEFERRED_PRODUCT_SCOPE: general-compute,user-web-hosting -->
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Deliver the complete v1 OrgSpace product as a sequence of production-ready vertical slices, with every capability implemented consistently in backend, Web, CLI, Skill, audit, tests, and AUP deployment.

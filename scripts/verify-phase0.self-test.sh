@@ -7,6 +7,8 @@ for required_step in \
   'node scripts/check-resource-surface-coverage.self-test.mjs' \
   'node scripts/check-web-brand-contract.mjs' \
   'node scripts/check-web-brand-contract.self-test.mjs' \
+  'node scripts/check-deferred-product-scope.mjs' \
+  'node scripts/check-deferred-product-scope.self-test.mjs' \
   'bash scripts/publish-public-distribution.self-test.sh' \
   'bash scripts/smoke-public-distribution.self-test.sh'; do
   grep -F "$required_step" "$repository_root/scripts/verify-phase0.sh" >/dev/null || {

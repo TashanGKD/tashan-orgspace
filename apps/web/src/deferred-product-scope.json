@@ -1,0 +1,21 @@
+{
+  "decisionId": "defer-compute-and-user-web-deployment-2026-08-28",
+  "status": "deferred_visible",
+  "moduleIds": [
+    "personal.runtime",
+    "personal.services",
+    "organization.runtime",
+    "organization.services"
+  ],
+  "requiredModuleStatus": "coming_soon",
+  "forbiddenCapabilityPrefixes": [
+    "runtime.",
+    "run.",
+    "build.",
+    "service.",
+    "database.",
+    "domain.",
+    "deployment."
+  ],
+  "requiredDocumentMarker": "<!-- DEFERRED_PRODUCT_SCOPE: general-compute,user-web-hosting -->"
+}
