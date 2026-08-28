@@ -116,8 +116,8 @@ Sidebar rules:
 
 - use the homepage-v2 logo or a properly derived compact mark;
 - group available modules by work context;
-- show no repeated `即将上线` labels in the primary navigation;
-- move unavailable modules to `更多` or a roadmap surface;
+- keep the strategic core destinations shown in the approved mockup (首页、任务、文件、消息) even when their first version is not open yet, but never repeat `即将上线` beside every item;
+- move other unavailable modules to `更多` or a roadmap surface;
 - use Lucide line icons only;
 - selected navigation uses a pale blue/mint fill, not a dark solid block.
 
