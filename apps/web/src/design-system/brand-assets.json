@@ -1,0 +1,20 @@
+[
+  {
+    "name": "mountain-background",
+    "publicPath": "media/brand/bg-horizontal.webp",
+    "source": "homepage-v2/frontend/public/media/bg_horizontal.webp",
+    "sha256": "b155f0f9a65c3262803f58b571c07d675663cd61d405690d7d15366563913c45"
+  },
+  {
+    "name": "complete-logo",
+    "publicPath": "media/brand/logo-complete.webp",
+    "source": "homepage-v2/frontend/public/media/logo_complete.webp",
+    "sha256": "8dfd1d4cffd2886cd118d74e945075414912c6359e74eb235cf2993c052e60a8"
+  },
+  {
+    "name": "square-logo",
+    "publicPath": "media/brand/logo-square.webp",
+    "source": "homepage-v2/frontend/public/media/logo_square_2.webp",
+    "sha256": "3d990e6ca08a3f46e0b184fcfab78b5ad7ee077c4285fee12681b3400f5411cc"
+  }
+]
