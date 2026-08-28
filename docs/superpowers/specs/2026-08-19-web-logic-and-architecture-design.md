@@ -1,5 +1,7 @@
 # Tashan OrgSpace Web 逻辑与架构设计
 
+<!-- DEFERRED_PRODUCT_SCOPE: general-compute,user-web-hosting -->
+
 > 日期：2026-08-19
 >
 > 状态：用户已于 2026-08-19 批准书面规格
@@ -25,7 +27,7 @@ OrgSpace Web 是统一 OrgSpace API 的一个独立客户端。它不是后端�
 - 登录后默认进入用户上次使用的当前组织；没有历史选择时进入第一个可用组织。
 - 组织首页是默认工作台，不以平台管理后台或个人汇总页作为首页。
 - “我的工作”跨组织聚合本人事项，但事项始终属于原组织并在原组织权限下操作。
-- “个人空间”只承载个人文件、运行资源、服务和用量，不承载私人任务、私人 OKR 或私人聊天。
+- “个人空间”只承载个人文件、存储用量和未来能力，不承载私人任务、私人 OKR 或私人聊天。
 - 任务、OKR、审批、会议和聊天全部属于组织。
 - 导航展示完整产品版图；尚未实现的模块显示“即将上线”。
 - 无权限的管理员功能完全隐藏，不使用置灰入口暴露管理能力。
@@ -47,7 +49,7 @@ unified API control plane
 auth + authorization + business rules + idempotency + audit
             |
             v
-PostgreSQL / Redis / object storage / Worker / Realtime / AUP Runtime
+PostgreSQL / Redis / object storage / Worker / Realtime
 ```
 
 不采用以下方案：
@@ -61,9 +63,9 @@ PostgreSQL / Redis / object storage / Worker / Realtime / AUP Runtime
 
 - 身份认证、token 轮换、设备会话和成员状态。
 - 组织、角色、对象作用域、ACL 和最终授权判断。
-- 任务、OKR、审批、会议、聊天、文件和运行资源的业务规则。
+- 任务、OKR、审批、会议、聊天和文件的业务规则。
 - 写操作幂等、事务、冲突检测、outbox 和审计。
-- 文件对象、短信、Worker、AUP Runtime、数据库和服务网关控制。
+- 文件对象、短信、Worker 与平台自身部署控制。
 - 稳定的请求、响应、错误和事件协议。
 
 ### 4.2 Web 负责
@@ -126,8 +128,8 @@ App Shell 只组织页面和上下文，不承载任务、文件、聊天等领�
 └─ 个人空间
    ├─ 概览
    ├─ 文件
-   ├─ 运行与构建
-   ├─ 服务与数据库
+   ├─ 运行与构建（即将上线）
+   ├─ 服务与数据库（即将上线）
    └─ 用量
 
 当前组织
@@ -138,11 +140,11 @@ App Shell 只组织页面和上下文，不承载任务、文件、聊天等领�
 ├─ 会议
 ├─ 文件
 ├─ 消息
-├─ 运行与构建
-├─ 服务与数据库
+├─ 运行与构建（即将上线）
+├─ 服务与数据库（即将上线）
 └─ 组织管理（仅有权限者可见）
    ├─ 成员与角色
-   ├─ 配额与资源策略
+   ├─ 空间额度
    ├─ 通知与短信策略
    ├─ 流程制度
    └─ 审计
@@ -159,7 +161,7 @@ App Shell 只组织页面和上下文，不承载任务、文件、聊天等领�
 3. 组织工作概览：任务进度、OKR 状态和待处理流程。
 4. 今日日程：会议与截止时间。
 5. 最近消息：私聊、组织群聊和 @我。
-6. 空间与运行状态：组织额度、服务异常和资源告警。
+6. 空间状态：组织额度和文件相关告警。
 
 普通成员只看到自己有权读取的数据。管理员拥有更广的组织视图，但不能由此读取成员个人空间。
 
@@ -171,7 +173,6 @@ App Shell 只组织页面和上下文，不承载任务、文件、聊天等领�
 /login
 /my-work
 /personal/files
-/personal/runtime
 /org/:organizationId/home
 /org/:organizationId/tasks
 /org/:organizationId/okr
@@ -179,9 +180,18 @@ App Shell 只组织页面和上下文，不承载任务、文件、聊天等领�
 /org/:organizationId/meetings
 /org/:organizationId/files
 /org/:organizationId/messages
+/org/:organizationId/admin/*
+```
+
+可见延期路由：
+
+```text
+/personal/runtime
+/personal/services
 /org/:organizationId/runtime
 /org/:organizationId/services
-/org/:organizationId/admin/*
+
+Visible deferred routes → ComingSoonPage only → no capability → no write request
 ```
 
 URL 决定当前页面和组织上下文，使刷新、深链接、浏览器前进后退和问题复现都保持确定。最近组织只用于选择默认跳转目标，不能覆盖 URL 中的显式组织。
@@ -281,7 +291,7 @@ Catalog 可以列出未来模块，但 `coming_soon` 模块只能渲染说明页
 4. 服务端事务写业务数据、outbox 和审计。
 5. Web 根据结果刷新受影响查询并显示确定状态。
 
-撤销设备、删除、审批、公开匿名服务和资源策略变更不得乐观更新。低风险且可撤销的操作只能逐 capability 显式允许乐观更新，不能设为全局默认。
+撤销设备、删除、审批和组织额度变更不得乐观更新。低风险且可撤销的操作只能逐 capability 显式允许乐观更新，不能设为全局默认。
 
 ### 9.5 实时数据
 
@@ -384,8 +394,7 @@ API routes
 3. 个人/组织文件与配额页面。
 4. 任务、OKR、审批与会议工作台。
 5. 通知、短信偏好、聊天与实时补齐。
-6. 运行、构建、服务、数据库与域名管理。
-7. 全 capability Web 覆盖收口与生产部署验收。
+6. 全 capability Web 覆盖收口与生产部署验收。
 
 每个切片同时交付对应 API/SDK/CLI/Web 映射、拒绝测试、门禁负例和可复核验证证据。
 

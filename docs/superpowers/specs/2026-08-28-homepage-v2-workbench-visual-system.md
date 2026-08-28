@@ -76,7 +76,7 @@ Use quiet white or very pale blue-gray surfaces for:
 - forms;
 - detail drawers;
 - audit evidence;
-- file/runtime/service management;
+- file and organization-management surfaces;
 - long-running administrative work.
 
 Mountain imagery must never sit behind dense text, form controls, audit identifiers or code/output content.
@@ -252,6 +252,7 @@ Rules:
 - page components consume shared primitives rather than adding page-specific card styles;
 - copy, API routes, SDK behavior, capability IDs and authorization remain unchanged;
 - homepage-v2 assets are copied into OrgSpace's own public asset directory with attribution/source recorded; production must not hotlink `preview2.tashan.ac.cn`.
+- deferred modules reuse the branded Coming Soon state and do not require separate operational components.
 
 ## 10. Accessibility and states
 
@@ -265,7 +266,7 @@ Rules:
 
 ## 11. Non-goals
 
-- Do not implement future task, file, chat, runtime or service backends as part of the visual redesign.
+- Do not implement future task, file or chat backends as part of the visual redesign; deferred runtime and service modules remain Coming Soon states.
 - Do not change CLI or Skill contracts.
 - Do not migrate the frontend framework or introduce Tailwind.
 - Do not copy homepage-v2 page content into OrgSpace.
