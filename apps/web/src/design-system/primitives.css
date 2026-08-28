@@ -191,6 +191,22 @@
   font-weight: 750;
 }
 
+.org-dialog.confirm-dialog {
+  border-top: 4px solid var(--error);
+}
+
+.confirm-dialog p {
+  color: var(--text-secondary);
+  line-height: 1.7;
+}
+
+.dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-3);
+  margin-top: var(--space-6);
+}
+
 .org-menu-content {
   z-index: 100;
   min-width: 12rem;

@@ -446,6 +446,14 @@ a.resource-row:focus-visible {
   box-shadow: var(--shadow-sm);
 }
 
+.resource-detail-header .eyebrow {
+  margin: 0;
+  color: var(--brand-blue);
+  font-size: 0.75rem;
+  font-weight: 750;
+  letter-spacing: 0.08em;
+}
+
 .resource-detail-content {
   display: grid;
   gap: var(--space-4);
@@ -582,6 +590,18 @@ a.resource-row:focus-visible {
   margin: 0;
   color: var(--text-secondary);
   line-height: 1.65;
+}
+
+.device-resource-item {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.device-resource-item > .org-button {
+  min-width: 8.5rem;
 }
 
 .roadmap-page {

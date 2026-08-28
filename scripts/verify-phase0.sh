@@ -22,6 +22,7 @@ run_step "node scripts/check-phone-auth-surface.mjs" node scripts/check-phone-au
 run_step "node scripts/check-release-contract.mjs" node scripts/check-release-contract.mjs
 run_step "node scripts/check-resource-surface-coverage.mjs" node scripts/check-resource-surface-coverage.mjs
 run_step "node scripts/check-user-facing-copy.mjs" node scripts/check-user-facing-copy.mjs
+run_step "node scripts/check-web-brand-contract.mjs" node scripts/check-web-brand-contract.mjs
 run_step "node scripts/check-production-contract.mjs" node scripts/check-production-contract.mjs
 run_step "node scripts/check-gate-self-tests.mjs" node scripts/check-gate-self-tests.mjs
 run_step "node scripts/check-capability-coverage.self-test.mjs" node scripts/check-capability-coverage.self-test.mjs
@@ -29,6 +30,7 @@ run_step "node scripts/check-phone-auth-surface.self-test.mjs" node scripts/chec
 run_step "node scripts/check-release-contract.self-test.mjs" node scripts/check-release-contract.self-test.mjs
 run_step "node scripts/check-resource-surface-coverage.self-test.mjs" node scripts/check-resource-surface-coverage.self-test.mjs
 run_step "node scripts/check-user-facing-copy.self-test.mjs" node scripts/check-user-facing-copy.self-test.mjs
+run_step "node scripts/check-web-brand-contract.self-test.mjs" node scripts/check-web-brand-contract.self-test.mjs
 run_step "node scripts/check-production-contract.self-test.mjs" node scripts/check-production-contract.self-test.mjs
 run_step "node scripts/check-gate-self-tests.self-test.mjs" node scripts/check-gate-self-tests.self-test.mjs
 run_step "node scripts/check-commit-evidence.self-test.mjs" node scripts/check-commit-evidence.self-test.mjs
