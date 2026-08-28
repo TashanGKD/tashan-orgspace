@@ -123,7 +123,7 @@ describe("routed Phase 0 Web", () => {
     expect(screen.getByText("正在登录…")).toBeVisible();
     expect(screen.queryByRole("heading", { name: "登录" })).not.toBeInTheDocument();
     expect(await screen.findByRole("heading", { name: "组织首页" })).toBeVisible();
-    expect(screen.getByRole("link", { name: /任务.*即将上线/ })).toBeVisible();
+    expect(screen.getAllByRole("link", { name: "任务" })[0]).toBeVisible();
   });
 
   test("shows invalid credentials as a focused error with request ID", async () => {

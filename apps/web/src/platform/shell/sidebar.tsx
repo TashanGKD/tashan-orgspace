@@ -21,8 +21,11 @@ export function Sidebar({
     <aside aria-label="工作区导航" className="workspace-sidebar" data-collapsed={String(collapsed)}>
       <div className="workspace-sidebar-brand">
         <a aria-label="他山组织空间首页" className="workspace-wordmark" href="/">
-          <span>他山</span>
-          {collapsed ? null : <small>ORGSPACE</small>}
+          <img
+            alt="他山组织空间"
+            className={collapsed ? "workspace-logo workspace-logo--square" : "workspace-logo"}
+            src={collapsed ? "/media/brand/logo-square.webp" : "/media/brand/logo-complete.webp"}
+          />
         </a>
         <Button
           aria-label={collapsed ? "展开侧边栏" : "折叠侧边栏"}

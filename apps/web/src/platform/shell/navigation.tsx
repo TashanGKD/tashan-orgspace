@@ -25,6 +25,13 @@ import { productModules, type ProductModule } from "../modules/module-catalog.js
 
 type MembershipRole = "org_owner" | "org_admin" | "member";
 
+const strategicCoreIds = new Set([
+  "organization.home",
+  "organization.tasks",
+  "organization.files",
+  "organization.messages",
+]);
+
 const moduleIcons: Readonly<Record<string, LucideIcon>> = {
   "global.my-work": ClipboardCheck,
   "global.account": CircleUserRound,
@@ -65,17 +72,14 @@ function ModuleLink({
   organizationId: string;
 }) {
   const Icon = moduleIcons[module.id] ?? FileText;
-  const accessibleLabel =
-    module.status === "coming_soon" ? `${module.label} 即将上线` : module.label;
   return (
     <NavLink
-      aria-label={accessibleLabel}
+      aria-label={module.label}
       title={collapsed ? module.label : undefined}
       to={moduleHref(module, organizationId)}
     >
       <Icon aria-hidden className="navigation-icon" size={16} />
       {collapsed ? null : <span>{module.label}</span>}
-      {module.status === "coming_soon" && !collapsed ? <small aria-hidden>即将上线</small> : null}
     </NavLink>
   );
 }
@@ -92,20 +96,17 @@ export function Navigation({
   const visible = productModules.filter(
     (module) => module.context !== "organization" || module.roles.includes(role),
   );
+  const primary = visible.filter(
+    (module) => module.status === "available" || strategicCoreIds.has(module.id),
+  );
   const groups = [
-    { label: "全局", items: visible.filter((module) => module.context === "global") },
-    { label: "个人空间", items: visible.filter((module) => module.context === "personal") },
     {
-      label: "当前组织",
-      items: visible.filter(
-        (module) => module.context === "organization" && !module.route.includes("/admin/"),
-      ),
+      label: "组织协作",
+      items: primary.filter((module) => strategicCoreIds.has(module.id)),
     },
     {
-      label: "组织管理",
-      items: visible.filter(
-        (module) => module.context === "organization" && module.route.includes("/admin/"),
-      ),
+      label: "设置与管理",
+      items: primary.filter((module) => !strategicCoreIds.has(module.id)),
     },
   ].filter((group) => group.items.length > 0);
 

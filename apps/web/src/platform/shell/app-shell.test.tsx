@@ -11,13 +11,17 @@ afterEach(cleanup);
 const organizationId = "95d5579d-a32d-4650-aec4-318ff3a55df1";
 
 describe("application shell", () => {
-  test("shows the complete roadmap but hides admin modules from members", () => {
+  test("keeps the primary navigation focused and hides admin modules from members", () => {
     render(
       <MemoryRouter>
         <Navigation organizationId={organizationId} role="member" />
       </MemoryRouter>,
     );
-    expect(screen.getByRole("link", { name: /任务.*即将上线/ })).toBeVisible();
+    expect(screen.getByRole("link", { name: "任务" })).toBeVisible();
+    expect(screen.getByRole("link", { name: "组织文件" })).toBeVisible();
+    expect(screen.getByRole("link", { name: "消息" })).toBeVisible();
+    expect(screen.queryByText("即将上线")).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "OKR" })).not.toBeInTheDocument();
     expect(screen.queryByRole("link", { name: "成员与角色" })).not.toBeInTheDocument();
     expect(screen.queryByRole("link", { name: "操作记录" })).not.toBeInTheDocument();
   });

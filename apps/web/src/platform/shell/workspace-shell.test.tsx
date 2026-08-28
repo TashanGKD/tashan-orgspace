@@ -1,4 +1,4 @@
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 
 import { QueryClientProvider } from "@tanstack/react-query";
@@ -71,18 +71,34 @@ function renderShell(role: "org_owner" | "org_admin" | "member" = "member") {
 }
 
 describe("responsive workspace shell", () => {
-  test("has one authoritative desktop header rule instead of a legacy override", () => {
-    const css = readFileSync(resolve(import.meta.dirname, "../../styles.css"), "utf8");
+  test("uses one responsive homepage-v2 shell stylesheet", () => {
+    const stylesheet = resolve(import.meta.dirname, "../../design-system/workspace-shell.css");
+    const stylesheetExists = existsSync(stylesheet);
+    expect(stylesheetExists, "workspace-shell.css").toBe(true);
+    if (!stylesheetExists) return;
+
+    const css = readFileSync(stylesheet, "utf8");
     expect(css.match(/^\.workspace-header \{/gm)).toHaveLength(1);
-    expect(css).not.toContain("min-height: 5.5rem");
+    expect(css).toContain("width: 208px");
+    expect(css).toContain("width: 64px");
+    expect(css).toContain("@media (max-width: 760px)");
+    expect(css).toContain("height: 70px");
   });
 
   test("collapses explicitly and restores the device-local preference", async () => {
     const user = userEvent.setup();
     const first = renderShell();
     const aside = await screen.findByRole("complementary", { name: "工作区导航" });
+    expect(within(aside).getByRole("img", { name: "他山组织空间" })).toHaveAttribute(
+      "src",
+      "/media/brand/logo-complete.webp",
+    );
     await user.click(screen.getByRole("button", { name: "折叠侧边栏" }));
     expect(aside).toHaveAttribute("data-collapsed", "true");
+    expect(within(aside).getByRole("img", { name: "他山组织空间" })).toHaveAttribute(
+      "src",
+      "/media/brand/logo-square.webp",
+    );
     expect(localStorage.getItem("orgspace.sidebar-collapsed")).toBe("1");
 
     first.unmount();
@@ -107,11 +123,16 @@ describe("responsive workspace shell", () => {
     const user = userEvent.setup();
     renderShell("member");
     const desktop = await screen.findByRole("navigation", { name: "主导航" });
-    expect(within(desktop).getByRole("link", { name: /任务.*即将上线/ })).toBeVisible();
+    expect(within(desktop).getByRole("link", { name: "任务" })).toBeVisible();
+    expect(within(desktop).getByRole("link", { name: "组织文件" })).toBeVisible();
+    expect(within(desktop).getByRole("link", { name: "消息" })).toBeVisible();
+    expect(within(desktop).queryByText("即将上线")).not.toBeInTheDocument();
+    expect(within(desktop).queryByRole("link", { name: "OKR" })).not.toBeInTheDocument();
     expect(within(desktop).queryByRole("link", { name: "成员与角色" })).not.toBeInTheDocument();
 
     const mobile = screen.getByRole("navigation", { name: "移动导航" });
     expect(mobile.querySelectorAll("a")).toHaveLength(4);
+    expect(within(mobile).getByRole("button", { name: "更多导航" })).toBeVisible();
     await user.click(screen.getByRole("button", { name: "更多导航" }));
     const dialog = screen.getByRole("dialog", { name: "全部模块" });
     expect(dialog).toBeVisible();
