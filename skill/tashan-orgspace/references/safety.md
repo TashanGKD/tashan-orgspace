@@ -7,5 +7,5 @@
 - Do not add `--yes` merely to make a command pass. It records that the caller intentionally crossed a mutation gate.
 - Do not weaken TLS, substitute a different API origin, or use installer test overrides in normal operation.
 - The CLI enforces platform authorization; the agent must not attempt filesystem, process, container, service, database, user-website, or organization-boundary bypasses.
-- Runtime, build, service, database, daemon, user-domain and public-service capabilities are not currently available. Treat their navigation entries as Coming Soon; do not emulate them with another machine, SSH, raw HTTP or local tools.
+- The CLI exposes no runtime, build, service, database, daemon, user-domain or public-service commands while this scope is deferred. Treat their navigation entries as Coming Soon; do not emulate them with another machine, SSH, raw HTTP or local tools.
 - If the live server lacks a capability, state that it is unavailable. Do not emulate it with SSH, raw HTTP, local filesystem access, or another project.
