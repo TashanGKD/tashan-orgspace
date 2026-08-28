@@ -1,4 +1,6 @@
-@import "./design-system/tokens.css";
+@import "./design-system/brand-tokens.css";
+@import "./design-system/global.css";
+@import "./design-system/primitives.css";
 
 :root {
   color: #1b1b17;

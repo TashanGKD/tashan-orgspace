@@ -1,4 +1,4 @@
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
@@ -67,9 +67,30 @@ describe("OrgSpace UI primitives", () => {
     expect(screen.getByRole("status", { name: "正在加载任务" })).toBeVisible();
   });
 
-  test("tokens include reduced-motion and tabular-number rules", () => {
-    const css = readFileSync(resolve(import.meta.dirname, "../tokens.css"), "utf8");
+  test("uses the reviewed homepage-v2 token contract", () => {
+    const tokenPath = resolve(import.meta.dirname, "../brand-tokens.css");
+    const tokenExists = existsSync(tokenPath);
+    expect(tokenExists, "brand-tokens.css").toBe(true);
+    if (!tokenExists) return;
+
+    const css = readFileSync(tokenPath, "utf8");
+    expect(css).toContain("--brand-navy: #0e2e4f");
+    expect(css).toContain("--brand-blue: #5b9bd5");
+    expect(css).toContain("--brand-mint: #9fd4c4");
+    expect(css).toContain("--radius-card: 20px");
+    expect(css).toContain("--shadow-card: 0 4px 16px rgba(15, 46, 79, 0.12)");
+    expect(css).not.toMatch(/--ink:|--paper:|--red:/);
+  });
+
+  test("keeps global accessibility rules separate from component styles", () => {
+    const globalPath = resolve(import.meta.dirname, "../global.css");
+    const globalExists = existsSync(globalPath);
+    expect(globalExists, "global.css").toBe(true);
+    if (!globalExists) return;
+
+    const css = readFileSync(globalPath, "utf8");
     expect(css).toContain("@media (prefers-reduced-motion: reduce)");
     expect(css).toContain("font-variant-numeric: tabular-nums");
+    expect(css).not.toMatch(/Noto Serif CJK SC|Songti SC|STSong/);
   });
 });
