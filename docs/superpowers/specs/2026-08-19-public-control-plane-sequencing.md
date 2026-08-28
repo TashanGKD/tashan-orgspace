@@ -1,7 +1,9 @@
 # OrgSpace 公网控制面前置规格
 
+<!-- DEFERRED_PRODUCT_SCOPE: general-compute,user-web-hosting -->
+
 日期：2026-08-19  
-状态：用户已选择方案 1；本文件是对已批准总设计交付顺序的补充，不改变其身份、权限、空间与运行时安全模型。
+状态：用户已选择方案 1；本文件是对已批准总设计交付顺序的补充，不改变其身份、权限与空间安全模型。
 
 ## 目标
 
@@ -12,7 +14,7 @@
 - 运维访问与最终用户访问严格分离：运维可使用 `ssh aup-server` 经 Tailscale 做部署和排障；最终用户、CLI、Web 与未来 AI 只能使用 HTTPS API 和用户设备会话。
 - ECS 是公网 TLS 与域名入口；AUP 只接受来自平台级持久反向隧道的请求，不向用户暴露 SSH、宿主机端口、Docker socket 或控制面文件。
 - 默认公开地址为 `https://orgspace.tashan.chat`。正式 Release 中 `torg` 指向此地址；源码开发默认仍指向 loopback，避免本地命令意外访问生产。
-- 用户注册、登录、组织、文件、协作与运行能力始终经过同一 API、权限、审计和 capability manifest；Web 不拥有独立的业务后端。
+- 用户注册、登录、组织、文件与协作能力始终经过同一 API、权限、审计和 capability manifest；Web 不拥有独立的业务后端。
 
 ## 采用的交付顺序
 
@@ -32,13 +34,11 @@
 
 按总设计依次交付 WorkItem/任务/会议/审批/OKR、站内通知与阿里云短信、单聊与群聊。每项能力均同步交付 CLI、API、审计、拒绝测试与 capability gate；Web 可逐步增强，但不得形成只在 Web 可用的业务能力。
 
-### Phase 5：安全计算闭环
+### 延期方向：计算执行与用户网站托管
 
-在 rootless executor 的隔离与资源保留通过实机验证前，不开放用户运行 Python、Node.js、编译语言、Docker 构建、数据库或 daemon。运行时只能挂载调用者被授权的个人/组织空间；允许访问公网，但网络层拒绝私网、云元数据、控制面和其他空间。
+用户运行 Python、Node.js、编译语言、Docker 构建、数据库、daemon、用户服务域名与 `service public` 均不属于当前实现或 v1 验收。导航仅保留四个“即将上线”方向；它们不拥有 capability、CLI/Skill 命令或 API 写入路径。
 
-### Phase 6：用户服务公网入口
-
-在平台级 gateway 通过独立测试域名验证 Host 隔离、默认登录保护与显式 `service public` 后，才允许工作负载获得 `*.tashan.chat` HTTPS 地址。公开访问只能由显式命令开启并留下高风险审计；恢复 private 同样是显式操作。
+当前网关只服务 OrgSpace 自己的 Web/API，不代理用户工作负载或用户网站。若未来重新启动本方向，必须重新完成隔离、资源、网络、动态路由和公开访问的设计与验收。
 
 ## 公网链路
 
@@ -52,7 +52,7 @@ orgspace.tashan.chat (ECS: TLS, WAF/限流, Nginx)
 AUP: OrgSpace API / Worker / DB / Redis
         │ 受 API 授权的内部控制请求
         ▼
-后续的对象存储、执行器与动态 gateway
+后续的对象存储与协作服务
 ```
 
 Tailscale 不处在用户数据链路中。它只用于运维人员进入 AUP/ECS 维护上述平台组件。
@@ -85,4 +85,4 @@ Tailscale 不处在用户数据链路中。它只用于运维人员进入 AUP/EC
 
 ## 不在 Phase 0.5 提前交付的内容
 
-文件上传、任务、OKR、短信通知、聊天、用户程序运行、Docker、数据库、daemon 和用户服务域名仍按上述阶段逐一实现。这样可以先让真实用户安全地接入，再避免在没有空间隔离、资源保留和运行时拒绝测试的情况下开放 AUP 执行权限。
+文件上传、任务、OKR、短信通知和聊天仍按上述阶段逐一实现。计算执行与用户网站托管保持为导航可见的延期方向，不能被 Phase 0.5 的公网接入误解为 AUP 执行权限。

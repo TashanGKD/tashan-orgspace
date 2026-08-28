@@ -9,10 +9,12 @@
 > Web 与 API 公网入口：`https://orgspace.tashan.chat`（`/` 为 Web，`/v1/*` 为 API）
 > Codex Skill：`tashan-orgspace`
 > 状态：用户已于 2026-08-18 批准书面规格；实施须按分阶段计划执行
+>
+> 2026-08-28 范围更新：通用计算执行和用户网站/服务托管不属于当前实现或 v1 验收范围；相关方向保留在导航并标记“即将上线”。本更新以 `2026-08-28-defer-compute-and-user-web-deployment-design.md` 为准。
 
 ## 1. 一句话定义
 
-Tashan OrgSpace 是一个以组织为核心、同时提供个人空间的协作与安全计算平台。真实人员使用账号和密码登录，通过 Web、CLI 或调用 CLI 的 AI，以本人身份管理文件、任务、OKR、审批、会议、聊天、通知和服务器运行资源。
+Tashan OrgSpace 是一个以组织为核心、同时提供个人空间的组织协作与文件平台。真实人员使用账号和密码登录，通过 Web、CLI 或调用 CLI 的 AI，以本人身份管理文件、任务、OKR、审批、会议、聊天和通知。
 
 平台不是 TopicLab 的新 CLI，也不是现有认知平台中的一个模块。它拥有独立仓库、独立后端、独立 CLI、独立 Web、独立 Skill 和独立部署生命周期。
 
@@ -23,7 +25,7 @@ Tashan OrgSpace 是一个以组织为核心、同时提供个人空间的协作�
 1. **收集**：文件、群聊消息、会议、任务、申请、通知进入组织系统。
 2. **组织**：信息被归入组织、空间、项目、流程、责任人和时间线。
 3. **分发**：系统通过个人工作台、群聊、CLI、Web 和短信把信息送到正确的人。
-4. **执行与追责**：任务、审批、程序和服务在权限边界内执行，并留下可核查记录。
+4. **推进与追责**：任务、审批和组织流程在权限边界内推进，并留下可核查记录。
 
 不可放宽的产品原则：
 
@@ -32,8 +34,6 @@ Tashan OrgSpace 是一个以组织为核心、同时提供个人空间的协作�
 - Web、CLI 和未来 AI 使用同一组服务端能力与权限规则。
 - **所有用户功能必须有 CLI 覆盖；CI 强制检查，不靠人工记忆。**
 - 默认私密、默认安全、默认不覆盖、默认不执行破坏性操作。
-- 任何运行中的代码只能访问被授权的个人或组织空间，不能跨空间、跨组织或接触平台控制面。
-- 公网出站允许，但私网、宿主机、控制面、云元数据和其他租户网络必须阻断。
 - 所有短信使用阿里云短信；业务层负责幂等、重试、回执和审计。
 - v1 不实现 AI 员工，但身份、权限、事件、会话和审批模型不得把未来 AI 排除在外。
 
@@ -45,7 +45,7 @@ Tashan OrgSpace 是一个以组织为核心、同时提供个人空间的协作�
 空间 → 模块 → 对象列表 → 对象详情 → 对对象执行动作
 ```
 
-文件、任务、OKR、审批、会议、会话、运行任务、服务、数据库、成员和审计只是不同对象类型。前端复用列表、详情、关系、附件、活动和动作组件；后端复用身份、空间边界、权限、状态、关系、通知和审计控制面。文件 Blob、聊天消息流、计算调度和数据库数据卷保留各自数据面，不使用万能对象表取代专业模型。
+文件、任务、OKR、审批、会议、会话、成员和审计只是不同对象类型。前端复用列表、详情、关系、附件、活动和动作组件；后端复用身份、空间边界、权限、状态、关系、通知和审计控制面。文件 Blob 与聊天消息流保留各自数据面，不使用万能对象表取代专业模型。
 
 完整信息架构、核心页面线稿、响应式行为和 Web/API/CLI/Skill 映射见 [`2026-08-26-full-product-frontend-blueprint.md`](2026-08-26-full-product-frontend-blueprint.md)。
 
@@ -60,9 +60,6 @@ Tashan OrgSpace 是一个以组织为核心、同时提供个人空间的协作�
 - 组织 OKR、个人 OKR、任务、会议记录、通用审批。
 - 站内通知、阿里云短信和提醒策略。
 - 单聊、组织群聊、附件、搜索、已读状态和消息转工作项。
-- Python、Node.js、编译型语言、Docker 构建、批处理任务。
-- 长期 Web 服务、数据库和 Agent daemon 等常驻进程。
-- 自动 HTTPS 域名、默认登录保护和显式匿名公开。
 - Web、CLI、独立 Codex Skill、能力清单与审计。
 
 ### 3.2 v1 明确不做
@@ -74,17 +71,23 @@ Tashan OrgSpace 是一个以组织为核心、同时提供个人空间的协作�
 - 不开放用户直接使用宿主机 Docker socket、宿主机 shell 或任意端口映射。
 - 不把已安装的阿里云短信 shell Skill 当成生产短信发送引擎。
 
-### 3.3 后续独立规格
+### 3.3 延期但导航可见
+
+- 个人与组织“运行与构建”；
+- 个人与组织“服务与数据库”，包括用户网站部署；
+- 代码执行、Docker 构建、批处理、数据库、daemon、用户服务域名和 `service public`。
+
+这些模块只显示“即将上线”，不属于当前实施阶段、capability、CLI/Skill 或 v1 验收。
+
+### 3.4 后续独立规格
 
 1. 平台骨架、认证、组织、设备与审计。
 2. 空间、对象存储、配额和文件 CLI。
 3. Work Item / Process / Assignment 协作内核与 OKR。
 4. 通知、阿里云短信和定时提醒。
 5. 聊天、实时事件和消息转工作项。
-6. 运行时、构建、任务、服务、数据库与网络隔离。
-7. 动态 HTTPS 入口与服务公开策略。
-8. Web 全工作台与独立 Codex Skill。
-9. AUP 生产部署、备份、恢复、监控和安全加固。
+6. Web 全工作台与独立 Codex Skill。
+7. AUP 生产部署、备份、恢复、监控和安全加固。
 
 每个子系统必须单独完成设计、实现计划、威胁测试和验收，不能以本总设计替代实施规格。
 
@@ -115,14 +118,14 @@ Tashan OrgSpace 是一个以组织为核心、同时提供个人空间的协作�
 
 平台级：
 
-- `platform_superadmin`：平台运维、组织配额、弹性资源与 break-glass。
+- `platform_superadmin`：平台运维、组织配额与 break-glass。
 - `platform_operator`：限定运维能力，不自动获得业务数据读取权。
 
 组织级：
 
 - `org_owner`：组织所有权与管理员管理。
 - `org_admin`：成员、任务、OKR、流程和组织空间管理。
-- `member`：普通成员，可创建和指派任务、发起审批、参与聊天和使用被授予空间/算力。
+- `member`：普通成员，可创建和指派任务、发起审批、参与聊天和使用被授予空间。
 
 管理员权限不是万能后门。个人空间不对组织管理员开放；平台 break-glass 必须填写理由、限定对象和时间，形成高风险不可篡改审计，并通知数据本人。
 
@@ -138,7 +141,7 @@ Tashan OrgSpace 是一个以组织为核心、同时提供个人空间的协作�
 - 变更前后字段摘要；敏感字段只记录掩码或不可逆摘要。
 - AI 调用时记录 `actor_source=ai_via_cli`，仍以用户 Principal 授权。
 
-普通安全审计默认保留 365 天；短信发送账本默认保留 3 年。break-glass、合规读取、角色变更、永久删除和服务公开等高风险审计在组织存续期内不自动清理，组织关闭后继续保留 3 年。组织可配置更长时间。审计日志追加写入，普通管理员不能修改或删除；导出与查询本身也进入审计。
+普通安全审计默认保留 365 天；短信发送账本默认保留 3 年。break-glass、合规读取、角色变更和永久删除等高风险审计在组织存续期内不自动清理，组织关闭后继续保留 3 年。组织可配置更长时间。审计日志追加写入，普通管理员不能修改或删除；导出与查询本身也进入审计。
 
 ## 6. 空间、文件与配额
 
@@ -169,8 +172,6 @@ Tashan OrgSpace 是一个以组织为核心、同时提供个人空间的协作�
 - 符号链接、硬链接、前缀碰撞和挂载点逃逸。
 - 上传中断、校验和错误、配额并发超卖和临时对象泄漏。
 - 跨组织对象 ID、猜测文件 ID、失效分享链接和越权版本读取。
-
-运行时挂载只通过平台解析后的空间卷，不能将用户字符串直接拼成宿主机路径。
 
 ## 7. 统一组织工作内核
 
@@ -300,94 +301,17 @@ KR 支持三种计算方式：
 
 任一消息可以转成任务、审批、会议或组织文件条目。新对象保存来源消息 ID 和不可变摘要；消息保存反向链接。撤回消息不会删除已经创建的工作项，但工作项会显示来源已撤回。
 
-## 11. 计算、构建与常驻服务
+## 11. 延期方向：计算执行与用户网站托管
 
-### 11.1 支持范围
+本方向不属于当前实现或 v1 验收。导航保留四个 `coming_soon` 模块，用于展示长期方向；当前不定义 RuntimeWorkload、Build、Service、DatabaseService、Daemon、ServiceDomain 或 ServicePublication，也不建设用户 Executor、BuildKit、动态服务路由或 `service public`。
 
-v1 从第一天支持：
+OrgSpace 自身继续使用 AUP、Docker Compose、Nginx、PostgreSQL 和 Redis。平台自身部署不等于向用户提供计算、数据库或网站托管产品。
 
-- Python、Node.js、常见编译型语言工具链。
-- rootless BuildKit 构建 Docker/OCI 镜像。
-- 短任务、定时任务、批处理和交互日志。
-- 长期 Web 服务、数据库和 Agent daemon。
-- 公网出站访问。
+历史计算与服务设计由 `2026-08-28-defer-compute-and-user-web-deployment-design.md` 取代。未来重新启用必须重新完成设计、威胁模型、能力注册和用户确认。
 
-运行对象统一建模为 `RuntimeWorkload`，类型为 `job`、`service`、`database`、`daemon`、`build`。每个对象包含所属组织/个人空间、镜像或构建来源、命令、环境变量引用、资源策略、期望状态和实际状态。
+## 12. 系统架构
 
-### 11.2 空间边界
-
-- 工作负载启动时必须明确选择一个个人空间或组织空间。
-- 只挂载该空间授权目录以及只读运行时镜像；不挂载其他空间、控制面目录或宿主机用户目录。
-- secret 使用独立 secrets store 以文件或短期环境注入，不写入镜像、日志或工作空间。
-- 数据库数据卷归属同一空间，计入该空间额度。
-- 数据库只能由同一空间授权工作负载或经平台代理的获准客户端访问，默认无公网端口。
-
-### 11.3 网络边界
-
-允许 DNS、HTTP(S) 和用户明确需要的公网出站，但拒绝：
-
-- IPv4/IPv6 loopback、RFC1918、链路本地、IPv6 ULA。
-- AUP 管理网、容器桥接网、平台控制面、其他租户网段。
-- 云元数据地址、Docker API、Kubernetes/API 控制地址。
-- DNS 首次解析为公网、连接时重绑定到私网的请求。
-
-出口策略在网络层执行，应用层 URL 校验只是第二道防线。平台服务入口仅通过 gateway，用户容器不能自行监听宿主机公网接口。
-
-### 11.4 AUP 资源池
-
-2026-08-18 实机验证基线：32 CPU、约 62.4 GiB 总内存、cgroup v2、Docker 29.1.5、Compose v5.0.1、user namespace 已启用、`rootlesskit` 已存在。`newuidmap/newgidmap` 当前缺失，执行器上线前必须安装并验证 rootless 容器；禁止向用户暴露当前 rootful Docker socket。
-
-初始资源池：
-
-- 平台与操作系统保留：1 CPU、10 GiB 内存。
-- 应急保留：1 CPU、4 GiB 内存。
-- 用户计算池：30 CPU、48 GiB 内存。
-
-资源策略：
-
-- `capped`：默认，设置 CPU、内存、进程数、临时盘和运行时长上限。
-- `elastic`：可使用用户池中当前空闲资源，但永不侵占平台和应急保留。
-- 组织管理员只能在平台授予该组织的预算内调整成员上限。
-- 只有平台超级管理员可授予 elastic；只有超级管理员或指定应急调度器可使用应急池。
-- cgroup v2、cpuset、pids 和临时盘配额机器强制执行，不能只写在数据库字段中。
-
-## 12. 自动 HTTPS 服务
-
-### 12.1 域名和可见性
-
-用户服务获得：
-
-`https://<service>-<space>.tashan.chat`
-
-slug 必须全局唯一，保留平台关键字，并对 Host header 做严格规范化。新服务默认 `private`：域名公网可达，但 gateway 要求平台登录并校验空间权限。
-
-```text
-torg service public <service-id> --space <space-id>
-```
-
-该命令意味着“互联网上任何匿名用户均可访问”，CLI 必须在帮助和确认界面完整显示这句话。恢复：
-
-```text
-torg service private <service-id> --space <space-id>
-```
-
-### 12.2 动态入口架构
-
-```text
-Browser / CLI
-  -> wildcard *.tashan.chat on ECS
-  -> ECS wildcard TLS + Nginx
-  -> one persistent reverse tunnel
-  -> AUP platform gateway
-  -> auth + dynamic host/service lookup
-  -> isolated user runtime
-```
-
-不能为每个用户服务人工新增一条 tunnel 和一份 Nginx 配置。ECS 只维护平台级 wildcard 入口和持久隧道；AUP gateway 根据标准化 Host 查询 service registry，再代理到动态运行时。
-
-## 13. 系统架构
-
-### 13.1 Monorepo
+### 12.1 Monorepo
 
 ```text
 tashan-orgspace/
@@ -397,9 +321,6 @@ tashan-orgspace/
     worker/        outbox、短信、提醒、清理与调和
     realtime/      WebSocket、聊天和事件分发
     cli/           Node.js/TypeScript CLI: torg
-  services/
-    gateway/       Go 动态服务入口与访问控制
-    executor/      Go AUP 运行时执行器
   packages/
     contracts/     schema、错误码、事件、权限和能力清单
     capabilities/  capability 注册与一致性生成
@@ -409,25 +330,23 @@ tashan-orgspace/
   docs/            产品、架构、规格和运维证据
 ```
 
-### 13.2 基础设施
+### 12.2 基础设施
 
 - PostgreSQL：交易数据、授权、元数据、事件序列和 outbox。
 - Redis：短期缓存、分布式租约、频控和实时 fan-out；不是业务真源。
-- S3 兼容对象存储：文件、版本、上传分片和构建产物。
-- rootless Docker/BuildKit：构建与隔离运行。
-- ECS Nginx/TLS：公网入口；AUP gateway：动态服务路由。
+- S3 兼容对象存储：协作文件、版本与上传分片。
+- Docker Compose：OrgSpace 自身服务编排。
+- ECS Nginx/TLS 与 AUP 反向隧道：OrgSpace Web/API 的公网入口。
 
-### 13.3 组件边界
+### 12.3 组件边界
 
 - API 只处理控制面命令和查询，不直接执行用户程序或发送短信。
 - Worker 处理可靠异步任务；所有任务来自数据库 outbox 或可恢复调度表。
 - Realtime 不拥有聊天真相；消息先提交数据库，再分发。
-- Executor 只接受经过签名、短期有效、绑定空间和资源策略的执行租约。
-- Gateway 不信任用户服务上报的身份，自己完成域名解析、登录和授权。
 
-## 14. 能力清单、CLI 与 Web
+## 13. 能力清单、CLI 与 Web
 
-### 14.1 Capability Manifest
+### 13.1 Capability Manifest
 
 服务端每项用户能力必须注册唯一 capability，至少声明：
 
@@ -440,7 +359,7 @@ tashan-orgspace/
 
 CLI 与 Web SDK 从该清单和 schema 生成/校验，不能各自手写一份易漂移命令表。
 
-### 14.2 CLI 命令面
+### 13.2 CLI 命令面
 
 - `torg auth ...`、`device ...`
 - `torg org ...`、`member ...`
@@ -449,8 +368,6 @@ CLI 与 Web SDK 从该清单和 schema 生成/校验，不能各自手写一份�
 - `torg process ...`、`approval ...`
 - `torg notify ...`
 - `torg chat ...`、`message ...`
-- `torg run ...`、`job ...`、`build ...`
-- `torg service ...`、`db ...`
 - `torg audit ...`
 - `torg capability list|describe --json`
 
@@ -459,11 +376,11 @@ CLI 与 Web SDK 从该清单和 schema 生成/校验，不能各自手写一份�
 - 无参数只显示帮助，不登录、不联网、不安装依赖、不执行任何动作。
 - 组织写操作必须显式提供 `--org`；所有空间操作必须显式提供 `--space`。组织空间操作同时提供两者，个人空间操作只提供 `--space`。
 - 机器调用支持稳定 `--json`、标准错误码和 stdout/stderr 分离。
-- `file sync` 默认 dry-run；覆盖、永久删除、公开服务和高风险资源提升必须显式确认。
+- `file sync` 默认 dry-run；覆盖、永久删除等高风险操作必须显式确认。
 - 非交互自动化需要同时提供 `--yes` 和幂等键；仅 `--yes` 不能绕过权限或缺失参数。
 - 删除默认进回收站；永久删除必须再次确认并写审计。
 
-### 14.3 CI 一致性门禁
+### 13.3 CI 一致性门禁
 
 CI 必须机器比较：
 
@@ -476,87 +393,75 @@ CI 必须机器比较：
 
 Codex Skill 不复制全部命令说明，而是优先调用 `torg capability list|describe --json` 发现当前能力，避免 Skill 与 CLI 漂移。
 
-## 15. 数据一致性与故障处理
+## 14. 数据一致性与故障处理
 
 - 所有写操作支持请求幂等键；服务端以 actor、capability 和幂等键判重。
 - 业务事务与 outbox 同一 PostgreSQL 事务提交。
 - Worker 使用租约、心跳、指数退避和死信队列；失败可重放但不能重复产生业务效果。
 - 定时提醒保存确定的提醒实例和唯一键，重启后可恢复。
 - 上传分片有 TTL 清理；成功对象必须同时满足数据库完成状态和对象校验和。
-- RuntimeWorkload 保存 `desired_state` 与 `actual_state`，调和器处理进程崩溃和节点重启。
 - 聊天以 client ID 去重、server seq 排序；WebSocket 断线通过游标补齐。
 - 审批节点使用版本号/乐观锁，重复点击只能有一个状态转换成功。
 
-外部服务超时不等于失败。短信、对象存储和运行时创建都先查询实际状态，再决定补偿或重试。
+外部服务超时不等于失败。短信和对象存储都先查询实际状态，再决定补偿或重试。
 
-## 16. 威胁模型与先行拒绝测试
+## 15. 威胁模型与先行拒绝测试
 
 实现任何安全敏感 happy path 前，至少先写以下真实形状负例：
 
-### 16.1 身份与租户
+### 15.1 身份与租户
 
 - 已撤销、过期、旧版本和其他设备 token。
 - 账号仍有效但 Membership 已移除。
 - 同一对象 ID 在不同组织上下文中的越权调用。
 - 伪造代理头、设备信息和 actor source。
 
-### 16.2 文件与配额
+### 15.2 文件与配额
 
 - 路径穿越、symlink/prefix 逃逸、Unicode 等价路径。
 - 两个并发上传同时吃掉最后额度。
 - 断线、校验失败、完成事务失败后的配额和分片清理。
 
-### 16.3 执行与网络
-
-- 命令注入、参数注入、恶意 Dockerfile、环境变量泄漏。
-- 访问 `127.0.0.1`、私网、云元数据、Docker socket 和其他空间服务。
-- DNS rebinding、IPv4-mapped IPv6 和重定向到私网。
-- 伪造 Host、保留 slug、跨服务 upstream 和端口扫描。
-
-### 16.4 协作与聊天
+### 15.3 协作与聊天
 
 - 非成员创建/指派任务、伪造审批人、重复审批。
 - 无共同组织的单聊、选择错误归属组织、跨组织附件。
 - 撤回消息仍出现在普通搜索、非合规角色读取原文。
 - 普通通知伪装紧急绕过频控，或用户错误关闭强制短信。
 
-为任何失败路径分配的上传预留、运行租约、临时 secret 和短信 outbox 都必须有清理/补偿测试。
+为任何失败路径分配的上传预留和短信 outbox 都必须有清理/补偿测试。
 
-## 17. 验证与质量门禁
+## 16. 验证与质量门禁
 
 验收分层报告，不把“单测通过”写成“系统完成”：
 
-1. 静态检查：格式、lint、类型、Go vet、依赖和 secret scan。
+1. 静态检查：格式、lint、类型、依赖和 secret scan。
 2. 单元/属性测试：权限矩阵、状态机、配额、路径和 schema。
 3. API/数据库集成：真实 PostgreSQL、Redis、对象存储。
-4. Docker E2E：上传、任务、聊天、短信 mock、运行时隔离和恢复。
-5. AUP 预生产：rootless、cgroup、网络阻断、重启调和和资源压力。
-6. ECS/AUP 公网：TLS、默认私密、登录跳转、显式 public、WebSocket。
-7. 浏览器视觉与可用性：组织/个人工作台、聊天、运行和权限反馈。
+4. Docker E2E：上传、任务、聊天、短信 mock 和恢复。
+5. AUP 预生产：数据库、对象存储、反向隧道、重启与资源压力。
+6. ECS/AUP 公网：TLS、登录、WebSocket 和平台恢复。
+7. 浏览器视觉与可用性：组织/个人工作台、聊天和权限反馈。
 8. CLI/Skill：所有 capability 覆盖、JSON 稳定性、帮助安全和 Agent 调用。
 
 关键 gate 除正常样例外必须包含能触发失败的负例自测。发布候选必须记录实际运行命令、版本、提交 SHA 和输出摘要。
 
-## 18. AUP 与 ECS 运维设计
+## 17. AUP 与 ECS 运维设计
 
-### 18.1 管理与用户链路分离
+### 17.1 管理与用户链路分离
 
 - 运维可通过本机 SSH alias `aup-server` 经 Tailscale 登录 AUP；该入口只用于部署和排障。
 - 最终用户和 AI 不获得 AUP SSH；只访问 `orgspace.tashan.chat` 并使用用户 token。
-- 公网服务经 ECS wildcard TLS、平台级持久隧道和 AUP gateway。
+- OrgSpace Web/API 经 ECS TLS、平台级持久隧道和 AUP 网关公开。
 - `*.tashan.chat` 已有 wildcard DNS，但生产前仍要以 ECS 生效 Nginx、证书和公网请求为准。
 
-### 18.2 上线前硬门槛
+### 17.2 上线前硬门槛
 
-- 安装 `newuidmap/newgidmap` 并完成 rootless Docker/BuildKit 负例验证。
-- 定义平台、应急、用户 cgroup 树并证明保留资源不能被用户任务侵占。
-- 禁止 executor 访问 rootful Docker socket。
 - 建立 PostgreSQL、对象存储和 secret 的备份恢复演练。
 - 建立一条持久、可监控、自恢复的 ECS↔AUP 隧道。
-- 动态 gateway 上线前先在专用测试域名验证 Host 隔离和默认登录保护。
 - 运维文档记录端口、域名、证书、systemd 单元和回滚；真实密钥不进入 Git。
 
-## 19. 交付顺序
+## 18. 交付顺序
 
 推荐从一个纵向闭环开始，而不是先把所有页面做空壳：
 
@@ -580,17 +485,13 @@ WorkItem、Assignment、Process、任务、会议、通用审批、OKR 与组织
 
 单聊、群聊、附件、实时事件、搜索、合规读取和消息转工作项。
 
-### Phase 5：安全计算闭环
+### Phase 5：v1 收口与生产运维
 
-rootless executor、构建、任务、服务、数据库、daemon、配额、出口网络和恢复。
-
-### Phase 6：公网服务闭环
-
-动态 gateway、自动域名、默认私密、显式 public、ECS/AUP 持久入口。
+完成全功能覆盖、恢复演练、Web 可用性与 AUP/ECS 平台部署验收；不含用户计算或网站托管。
 
 每一 Phase 都必须同时交付 API、CLI、必要 Web、审计、拒绝测试、运维证据和 capability gate；不允许先做一个无门禁后端，再承诺以后补 CLI。
 
-## 20. v1 验收定义
+## 19. v1 验收定义
 
 只有同时满足以下条件，才能称为 v1：
 
@@ -600,15 +501,12 @@ rootless executor、构建、任务、服务、数据库、daemon、配额、出
 - OKR 进度即时更新，实质性修改必须经过管理员审批。
 - 审批、紧急、DDL 和会议短信按规则发送且不可关闭；每日汇总可关闭。
 - 单聊必须有共同组织；群聊、附件、撤回、搜索和消息转任务可用。
-- Python、Node、编译项目、Docker build、长期服务、数据库和 daemon 均能运行。
-- 容器能访问公网，但无法访问其他空间、AUP 控制面、元数据和宿主机服务。
-- 用户服务自动获得 HTTPS；默认要求登录；显式 public 后匿名可访问并可恢复 private。
 - 服务端所有用户 capability 都有 CLI 绑定，删除任一绑定时 CI 负例能稳定失败。
-- 重启 API、Worker、Executor、Gateway 和 AUP 后，上传、提醒、任务和服务能调和恢复且不重复产生副作用。
+- 重启 API、Worker 和 AUP 后，上传、提醒、任务和聊天事件能恢复且不重复产生副作用。
 
-## 21. 已确认决策与可审阅默认值
+## 20. 已确认决策与可审阅默认值
 
-已确认、不再回退：独立产品；组织与个人空间；真实人员单账号；多设备 token；CLI 全功能覆盖及 CI 强制门禁；AUP 运行；公网出站；多语言和 Docker 构建；常驻服务；自动 HTTPS；默认登录保护；显式 public；组织工作/OKR/任务/审批/短信/聊天规则；未来 AI 扩展但 v1 不做 AI。
+已确认、不再回退：独立产品；组织与个人空间；真实人员单账号；多设备 token；CLI 全功能覆盖及 CI 强制门禁；AUP 平台部署；组织工作/OKR/任务/审批/短信/聊天规则；未来 AI 扩展但 v1 不做 AI。
 
 本书面规格为消除歧义新增、请用户重点审阅的默认值：
 
@@ -621,9 +519,9 @@ rootless executor、构建、任务、服务、数据库、daemon、配额、出
 - CLI 组织写操作必须显式 `--org`，所有空间操作必须显式 `--space`。
 - Web 可以阶段交付，但任何 Web 缺口必须在 capability manifest 显式声明；CLI 不允许缺口。
 
-## 22. 事实依据快照
+## 21. 事实依据快照
 
-### 22.1 会议记录
+### 21.1 会议记录
 
 来源：`20260813204606-他山协会的快速会议-逐字稿文本-1.txt`。
 
@@ -631,15 +529,15 @@ rootless executor、构建、任务、服务、数据库、daemon、配额、出
 - 需要组织文件库、组织任务看板、个人任务视图，并能看到任务/会议的人员和时间。
 - 会议也提出未来由 AI 分配任务，但本设计仅预留身份和流程扩展，不在 v1 实现。
 
-### 22.2 AUP 目标环境复核
+### 21.2 AUP 目标环境复核
 
-2026-08-18 通过只读检查确认目标研发服务器具备 Linux、cgroup v2、Docker/Compose、rootless 容器基础和足够的 CPU、内存与存储。公开设计不记录主机别名、登录身份、精确硬件容量或本机路径；部署前仍须重新执行容量与隔离检查。
+2026-08-18 通过只读检查确认目标研发服务器具备 Linux、Docker/Compose、cgroup v2 和足够的 CPU、内存与存储，以支持 OrgSpace 自身部署。公开设计不记录主机别名、登录身份、精确硬件容量或本机路径；部署前仍须重新执行平台容量与隔离检查。
 
-### 22.3 公网入口资料
+### 21.3 公网入口资料
 
-现有运维资料确认：`*.tashan.chat` 指向 ECS；TLS 在 ECS 终止；AUP 不直接作为 DNS 目标；业务经反向隧道进入 AUP。现有文档按项目手工端口配置，本设计把它升级为单一平台隧道和动态 gateway，以满足用户服务自动创建。
+现有运维资料确认：`*.tashan.chat` 指向 ECS；TLS 在 ECS 终止；AUP 不直接作为 DNS 目标；业务经反向隧道进入 AUP。当前设计只把该入口用于 OrgSpace 自己的 Web/API。
 
-### 22.4 阿里云短信 Skill
+### 21.4 阿里云短信 Skill
 
 短信能力参考阿里云短信 Codex Skill 的公开接口约束。
 
