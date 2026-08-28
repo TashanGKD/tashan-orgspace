@@ -1,5 +1,7 @@
 import type { ReactNode } from "react";
 
+import { PageHero } from "./page-hero.js";
+
 export function ResourceListPage({
   children,
   description,
@@ -19,13 +21,11 @@ export function ResourceListPage({
 }) {
   return (
     <section className="resource-list-page" data-view={view}>
-      <header className="resource-page-heading">
-        <div>
-          <h1>{title}</h1>
-          {description ? <p>{description}</p> : null}
-        </div>
-        {primaryAction ? <div>{primaryAction}</div> : null}
-      </header>
+      <PageHero
+        title={title}
+        {...(description === undefined ? {} : { description })}
+        {...(primaryAction === undefined ? {} : { action: primaryAction })}
+      />
       {summary ? <div className="resource-summary">{summary}</div> : null}
       {toolbar}
       <div className="resource-list-content">{children}</div>

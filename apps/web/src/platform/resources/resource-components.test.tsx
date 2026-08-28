@@ -6,6 +6,7 @@ import { afterEach, describe, expect, test, vi } from "vitest";
 
 import { ResourceActionBar } from "./resource-action-bar.js";
 import { ResourceDetailDrawer } from "./resource-detail-drawer.js";
+import { ResourceListPage } from "./resource-list-page.js";
 import { ResourceListToolbar } from "./resource-list-toolbar.js";
 import { ResourceRow } from "./resource-row.js";
 import { ResourceState } from "./resource-states.js";
@@ -13,6 +14,16 @@ import { ResourceState } from "./resource-states.js";
 afterEach(cleanup);
 
 describe("generic resource surfaces", () => {
+  test("resource lists use the shared mountain title band", () => {
+    render(
+      <ResourceListPage description="查看和添加组织成员" title="成员">
+        <p>成员列表</p>
+      </ResourceListPage>,
+    );
+    expect(screen.getByRole("banner")).toHaveClass("page-hero");
+    expect(screen.getByRole("heading", { level: 1, name: "成员" })).toBeVisible();
+  });
+
   test.each([
     ["loading", "正在加载成员"],
     ["empty", "还没有成员"],
@@ -55,30 +66,44 @@ describe("generic resource surfaces", () => {
 
   test("keeps list context while a focus-trapped detail drawer is open", async () => {
     const user = userEvent.setup();
+    function DrawerHarness() {
+      const [open, setOpen] = useState(true);
+      return (
+        <>
+          <p>成员列表仍在这里</p>
+          <ResourceDetailDrawer
+            detail={<p>手机号：189****7794</p>}
+            onOpenChange={setOpen}
+            open={open}
+            technical={<p>账号 ID：member-1</p>}
+            title="张三"
+          >
+            <button type="button">编辑成员</button>
+            <button type="button">查看日志</button>
+          </ResourceDetailDrawer>
+        </>
+      );
+    }
     render(
       <MemoryRouter>
-        <p>成员列表仍在这里</p>
-        <ResourceDetailDrawer
-          fullPageHref="/org/demo/members/member-1"
-          onOpenChange={vi.fn()}
-          open
-          title="张三"
-        >
-          <button type="button">编辑成员</button>
-          <button type="button">查看日志</button>
-        </ResourceDetailDrawer>
+        <DrawerHarness />
       </MemoryRouter>,
     );
 
     expect(screen.getByText("成员列表仍在这里")).toBeInTheDocument();
     const dialog = screen.getByRole("dialog", { name: "张三" });
     expect(dialog).toBeVisible();
-    expect(within(dialog).getByRole("link", { name: "打开完整详情" })).toHaveAttribute(
-      "href",
-      "/org/demo/members/member-1",
-    );
+    expect(within(dialog).queryByRole("link", { name: "打开完整详情" })).not.toBeInTheDocument();
+    const ordinary = within(dialog).getByText("手机号：189****7794");
+    const technical = within(dialog).getByRole("region", { name: "技术信息" });
+    expect(
+      ordinary.compareDocumentPosition(technical) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
     await user.tab();
     expect(dialog).toContainElement(document.activeElement as HTMLElement | null);
+    await user.keyboard("{Escape}");
+    expect(screen.queryByRole("dialog", { name: "张三" })).not.toBeInTheDocument();
+    expect(screen.getByText("成员列表仍在这里")).toBeInTheDocument();
   });
 
   test("exposes search, filter chips and a named list-grid view choice", async () => {

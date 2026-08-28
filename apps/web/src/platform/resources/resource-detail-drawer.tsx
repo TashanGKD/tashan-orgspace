@@ -6,19 +6,23 @@ import { Sheet, SheetContent, SheetTitle } from "../../design-system/primitives/
 
 export function ResourceDetailDrawer({
   children,
+  detail,
   footer,
   fullPageHref,
   onOpenChange,
   open,
   subtitle,
+  technical,
   title,
 }: {
-  children: ReactNode;
+  children?: ReactNode;
+  detail?: ReactNode;
   footer?: ReactNode;
-  fullPageHref: string;
+  fullPageHref?: string;
   onOpenChange(open: boolean): void;
   open: boolean;
   subtitle?: string;
+  technical?: ReactNode;
   title: string;
 }) {
   return (
@@ -29,12 +33,23 @@ export function ResourceDetailDrawer({
             <SheetTitle>{title}</SheetTitle>
             {subtitle ? <p>{subtitle}</p> : null}
           </div>
-          <Link className="resource-full-page-link" to={fullPageHref}>
-            打开完整详情
-            <ExternalLink aria-hidden size={14} />
-          </Link>
+          {fullPageHref ? (
+            <Link className="resource-full-page-link" to={fullPageHref}>
+              打开完整详情
+              <ExternalLink aria-hidden size={14} />
+            </Link>
+          ) : null}
         </header>
-        <div className="resource-detail-drawer-body">{children}</div>
+        <div className="resource-detail-drawer-body">
+          {detail ? <section className="resource-detail-primary">{detail}</section> : null}
+          {children}
+          {technical ? (
+            <section aria-label="技术信息" className="resource-technical-information">
+              <h2>技术信息</h2>
+              {technical}
+            </section>
+          ) : null}
+        </div>
         {footer ? <footer className="resource-detail-drawer-footer">{footer}</footer> : null}
       </SheetContent>
     </Sheet>
