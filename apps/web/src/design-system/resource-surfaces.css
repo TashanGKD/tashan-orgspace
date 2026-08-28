@@ -365,6 +365,78 @@ a.resource-row:focus-visible {
   backdrop-filter: blur(18px);
 }
 
+.resource-form-sheet {
+  width: min(100%, 520px);
+}
+
+.resource-sheet-form {
+  display: flex;
+  min-height: 0;
+  flex: 1;
+  flex-direction: column;
+  margin: 0;
+}
+
+.resource-sheet-form-body {
+  display: grid;
+  flex: 1;
+  align-content: start;
+  gap: var(--space-5);
+  overflow-y: auto;
+  padding: var(--space-6);
+}
+
+.resource-sheet-form-body label {
+  display: grid;
+  gap: var(--space-2);
+  color: var(--text-secondary);
+  font-size: 0.82rem;
+  font-weight: 650;
+}
+
+.resource-sheet-form-body input,
+.resource-sheet-form-body select {
+  width: 100%;
+  min-height: 44px;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-field);
+  padding: 0.65rem 0.8rem;
+  color: var(--text-primary);
+  background: var(--surface-primary);
+  outline: none;
+}
+
+.resource-sheet-form-body input:focus-visible,
+.resource-sheet-form-body select:focus-visible {
+  border-color: var(--brand-blue);
+  box-shadow: var(--focus-ring);
+}
+
+.resource-sheet-form-actions {
+  display: flex;
+  justify-content: flex-end;
+  border-top: 1px solid var(--border-subtle);
+  padding: var(--space-4) var(--space-6);
+  background: rgba(255, 255, 255, 0.96);
+}
+
+.resource-form-error {
+  display: grid;
+  gap: var(--space-2);
+  border: 1px solid color-mix(in srgb, var(--error) 35%, var(--border-subtle));
+  border-radius: var(--radius-field);
+  padding: var(--space-3);
+  color: var(--error);
+  background: var(--error-surface);
+  font-size: 0.82rem;
+}
+
+.resource-form-error code {
+  overflow-wrap: anywhere;
+  color: inherit;
+  font-size: 0.72rem;
+}
+
 .resource-detail-header {
   display: grid;
   gap: var(--space-2);

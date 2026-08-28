@@ -33,6 +33,9 @@ test("locks duplicate organization submissions before pending state rerenders", 
   const user = userEvent.setup();
   expect(await screen.findByText("查看和创建组织")).toBeVisible();
   expect(screen.queryByText(organizationId)).not.toBeInTheDocument();
+  expect(screen.queryByRole("form", { name: "创建组织" })).not.toBeInTheDocument();
+  await user.click(screen.getByRole("button", { name: "创建组织" }));
+  expect(screen.getByRole("dialog", { name: "创建组织" })).toBeVisible();
   await user.type(await screen.findByLabelText("新组织名称"), "重复提交测试");
   const form = screen.getByRole("form", { name: "创建组织" });
   fireEvent.submit(form);
@@ -56,6 +59,11 @@ test("keeps the organization ID on the organization detail surface", async () =>
       </FeedbackProvider>
     </QueryClientProvider>,
   );
-  expect(await screen.findByRole("heading", { name: "组织信息" })).toBeVisible();
-  expect(screen.getByText(organizationId)).toBeVisible();
+  expect(
+    await screen.findByRole("link", { name: /他山协会.*当前组织/, hidden: true }),
+  ).toBeInTheDocument();
+  const dialog = screen.getByRole("dialog", { name: "他山协会" });
+  expect(dialog).toBeVisible();
+  expect(screen.getByText("组织首页")).toBeVisible();
+  expect(screen.getByRole("region", { name: "技术信息" })).toHaveTextContent(organizationId);
 });

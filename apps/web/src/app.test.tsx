@@ -201,6 +201,7 @@ describe("routed Phase 0 Web", () => {
     });
     await login(sdk);
     const user = userEvent.setup();
+    await user.click(screen.getByRole("button", { name: "创建组织" }));
     await user.type(screen.getByLabelText("新组织名称"), "研究组");
     await user.click(screen.getByRole("button", { name: "创建组织" }));
     expect(await screen.findByRole("alert")).toHaveTextContent("当前账号不能创建组织");

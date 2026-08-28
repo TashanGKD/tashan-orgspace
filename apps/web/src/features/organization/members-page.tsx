@@ -1,13 +1,14 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { UserRoundPlus, Users } from "lucide-react";
 import { useMemo, useRef, useState, type FormEvent } from "react";
+import { useNavigate } from "react-router";
 
 import type { MembershipSummary } from "@tashan/contracts";
 import type { OrgSpaceClient } from "@tashan/sdk";
 
 import { pageCopy } from "../../content/user-facing-copy.js";
-import { Button } from "../../design-system/primitives/index.js";
-import { ResourceDetailPage } from "../../platform/resources/resource-detail-page.js";
+import { Button, Sheet, SheetContent, SheetTitle } from "../../design-system/primitives/index.js";
+import { ResourceDetailDrawer } from "../../platform/resources/resource-detail-drawer.js";
 import { ResourceListPage } from "../../platform/resources/resource-list-page.js";
 import {
   ResourceListToolbar,
@@ -37,43 +38,6 @@ const membershipStatusTones = {
   removed: "neutral",
 } as const;
 
-function MemberDetail({ member }: { member: MembershipSummary }) {
-  return (
-    <ResourceDetailPage
-      activity={
-        <dl className="resource-definition-list">
-          <div>
-            <dt>加入时间</dt>
-            <dd>{member.createdAt ?? "暂无记录"}</dd>
-          </div>
-          <div>
-            <dt>最近更新</dt>
-            <dd>{member.updatedAt ?? "暂无记录"}</dd>
-          </div>
-        </dl>
-      }
-      eyebrow="组织成员"
-      subtitle={`${roleLabels[member.role]} · ${membershipStatusLabels[member.status]}`}
-      title={member.displayName}
-    >
-      <dl className="resource-definition-list">
-        <div>
-          <dt>成员名称</dt>
-          <dd>{member.displayName}</dd>
-        </div>
-        <div>
-          <dt>账号 ID</dt>
-          <dd className="tabular-nums">{member.accountId}</dd>
-        </div>
-        <div>
-          <dt>组织角色</dt>
-          <dd>{roleLabels[member.role]}</dd>
-        </div>
-      </dl>
-    </ResourceDetailPage>
-  );
-}
-
 export function MembersPage({
   canManage,
   organizationId,
@@ -85,7 +49,9 @@ export function MembersPage({
   sdk: OrgSpaceClient;
   selectedAccountId?: string | undefined;
 }) {
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const [addOpen, setAddOpen] = useState(false);
   const [accountId, setAccountId] = useState("");
   const [role, setRole] = useState<"org_admin" | "member">("member");
   const [query, setQuery] = useState("");
@@ -101,6 +67,7 @@ export function MembersPage({
       sdk.addMember(organizationId, { accountId, role }, { idempotencyKey: mutationKey() }),
     onSuccess: async () => {
       setAccountId("");
+      setAddOpen(false);
       await queryClient.invalidateQueries({
         queryKey: ["organization", organizationId, "members"],
       });
@@ -119,6 +86,9 @@ export function MembersPage({
           member.accountId.toLocaleLowerCase().includes(normalizedQuery)),
     );
   }, [activeFilter, members.data?.items, query]);
+  const selectedMember = members.data?.items.find(
+    (member) => member.accountId === selectedAccountId,
+  );
 
   function submit(event: FormEvent<HTMLFormElement>): void {
     event.preventDefault();
@@ -127,83 +97,142 @@ export function MembersPage({
     addMember.mutate();
   }
 
-  if (members.isPending) return <ResourceState resourceLabel="成员" state="loading" />;
-  if (members.isError) return <ResourceState resourceLabel="成员" state="fatal-error" />;
-  if (selectedAccountId !== undefined) {
-    const selected = members.data.items.find((member) => member.accountId === selectedAccountId);
-    return selected ? (
-      <MemberDetail member={selected} />
-    ) : (
-      <ResourceState resourceLabel="成员" state="fatal-error" />
-    );
-  }
-
   return (
-    <ResourceListPage
-      description={pageCopy.members.description}
-      primaryAction={
-        canManage ? (
-          <Button disabled={addMember.isPending} form="add-organization-member" type="submit">
-            <UserRoundPlus aria-hidden size={16} />
-            {addMember.isPending ? "正在添加…" : "添加成员"}
-          </Button>
-        ) : null
-      }
-      title="成员与角色"
-      view={view}
-      toolbar={
-        <ResourceListToolbar
-          activeFilter={activeFilter}
-          filters={[
-            { id: "all", label: "全部" },
-            { id: "active", label: "正常" },
-          ]}
-          onFilterChange={setActiveFilter}
-          onQueryChange={setQuery}
-          onViewChange={setView}
-          query={query}
-          resourceLabel="成员"
-          view={view}
-        />
-      }
-    >
-      {visibleMembers.length === 0 ? <ResourceState resourceLabel="成员" state="empty" /> : null}
-      {visibleMembers.map((membership) => (
-        <ResourceRow
-          href={routes.organizationMember(organizationId, membership.accountId)}
-          key={membership.id ?? membership.accountId}
-          leading={<Users aria-hidden size={17} />}
-          metadata={[roleLabels[membership.role]]}
-          status={{
-            label: membershipStatusLabels[membership.status],
-            tone: membershipStatusTones[membership.status],
-          }}
-          title={membership.displayName}
-        />
-      ))}
-      {canManage ? (
-        <form className="resource-inline-form" id="add-organization-member" onSubmit={submit}>
-          <label>
-            账号 ID
-            <input
-              required
-              value={accountId}
-              onChange={(event) => setAccountId(event.target.value)}
-            />
-          </label>
-          <label>
-            组织角色
-            <select
-              value={role}
-              onChange={(event) => setRole(event.target.value as "org_admin" | "member")}
-            >
-              <option value="member">普通成员</option>
-              <option value="org_admin">组织管理员</option>
-            </select>
-          </label>
-          {addMember.isError ? <p role="alert">成员添加失败。</p> : null}
-        </form>
-      ) : null}
-    </ResourceListPage>
+    <>
+      <ResourceListPage
+        description={pageCopy.members.description}
+        primaryAction={
+          canManage ? (
+            <Button disabled={addMember.isPending} onClick={() => setAddOpen(true)}>
+              <UserRoundPlus aria-hidden size={16} />
+              添加成员
+            </Button>
+          ) : null
+        }
+        title="成员与角色"
+        view={view}
+        toolbar={
+          <ResourceListToolbar
+            activeFilter={activeFilter}
+            filters={[
+              { id: "all", label: "全部" },
+              { id: "active", label: "正常" },
+            ]}
+            onFilterChange={setActiveFilter}
+            onQueryChange={setQuery}
+            onViewChange={setView}
+            query={query}
+            resourceLabel="成员"
+            view={view}
+          />
+        }
+      >
+        {members.isPending ? <ResourceState resourceLabel="成员" state="loading" /> : null}
+        {members.isError ? <ResourceState resourceLabel="成员" state="fatal-error" /> : null}
+        {!members.isPending && !members.isError && visibleMembers.length === 0 ? (
+          <ResourceState resourceLabel="成员" state="empty" />
+        ) : null}
+        {visibleMembers.map((membership) => (
+          <ResourceRow
+            href={routes.organizationMember(organizationId, membership.accountId)}
+            key={membership.id ?? membership.accountId}
+            leading={<Users aria-hidden size={17} />}
+            metadata={[roleLabels[membership.role]]}
+            status={{
+              label: membershipStatusLabels[membership.status],
+              tone: membershipStatusTones[membership.status],
+            }}
+            title={membership.displayName}
+          />
+        ))}
+      </ResourceListPage>
+
+      <ResourceDetailDrawer
+        detail={
+          selectedMember ? (
+            <dl className="resource-definition-list">
+              <div>
+                <dt>成员名称</dt>
+                <dd>{selectedMember.displayName}</dd>
+              </div>
+              <div>
+                <dt>组织角色</dt>
+                <dd>{roleLabels[selectedMember.role]}</dd>
+              </div>
+              <div>
+                <dt>状态</dt>
+                <dd>{membershipStatusLabels[selectedMember.status]}</dd>
+              </div>
+              <div>
+                <dt>加入时间</dt>
+                <dd>{selectedMember.createdAt ?? "暂无记录"}</dd>
+              </div>
+              <div>
+                <dt>最近更新</dt>
+                <dd>{selectedMember.updatedAt ?? "暂无记录"}</dd>
+              </div>
+            </dl>
+          ) : selectedAccountId && !members.isPending ? (
+            <ResourceState resourceLabel="成员" state="fatal-error" />
+          ) : (
+            <ResourceState resourceLabel="成员" state="loading" />
+          )
+        }
+        onOpenChange={(open) => {
+          if (!open) navigate(routes.organizationMembers(organizationId));
+        }}
+        open={selectedAccountId !== undefined}
+        technical={
+          selectedMember ? (
+            <dl className="resource-definition-list">
+              <div>
+                <dt>账号 ID</dt>
+                <dd className="tabular-nums">{selectedMember.accountId}</dd>
+              </div>
+            </dl>
+          ) : null
+        }
+        title={selectedMember?.displayName ?? "成员信息"}
+        {...(selectedMember
+          ? {
+              subtitle: `${roleLabels[selectedMember.role]} · ${membershipStatusLabels[selectedMember.status]}`,
+            }
+          : {})}
+      />
+
+      <Sheet open={addOpen} onOpenChange={setAddOpen}>
+        <SheetContent className="resource-form-sheet">
+          <SheetTitle>添加成员</SheetTitle>
+          <form aria-label="添加成员" className="resource-sheet-form" onSubmit={submit}>
+            <div className="resource-sheet-form-body">
+              <label>
+                账号 ID
+                <input
+                  required
+                  value={accountId}
+                  onChange={(event) => setAccountId(event.target.value)}
+                />
+              </label>
+              <label>
+                组织角色
+                <select
+                  value={role}
+                  onChange={(event) => setRole(event.target.value as "org_admin" | "member")}
+                >
+                  <option value="member">普通成员</option>
+                  <option value="org_admin">组织管理员</option>
+                </select>
+              </label>
+              {addMember.isError ? <p role="alert">成员添加失败。</p> : null}
+            </div>
+            <footer className="resource-sheet-form-actions">
+              <Button disabled={addMember.isPending} type="submit">
+                {addMember.isPending ? "正在添加…" : "添加成员"}
+              </Button>
+            </footer>
+          </form>
+        </SheetContent>
+      </Sheet>
+    </>
   );
 }

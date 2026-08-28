@@ -1,5 +1,5 @@
 import { QueryClientProvider } from "@tanstack/react-query";
-import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router";
 import { afterEach, describe, expect, test, vi } from "vitest";
@@ -59,6 +59,9 @@ describe("MembersPage", () => {
       "data-view",
       "grid",
     );
+    expect(screen.queryByRole("form", { name: "添加成员" })).not.toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "添加成员" }));
+    expect(screen.getByRole("dialog", { name: "添加成员" })).toBeVisible();
     await user.type(screen.getByLabelText("账号 ID"), targetAccountId);
     await user.selectOptions(screen.getByLabelText("组织角色"), "member");
     await user.click(screen.getByRole("button", { name: "添加成员" }));
@@ -86,10 +89,15 @@ describe("MembersPage", () => {
       addMember: vi.fn(),
     } as unknown as OrgSpaceClient;
     renderPage(sdk, true, accountId);
-    expect(await screen.findByRole("heading", { name: "用户8000" })).toBeVisible();
-    expect(screen.getByText(accountId)).toBeVisible();
-    expect(screen.getByText("组织管理员")).toBeVisible();
-    expect(screen.getByText("2026-08-20T00:00:00.000Z")).toBeVisible();
+    expect(
+      await screen.findByRole("link", { name: /用户8000.*正常/, hidden: true }),
+    ).toBeInTheDocument();
+    const dialog = screen.getByRole("dialog", { name: "用户8000" });
+    expect(dialog).toBeVisible();
+    expect(screen.getByRole("heading", { name: "成员与角色", hidden: true })).toBeInTheDocument();
+    expect(screen.getByRole("region", { name: "技术信息" })).toHaveTextContent(accountId);
+    expect(within(dialog).getByText("组织管理员")).toBeVisible();
+    expect(within(dialog).getByText("2026-08-20T00:00:00.000Z")).toBeVisible();
   });
 
   test("does not render the add-member form without management permission", async () => {
@@ -132,6 +140,7 @@ describe("MembersPage", () => {
     } as unknown as OrgSpaceClient;
     renderPage(sdk);
     const user = userEvent.setup();
+    await user.click(await screen.findByRole("button", { name: "添加成员" }));
     await user.type(await screen.findByLabelText("账号 ID"), targetAccountId);
     const form = screen.getByLabelText("账号 ID").closest("form");
     if (form === null) throw new Error("member form missing");
