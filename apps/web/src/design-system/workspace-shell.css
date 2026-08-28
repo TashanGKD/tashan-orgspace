@@ -378,6 +378,17 @@
   }
 }
 
+@media (max-width: 900px) {
+  .account-trigger span:not(.member-avatar) {
+    display: none;
+  }
+
+  .account-trigger {
+    min-width: 36px;
+    padding: 0;
+  }
+}
+
 @media (max-width: 760px) {
   .account-only-header span {
     display: none;

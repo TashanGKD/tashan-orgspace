@@ -82,6 +82,9 @@ describe("responsive workspace shell", () => {
     expect(css).toContain("width: 208px");
     expect(css).toContain("width: 64px");
     expect(css).toContain("@media (max-width: 760px)");
+    expect(css).toMatch(
+      /@media \(max-width: 900px\)[\s\S]*\.account-trigger span:not\(\.member-avatar\)[\s\S]*display: none;/,
+    );
     expect(css).toContain("height: calc(70px + env(safe-area-inset-bottom))");
   });
 
