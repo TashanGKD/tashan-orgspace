@@ -27,7 +27,7 @@
   {
     "id": "personal.overview",
     "label": "个人空间",
-    "description": "查看个人文件、运行资源、服务和用量",
+    "description": "查看个人文件、存储用量和未来能力",
     "context": "personal",
     "status": "coming_soon",
     "route": "/personal",
@@ -47,7 +47,7 @@
   {
     "id": "personal.runtime",
     "label": "个人运行与构建",
-    "description": "运行程序和构建镜像",
+    "description": "未来用于个人运行与构建",
     "context": "personal",
     "status": "coming_soon",
     "route": "/personal/runtime",
@@ -57,7 +57,7 @@
   {
     "id": "personal.services",
     "label": "个人服务与数据库",
-    "description": "管理常驻服务、数据库和域名",
+    "description": "未来用于个人服务、数据库和网站部署",
     "context": "personal",
     "status": "coming_soon",
     "route": "/personal/services",
@@ -67,7 +67,7 @@
   {
     "id": "personal.usage",
     "label": "个人用量",
-    "description": "查看存储和计算资源用量",
+    "description": "查看个人存储用量",
     "context": "personal",
     "status": "coming_soon",
     "route": "/personal/usage",
@@ -147,7 +147,7 @@
   {
     "id": "organization.runtime",
     "label": "运行与构建",
-    "description": "运行程序和构建镜像",
+    "description": "未来用于组织运行与构建",
     "context": "organization",
     "status": "coming_soon",
     "route": "/org/:organizationId/runtime",
@@ -157,7 +157,7 @@
   {
     "id": "organization.services",
     "label": "服务与数据库",
-    "description": "管理常驻服务、数据库和域名",
+    "description": "未来用于组织服务、数据库和网站部署",
     "context": "organization",
     "status": "coming_soon",
     "route": "/org/:organizationId/services",

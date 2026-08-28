@@ -21,7 +21,11 @@ import { NavLink } from "react-router";
 
 import { OrganizationId } from "@tashan/contracts";
 
-import { productModules, type ProductModule } from "../modules/module-catalog.js";
+import {
+  deferredModuleIds,
+  productModules,
+  type ProductModule,
+} from "../modules/module-catalog.js";
 
 type MembershipRole = "org_owner" | "org_admin" | "member";
 
@@ -66,20 +70,24 @@ function ModuleLink({
   collapsed,
   module,
   organizationId,
+  showComingSoon = false,
 }: {
   collapsed: boolean;
   module: ProductModule;
   organizationId: string;
+  showComingSoon?: boolean;
 }) {
   const Icon = moduleIcons[module.id] ?? FileText;
+  const label = showComingSoon ? `${module.label} 即将上线` : module.label;
   return (
     <NavLink
-      aria-label={module.label}
-      title={collapsed ? module.label : undefined}
+      aria-label={label}
+      title={collapsed ? label : undefined}
       to={moduleHref(module, organizationId)}
     >
       <Icon aria-hidden className="navigation-icon" size={16} />
       {collapsed ? null : <span>{module.label}</span>}
+      {showComingSoon && !collapsed ? <small>即将上线</small> : null}
     </NavLink>
   );
 }
@@ -103,10 +111,17 @@ export function Navigation({
     {
       label: "组织协作",
       items: primary.filter((module) => strategicCoreIds.has(module.id)),
+      showComingSoon: false,
     },
     {
       label: "设置与管理",
       items: primary.filter((module) => !strategicCoreIds.has(module.id)),
+      showComingSoon: false,
+    },
+    {
+      label: "未来能力",
+      items: visible.filter((module) => deferredModuleIds.has(module.id)),
+      showComingSoon: true,
     },
   ].filter((group) => group.items.length > 0);
 
@@ -121,6 +136,7 @@ export function Navigation({
               key={module.id}
               module={module}
               organizationId={organizationId}
+              showComingSoon={group.showComingSoon}
             />
           ))}
         </section>

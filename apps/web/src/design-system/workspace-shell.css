@@ -198,6 +198,18 @@
   background: linear-gradient(90deg, rgba(91, 155, 213, 0.14), rgba(159, 212, 196, 0.2));
 }
 
+.workspace-sidebar .workspace-navigation a small {
+  margin-left: auto;
+  color: var(--text-tertiary);
+  font-size: 0.62rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.workspace-sidebar[data-collapsed="true"] .workspace-navigation a small {
+  display: none;
+}
+
 .navigation-icon {
   flex: 0 0 auto;
 }

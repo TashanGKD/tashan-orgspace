@@ -1,5 +1,8 @@
 import { describe, expect, test } from "vitest";
 
+import deferredScope from "../../deferred-product-scope.json" with { type: "json" };
+import modules from "../../product-modules.json" with { type: "json" };
+
 import { parseProductModules } from "./module-catalog.js";
 
 const base = {
@@ -59,5 +62,14 @@ describe("product module catalog", () => {
       },
     ]);
     expect(modules).toHaveLength(2);
+  });
+
+  test("keeps every deferred direction visible but inert", () => {
+    const catalog = parseProductModules(modules);
+    for (const moduleId of deferredScope.moduleIds) {
+      const module = catalog.find((candidate) => candidate.id === moduleId);
+      expect(module?.status).toBe("coming_soon");
+      expect(module?.capabilities).toEqual([]);
+    }
   });
 });

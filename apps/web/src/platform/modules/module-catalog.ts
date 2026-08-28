@@ -2,6 +2,7 @@ import { z } from "zod";
 
 import { CapabilityId } from "@tashan/capabilities";
 
+import rawDeferredScope from "../../deferred-product-scope.json" with { type: "json" };
 import rawModules from "../../product-modules.json" with { type: "json" };
 
 export const ProductModuleContext = z.enum(["global", "personal", "organization"]);
@@ -25,6 +26,20 @@ export const ProductModule = z
   .strict();
 
 export type ProductModule = z.infer<typeof ProductModule>;
+
+const DeferredProductScope = z
+  .object({
+    decisionId: z.literal("defer-compute-and-user-web-deployment-2026-08-28"),
+    status: z.literal("deferred_visible"),
+    moduleIds: z.array(z.string()).length(4),
+    requiredModuleStatus: z.literal("coming_soon"),
+    forbiddenCapabilityPrefixes: z.array(z.string().min(1)),
+    requiredDocumentMarker: z.string().min(1),
+  })
+  .strict();
+
+export const deferredProductScope = DeferredProductScope.parse(rawDeferredScope);
+export const deferredModuleIds = new Set(deferredProductScope.moduleIds);
 
 export function parseProductModules(input: unknown): readonly ProductModule[] {
   const modules = z.array(ProductModule).parse(input);
@@ -58,3 +73,14 @@ export function parseProductModules(input: unknown): readonly ProductModule[] {
 }
 
 export const productModules = parseProductModules(rawModules);
+
+for (const moduleId of deferredModuleIds) {
+  const module = productModules.find((candidate) => candidate.id === moduleId);
+  if (module === undefined) throw new Error(`missing deferred product module: ${moduleId}`);
+  if (module.status !== deferredProductScope.requiredModuleStatus) {
+    throw new Error(`deferred product module must remain coming_soon: ${moduleId}`);
+  }
+  if (module.capabilities.length !== 0) {
+    throw new Error(`deferred product module cannot bind capabilities: ${moduleId}`);
+  }
+}

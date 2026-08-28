@@ -1,4 +1,4 @@
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, render, screen, within } from "@testing-library/react";
 import { MemoryRouter } from "react-router";
 import { afterEach, describe, expect, test } from "vitest";
 
@@ -20,7 +20,8 @@ describe("application shell", () => {
     expect(screen.getByRole("link", { name: "任务" })).toBeVisible();
     expect(screen.getByRole("link", { name: "组织文件" })).toBeVisible();
     expect(screen.getByRole("link", { name: "消息" })).toBeVisible();
-    expect(screen.queryByText("即将上线")).not.toBeInTheDocument();
+    const collaboration = screen.getByRole("region", { name: "组织协作" });
+    expect(within(collaboration).queryByText("即将上线")).not.toBeInTheDocument();
     expect(screen.queryByRole("link", { name: "OKR" })).not.toBeInTheDocument();
     expect(screen.queryByRole("link", { name: "成员与角色" })).not.toBeInTheDocument();
     expect(screen.queryByRole("link", { name: "操作记录" })).not.toBeInTheDocument();
@@ -34,6 +35,19 @@ describe("application shell", () => {
     );
     expect(screen.getByRole("link", { name: "成员与角色" })).toBeVisible();
     expect(screen.getByRole("link", { name: "操作记录" })).toBeVisible();
+  });
+
+  test("shows deferred directions in a separate future group", () => {
+    render(
+      <MemoryRouter>
+        <Navigation organizationId={organizationId} role="member" />
+      </MemoryRouter>,
+    );
+    const future = screen.getByRole("region", { name: "未来能力" });
+    expect(within(future).getByRole("link", { name: "个人运行与构建 即将上线" })).toBeVisible();
+    expect(within(future).getByRole("link", { name: "个人服务与数据库 即将上线" })).toBeVisible();
+    expect(within(future).getByRole("link", { name: "运行与构建 即将上线" })).toBeVisible();
+    expect(within(future).getByRole("link", { name: "服务与数据库 即将上线" })).toBeVisible();
   });
 
   test("coming-soon pages are inert", () => {
