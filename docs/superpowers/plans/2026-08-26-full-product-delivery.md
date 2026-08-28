@@ -6,6 +6,8 @@
 
 **Goal:** Deliver the complete v1 OrgSpace product as a sequence of production-ready vertical slices, with every capability implemented consistently in backend, Web, CLI, Skill, audit, tests, and AUP deployment.
 
+> 2026-08-29 program update: the executable source of truth is `2026-08-29-v1-program-execution-map.md` plus the Phase 1–5 plans. Phase 2 now includes the independent Phase 2D organization-partner directory.
+
 **Architecture:** The control plane uses the common sequence `space → module → resource list → resource detail → action`. Specialized data planes remain separate for files and chat. Each phase ships one usable end-to-end slice and cannot be marked complete until API/Web/CLI/Skill capability coverage and isolation tests all pass.
 
 **Tech Stack:** Node.js 24, TypeScript 6, Fastify, React 19, TanStack Query, PostgreSQL 17, Redis 8, S3-compatible object storage, Nginx, WebSocket, Alibaba Cloud SMS, pnpm, Vitest, Docker Compose, GitHub Actions.
@@ -317,7 +319,7 @@ Tag the exact deployed commit, publish Skill/CLI assets, run fresh no-source use
 ```text
 Phase 0  已上线：身份 / 组织 / 设备 / 审计 / 公网安装
 Phase 1  通用工作台 + 空间/文件
-Phase 2  WorkItem / 审批 / 会议 / OKR
+Phase 2  WorkItem / 审批 / 会议 / OKR / 合作方
 Phase 3  通知 / 短信 / 定时提醒
 Phase 4  对话 / 搜索 / 全局工作 / 管理
 Phase 5  全面一致性 / 恢复 / 安全 / v1 验收

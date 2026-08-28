@@ -1,0 +1,71 @@
+# Phase 2 Work, Process and OKR Implementation Plan
+
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+
+**Goal:** Implement the shared collaboration kernel, tasks, meetings, approvals and OKR with one organization-scoped event and permission model.
+
+**Architecture:** Domain tables remain separate but reuse ResourceLink, Comment, ActivityEvent and DomainEvent/Outbox. All transitions are optimistic-versioned, idempotent and audited; Web/CLI/Skill bind the same capabilities.
+
+**Tech Stack:** TypeScript 6, Fastify 5, Zod 4, PostgreSQL 17, React 19, Commander 15, Vitest.
+
+---
+
+### Task 1: Shared event, relation and activity kernel
+
+**Files:** Create `apps/api/migrations/008_collaboration_kernel.sql`, `packages/contracts/src/collaboration.ts`, `apps/api/src/collaboration/`, `apps/api/test/collaboration/kernel.integration.test.ts`; modify contract exports.
+
+- [ ] Write RED tests for cross-organization links, duplicate links, immutable DomainEvent, comment authorization and same-transaction Outbox.
+- [ ] Run `pnpm --filter @tashan/api test:integration`; expect missing tables/types.
+- [ ] Implement `ResourceRef`, `ResourceLink`, `Comment`, `ActivityEvent`, `DomainEvent` and repositories; require organization equality and stable schema versions.
+- [ ] Run contracts/API tests and `pnpm typecheck`; expect green.
+- [ ] Commit: `git commit -m "feat(collaboration): add shared event kernel"`.
+
+### Task 2: WorkItem and Assignment state machines
+
+**Files:** Create `apps/api/migrations/009_work_items.sql`, `packages/contracts/src/work.ts`, `apps/api/src/work/work-service.ts`, `apps/api/src/work/work-state.ts`, `apps/api/test/work/work-service.integration.test.ts`.
+
+- [ ] Write RED transition tables covering create/assign/dispute/transfer/complete/reopen/cancel, stale expectedVersion and removed Membership.
+- [ ] Run the targeted integration test; expect WorkService missing.
+- [ ] Implement WorkItem/Assignment/Event tables and one `transitionWorkItem` function; immediate assignment retains responsibility during dispute.
+- [ ] Run targeted and full API tests; assert one DomainEvent/AuditEvent per accepted transition.
+- [ ] Commit: `git commit -m "feat(work): add assignments and transitions"`.
+
+### Task 3: Versioned process engine and approvals
+
+**Files:** Create `apps/api/migrations/010_processes.sql`, `packages/contracts/src/process.ts`, `apps/api/src/process/`, `apps/api/test/process/process-service.integration.test.ts`.
+
+- [ ] Write RED tests for immutable published versions, single/sequence/any/all approval, return, withdraw, transfer and concurrent decisions.
+- [ ] Run targeted tests; expect ProcessDefinition/Instance missing.
+- [ ] Implement definitions, versions, instances, steps and decision events; pin each instance to one published version.
+- [ ] Run tests and prove duplicate approval changes state once.
+- [ ] Commit: `git commit -m "feat(process): add versioned approval engine"`.
+
+### Task 4: Task, meeting and approval API/SDK/CLI
+
+**Files:** Create `apps/api/src/routes/work-routes.ts`, `packages/sdk/src/work.ts`, `apps/cli/src/commands/work.ts`; modify app mount, capability registry and CLI bindings.
+
+- [ ] Write RED route/SDK/CLI tests for list/get/create/action, stable errors, explicit `--org`, confirmation and JSON output.
+- [ ] Run API/SDK/CLI tests; expect missing capabilities and commands.
+- [ ] Register and implement capabilities for task, meeting, approval, assignment dispute/transfer and process decisions.
+- [ ] Run parity gates and targeted tests; remove any server capability without CLI binding.
+- [ ] Commit: `git commit -m "feat(cli): expose organization work commands"`.
+
+### Task 5: OKR formulas and change approval
+
+**Files:** Create `apps/api/migrations/011_okr.sql`, `packages/contracts/src/okr.ts`, `apps/api/src/okr/`, `apps/api/src/routes/okr-routes.ts`, tests under `apps/api/test/okr/`.
+
+- [ ] Write RED tests for numeric/linked_tasks/manual, invalid weights, cross-org task link, historical snapshots, immediate progress and forbidden direct substantive edit.
+- [ ] Run targeted tests; expect OKR service missing.
+- [ ] Implement Objective/KR/formula snapshots; route substantive edits through `okr_change_request` WorkItem and approval.
+- [ ] Run integration tests including stale approval and administrator direct-edit audit equivalence.
+- [ ] Commit: `git commit -m "feat(okr): add approved objective changes"`.
+
+### Task 6: Phase 2 Web, Skill and acceptance
+
+**Files:** Create `apps/web/src/features/work/`, `apps/web/src/features/okr/`, `skill/tashan-orgspace/references/work.md`, `skill/tashan-orgspace/references/okr.md`, `tests/e2e/work-okr.test.ts`; modify module/resource/capability surfaces.
+
+- [ ] Write RED Web tests for organization/personal projections, list/detail, roles, conflicts and action visibility; add E2E creator/assignee/admin/uninvolved journeys.
+- [ ] Run Web/E2E tests; expect coming-soon routes.
+- [ ] Implement shared surfaces, Skill references and capability mappings; flip tasks/OKR/approvals/meetings only after complete parity.
+- [ ] Run `pnpm --filter @tashan/web test`, full gates and `pnpm test:e2e`.
+- [ ] Commit: `git commit -m "docs(verification): record Phase 2 acceptance"`.
