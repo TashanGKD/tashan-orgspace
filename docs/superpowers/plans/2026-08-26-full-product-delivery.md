@@ -6,9 +6,9 @@
 
 **Goal:** Deliver the complete v1 OrgSpace product as a sequence of production-ready vertical slices, with every capability implemented consistently in backend, Web, CLI, Skill, audit, tests, and AUP deployment.
 
-**Architecture:** The control plane uses the common sequence `space → module → resource list → resource detail → action`. Specialized data planes remain separate for files, chat, compute, databases, and service routing. Each phase ships one usable end-to-end slice and cannot be marked complete until API/Web/CLI/Skill capability coverage and isolation tests all pass.
+**Architecture:** The control plane uses the common sequence `space → module → resource list → resource detail → action`. Specialized data planes remain separate for files and chat. Each phase ships one usable end-to-end slice and cannot be marked complete until API/Web/CLI/Skill capability coverage and isolation tests all pass.
 
-**Tech Stack:** Node.js 24, TypeScript 6, Fastify, React 19, TanStack Query, PostgreSQL 17, Redis 8, S3-compatible object storage, Docker/BuildKit, Nginx, WebSocket, Alibaba Cloud SMS, pnpm, Vitest, Docker Compose, GitHub Actions.
+**Tech Stack:** Node.js 24, TypeScript 6, Fastify, React 19, TanStack Query, PostgreSQL 17, Redis 8, S3-compatible object storage, Nginx, WebSocket, Alibaba Cloud SMS, pnpm, Vitest, Docker Compose, GitHub Actions.
 
 ---
 
@@ -213,70 +213,11 @@ Web provides notification list/detail and daily-summary toggle. CLI provides `no
 
 All flows use the deterministic sender. One separately confirmed real SMS proves gateway/carrier behavior; no full regression depends on real phones.
 
-### Task 6: Compute jobs, builds and resource isolation
+### Deferred directions: compute execution and user web deployment
 
-**Files:**
-- Create: `apps/api/migrations/011_runtime.sql`
-- Create: `packages/contracts/src/runtime.ts`
-- Create: `apps/api/src/runtime/`
-- Create: `apps/worker/src/handlers/runtime-handler.ts`
-- Create: `apps/cli/src/commands/runtime.ts`
-- Create: `apps/web/src/features/runtime/`
-- Create: `skill/tashan-orgspace/references/runtime.md`
+The navigation retains four inert `coming_soon` modules. This plan does not create runtime, build, service, database, daemon, domain or public-access contracts, migrations, APIs, CLI commands, Skill references or acceptance journeys. Re-entry requires a newly approved design and plan.
 
-- [ ] **Step 1: Approve executor, resource and network threat model**
-
-Fix Python/Node/compiler runtimes, rootless BuildKit, capped/elastic policies, platform and emergency reserve, authorized space mounts, public egress and private/metadata denial.
-
-- [ ] **Step 2: Write RED sandbox escape tests**
-
-Cover host/other-space paths, symlinks, Docker socket, privileged flags, device mounts, private IPv4/IPv6, DNS rebinding, cloud metadata, fork bombs, PID/memory/disk limits and cancellation cleanup.
-
-- [ ] **Step 3: Implement executor control plane and Worker adapter**
-
-Deliver `RuntimeWorkload`, immutable run specification, queue, attempt, log and artifact objects. Executor receives only resolved mounts and opaque secret references.
-
-- [ ] **Step 4: Implement compute list/detail and CLI/Skill**
-
-Web provides run/build lists, configuration, queue state, logs, artifacts and resource usage. CLI provides `run submit/list/get/logs/cancel`, `build create/list/get`, always requiring a space ID.
-
-- [ ] **Step 5: Verify on AUP without weakening isolation**
-
-Run language fixtures and Docker builds, then adversarial workloads. Prove the two reserved CPU pools and memory reserves remain unavailable to normal workloads.
-
-### Task 7: Services, databases, daemons and HTTPS access
-
-**Files:**
-- Create: `apps/api/migrations/012_services.sql`
-- Create: `packages/contracts/src/services.ts`
-- Create: `apps/api/src/services/`
-- Create: `apps/worker/src/handlers/service-handler.ts`
-- Create: `apps/cli/src/commands/service.ts`
-- Create: `apps/cli/src/commands/database.ts`
-- Create: `apps/web/src/features/services/`
-- Create: `skill/tashan-orgspace/references/services.md`
-
-- [ ] **Step 1: Approve service lifecycle and gateway policy**
-
-Fix workload types, desired/actual state, globally unique slugs, default login protection, explicit anonymous public action, database private networking, backup and rollback.
-
-- [ ] **Step 2: Write RED host/domain/access tests**
-
-Reject reserved/confusable slugs, forged Host headers, unauthorized service access, implicit public exposure, arbitrary host ports, database public ports and cross-space secret references.
-
-- [ ] **Step 3: Implement service controller and dynamic gateway**
-
-Controller reconciles service, database and daemon state. Gateway authenticates private domains and routes only to resolved service identities; anonymous routing requires audited public state.
-
-- [ ] **Step 4: Implement service/database list-detail surfaces**
-
-Web and CLI cover create, deploy, logs, restart, rollback, backup, credentials rotation, private/public and domain status. `service public` uses high-risk confirmation text stating anonymous Internet access.
-
-- [ ] **Step 5: Verify long-running recovery**
-
-Restart API, Worker, executor, gateway and AUP host independently; prove desired services recover, databases remain private and no duplicate side effect occurs.
-
-### Task 8: Organization chat and resource references
+### Task 6: Organization chat and resource references
 
 **Files:**
 - Create: `apps/api/migrations/013_chat.sql`
@@ -307,7 +248,7 @@ Web uses conversation list and message detail timeline. CLI provides `chat conve
 
 Convert messages into tasks, approvals, meetings and file entries; preserve bidirectional links and original permission boundaries after message withdrawal.
 
-### Task 9: Global work, search, administration and command palette
+### Task 7: Global work, search, administration and command palette
 
 **Files:**
 - Create: `packages/contracts/src/search.ts`
@@ -331,15 +272,15 @@ Prove removed users cannot retrieve cached search hits, counts do not reveal res
 
 Deliver my-work, notifications, search groups and command suggestions using stable object IDs and deep links.
 
-- [ ] **Step 4: Implement member/resource/policy administration**
+- [ ] **Step 4: Implement member/quota/policy administration**
 
-Web and CLI cover roles, quotas, resource policy, notification policy, process templates and audit views with organization owner/admin restrictions.
+Web and CLI cover roles, quotas, notification policy, process templates and audit views with organization owner/admin restrictions.
 
 - [ ] **Step 5: Verify global-to-space navigation**
 
 Open aggregated items, switch organization context, handle lost membership and return to the exact list view without leaking object content.
 
-### Task 10: AI-ready actor model, parity closure and v1 release
+### Task 8: AI-ready actor model, parity closure and v1 release
 
 **Files:**
 - Modify: `packages/contracts/src/`
@@ -361,11 +302,11 @@ The full-product gate compares every capability, list/detail route, CLI binding,
 
 - [ ] **Step 3: Run complete synthetic organization acceptance**
 
-Create multiple test users and organizations with simulated verification codes. Exercise files, work, OKR, notifications, chat, compute, services, domains, device/session revocation and cross-organization rejection.
+Create multiple test users and organizations with simulated verification codes. Exercise files, work, OKR, notifications, chat, device/session revocation and cross-organization rejection.
 
 - [ ] **Step 4: Run production recovery, security and real-channel smokes**
 
-Verify AUP backups, restore drill, tunnel/gateway recovery, storage integrity, workload recovery, one real SMS and one protected/public service URL. Record gateway acceptance and end delivery separately.
+Verify AUP backups, restore drill, tunnel recovery, storage integrity and one real SMS. Record gateway acceptance and end delivery separately.
 
 - [ ] **Step 5: Publish v1 only after every gate is current**
 
@@ -378,10 +319,8 @@ Phase 0  已上线：身份 / 组织 / 设备 / 审计 / 公网安装
 Phase 1  通用工作台 + 空间/文件
 Phase 2  WorkItem / 审批 / 会议 / OKR
 Phase 3  通知 / 短信 / 定时提醒
-Phase 4  计算 / 构建 / 资源隔离
-Phase 5  服务 / 数据库 / daemon / HTTPS
-Phase 6  对话 / 搜索 / 全局工作 / 管理
-Phase 7  全面一致性 / 恢复 / 安全 / v1 验收
+Phase 4  对话 / 搜索 / 全局工作 / 管理
+Phase 5  全面一致性 / 恢复 / 安全 / v1 验收
 ```
 
 每个 Phase 必须形成独立 PR、部署和验收证据。后续 Phase 可以复用前一阶段公共组件，但不能在前一阶段安全边界未通过时并行上线。
