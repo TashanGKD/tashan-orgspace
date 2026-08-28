@@ -262,6 +262,77 @@ function AccountArea({ sdk }: { sdk: OrgSpaceClient }) {
   );
 }
 
+function PersonalRoutes({
+  organizationId,
+  displayName,
+}: {
+  organizationId: string;
+  displayName: string;
+}) {
+  const session = useSession();
+  const feedback = useFeedback();
+  const comingSoon = productModules.filter(
+    (module) => module.context === "personal" && module.status === "coming_soon",
+  );
+
+  async function logout(): Promise<void> {
+    feedback.clear();
+    try {
+      await session.logout();
+    } catch (error) {
+      feedback.showError(error);
+    }
+  }
+
+  return (
+    <AppShell displayName={displayName} onLogout={logout}>
+      <Routes>
+        {comingSoon.map((module) => (
+          <Route
+            key={module.id}
+            path={module.route.replace("/personal/", "")}
+            element={
+              <ComingSoonPage module={module} backTo={routes.organizationHome(organizationId)} />
+            }
+          />
+        ))}
+        <Route
+          path="*"
+          element={<Navigate replace to={routes.organizationHome(organizationId)} />}
+        />
+      </Routes>
+    </AppShell>
+  );
+}
+
+function PersonalArea({ sdk }: { sdk: OrgSpaceClient }) {
+  const session = useSession();
+  const organizations = useQuery({
+    queryKey: ["organizations"],
+    queryFn: ({ signal }) => sdk.listOrganizations(signal),
+  });
+  if (session.status !== "authenticated") return null;
+  if (organizations.isPending) {
+    return <ResourceState resourceLabel="组织" state="loading" />;
+  }
+  const firstOrganization = organizations.data?.items[0];
+  if (firstOrganization === undefined) {
+    return <Navigate replace to={organizationSurface.listRoute} />;
+  }
+  return (
+    <OrganizationProvider
+      accountId={session.account.id}
+      organizationId={firstOrganization.id}
+      sdk={sdk}
+    >
+      <PersonalRoutes
+        displayName={session.account.displayName}
+        organizationId={firstOrganization.id}
+      />
+    </OrganizationProvider>
+  );
+}
+
 function OrganizationRoutes({ sdk, displayName }: { sdk: OrgSpaceClient; displayName: string }) {
   const session = useSession();
   const feedback = useFeedback();
@@ -359,6 +430,7 @@ function AuthenticatedRoutes({ sdk }: { sdk: OrgSpaceClient }) {
       <Route path="/" element={<RootRedirect />} />
       <Route path={organizationSurface.listRoute} element={<OrganizationsArea sdk={sdk} />} />
       <Route path={`${deviceSurface.listRoute}/*`} element={<AccountArea sdk={sdk} />} />
+      <Route path="/personal/*" element={<PersonalArea sdk={sdk} />} />
       <Route path="/org/:organizationId/*" element={<OrganizationArea sdk={sdk} />} />
       <Route path="*" element={<Navigate replace to="/" />} />
     </Routes>

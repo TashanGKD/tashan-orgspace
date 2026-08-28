@@ -197,6 +197,29 @@ describe("routed Phase 0 Web", () => {
     );
   });
 
+  test("keeps the personal runtime direction on an inert coming-soon route", async () => {
+    const sdk = client();
+    renderApp(sdk, "/personal/runtime");
+    const user = userEvent.setup();
+    await screen.findByRole("heading", { name: "登录" });
+    await user.type(screen.getByLabelText("手机号"), "13800138000");
+    await user.type(screen.getByLabelText("密码"), "CorrectHorseBattery9");
+    await user.click(screen.getByRole("button", { name: "登录" }));
+
+    const heading = await screen.findByRole("heading", { name: "个人运行与构建" });
+    const roadmap = heading.closest("article");
+    expect(roadmap).not.toBeNull();
+    if (roadmap === null) throw new Error("personal runtime roadmap is missing");
+    expect(roadmap).toHaveTextContent("即将上线");
+    expect(roadmap).toHaveTextContent("此功能暂未开放");
+    expect(screen.getByRole("link", { name: "返回组织首页" })).toHaveAttribute(
+      "href",
+      `/org/${organizationId}/home`,
+    );
+    expect(roadmap.querySelector("form")).toBeNull();
+    expect(roadmap.querySelector("button")).toBeNull();
+  });
+
   test("keeps account controls available before the user joins an organization", async () => {
     const sdk = client({
       listOrganizations: vi.fn().mockResolvedValue({ items: [] }),
