@@ -41,7 +41,7 @@ Phase 5  全功能一致性 / 恢复 / 安全 / v1 发布
 Account → Principal → Membership → Organization
 
 领域事实层
-Space / FileEntry / WorkItem / Objective / KeyResult
+Space / FileEntry / WorkItem / Objective / KeyResult / Partner
 Notification / Conversation / Message
 
 共享关系层
@@ -88,6 +88,18 @@ DomainEvent → Outbox → Worker / Realtime → Delivery / AuditEvent
 业务状态、DomainEvent、Outbox 和审计摘要在同一 PostgreSQL 事务中提交。Worker、通知和 WebSocket 消费 Outbox，不通过轮询或比较整表来猜测变化。
 
 `ActivityEvent` 是面向用户的对象活动投影；`AuditEvent` 是安全与合规真源。两者不能互相替代。
+
+### 3.4 个人负责的组织记录
+
+合作方、未来嘉宾、讲师和供应商等对象复用 `OwnedOrganizationRecordPolicy`：
+
+- 记录属于组织，并有唯一当前负责人；
+- 负责人查看和管理自己的记录；
+- `org_admin` 与 `org_owner` 查看和管理组织全部记录；
+- 其他成员不能通过 ID、搜索、统计或重复检测推断记录存在；
+- 成员离开组织时，记录进入待接管状态，由管理员转移负责人。
+
+手机号、微信号、邮箱和详细地址等敏感字段使用共享 `SensitiveFieldCipher` 加密保存。精确匹配使用 HMAC blind index；列表、日志、错误和普通审计默认掩码。
 
 ## 4. 通用控制面规则
 
@@ -144,6 +156,9 @@ Phase 2B：任务 / 会议 / 审批
 Phase 2C：OKR
   复用任务、审批和 change request
   ↓
+Phase 2D：合作方目录与跟进
+  复用 WorkItem、文件、ResourceLink 和个人负责记录策略
+  ↓
 Phase 3：通知 / 短信 / 定时提醒
   消费前面全部 DomainEvent
   ↓
@@ -160,6 +175,7 @@ Phase 5：一致性 / 恢复 / 安全 / v1 发布
 
 - 任务和聊天附件依赖 Phase 1 文件权限。
 - OKR 实质性修改依赖 Phase 2 审批流程。
+- 合作方跟进任务和会议依赖 Phase 2B；合作方提醒进入 Phase 3。
 - 强制和定时提醒依赖任务、会议和审批事件。
 - 消息转工作项依赖 WorkItem。
 - 搜索依赖每个领域提供授权过滤查询。
@@ -238,7 +254,19 @@ okr_change_request
 - 每次进度计算保存公式版本和输入快照。
 - 支持 `numeric`、`linked_tasks`、`manual`。
 
-Phase 2 拆为三份计划：协作内核；任务/会议/审批；OKR。
+Phase 2 拆为四份计划：协作内核；任务/会议/审批；OKR；合作方目录与跟进。
+
+### 7.5 合作方目录
+
+一条 `Partner` 记录代表一个具体联系人。同一单位可以有多个联系人。
+
+核心信息包括姓名、单位、部门、职务、地址、手机、微信号、邮箱、合作状态、标签、负责人、备注、最近联系时间和下次跟进时间。
+
+`PartnerInteraction` 追加保存联系时间、联系方式、摘要、记录人、关联文件/会议和后续动作。原记录不能被静默覆盖，更正以新事件保留历史。
+
+普通成员只查看和管理自己负责的合作方；管理员查看全部、转移负责人、处理待接管和导出。合作方通过 `ResourceLink` 关联文件、任务、会议和后续聊天消息。
+
+Phase 2D 使用独立规格与实施计划，不把 Partner 塞进 WorkItem 或通用 JSON 表。
 
 ## 8. Phase 3：通知、短信与定时提醒
 
@@ -379,6 +407,7 @@ docs/superpowers/specs/
   2026-08-29-unified-collaboration-v1-program-design.md
   2026-08-29-spaces-files-quotas-design.md
   2026-08-29-phase2-work-process-okr-design.md
+  2026-08-29-phase2d-organization-partners-design.md
   2026-08-29-phase3-notifications-sms-reminders-design.md
   2026-08-29-phase4-chat-search-global-work-design.md
   2026-08-29-phase5-v1-release-closure-design.md
@@ -390,6 +419,7 @@ docs/superpowers/specs/
 docs/superpowers/plans/
   2026-08-29-spaces-files-quotas-implementation.md
   2026-08-29-phase2-work-process-okr-implementation.md
+  2026-08-29-phase2d-organization-partners-implementation.md
   2026-08-29-phase3-notifications-sms-reminders-implementation.md
   2026-08-29-phase4-chat-search-global-work-implementation.md
   2026-08-29-phase5-v1-release-closure-implementation.md
