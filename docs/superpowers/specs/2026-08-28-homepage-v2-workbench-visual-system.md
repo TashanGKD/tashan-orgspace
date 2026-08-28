@@ -2,7 +2,7 @@
 
 Date: 2026-08-28
 
-Status: visual direction approved; written specification awaiting final review
+Status: visual direction approved; implementation accepted on 2026-08-28
 
 ## 1. Objective
 
