@@ -155,6 +155,12 @@ describe("routed Phase 0 Web", () => {
     expect(screen.getByRole("heading", { name: "账号与设备" })).toBeVisible();
     expect(screen.getByText("查看和管理登录设备")).toBeVisible();
     expect(screen.queryByText("0.1.0-alpha.3")).not.toBeInTheDocument();
+    await user.click(screen.getByRole("link", { name: /MacBook Air.*可用/ }));
+    const detail = screen.getByRole("dialog", { name: "MacBook Air" });
+    expect(detail).toBeVisible();
+    expect(screen.getByRole("heading", { name: "账号与设备", hidden: true })).toBeInTheDocument();
+    expect(screen.getByRole("region", { name: "技术信息" })).toHaveTextContent("0.1.0-alpha.3");
+    await user.keyboard("{Escape}");
     await user.click(await screen.findByRole("button", { name: "撤销 MacBook Air" }));
     const dialog = screen.getByRole("dialog", { name: "撤销 MacBook Air？" });
     expect(dialog).toContainElement(document.activeElement as HTMLElement | null);

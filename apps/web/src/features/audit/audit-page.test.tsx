@@ -1,5 +1,5 @@
 import { QueryClientProvider } from "@tanstack/react-query";
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, render, screen, within } from "@testing-library/react";
 import { MemoryRouter } from "react-router";
 import { afterEach, expect, test, vi } from "vitest";
 
@@ -40,7 +40,7 @@ test("lists organization audit actions in user language", async () => {
   );
   expect(await screen.findByRole("heading", { name: "操作记录" })).toBeVisible();
   expect(screen.getByRole("searchbox", { name: "搜索操作记录" })).toBeVisible();
-  expect(screen.getByText("添加组织成员")).toBeVisible();
+  expect(await screen.findByText("添加组织成员")).toBeVisible();
   expect(screen.getByText("网页")).toBeVisible();
   expect(screen.queryByText(requestId)).not.toBeInTheDocument();
   expect(screen.getByRole("link", { name: /添加组织成员.*成功/ })).toHaveAttribute(
@@ -87,10 +87,16 @@ test("renders an audit detail without exposing raw before-after payloads", async
       </MemoryRouter>
     </QueryClientProvider>,
   );
-  expect(await screen.findByRole("heading", { name: "创建组织" })).toBeVisible();
-  expect(screen.getByText("organization.create")).toBeVisible();
-  expect(screen.getByText(requestId)).toBeVisible();
-  expect(screen.getByText("203.0.113.10")).toBeVisible();
+  expect(
+    await screen.findByRole("link", { name: /创建组织.*成功/, hidden: true }),
+  ).toBeInTheDocument();
+  const dialog = screen.getByRole("dialog", { name: "创建组织" });
+  expect(dialog).toBeVisible();
+  expect(screen.getByRole("heading", { name: "操作记录", hidden: true })).toBeInTheDocument();
+  const technical = screen.getByRole("region", { name: "技术信息" });
+  expect(technical).toHaveTextContent("organization.create");
+  expect(technical).toHaveTextContent(requestId);
+  expect(technical).toHaveTextContent("203.0.113.10");
   expect(screen.getByText("部分敏感信息已隐藏")).toBeVisible();
   expect(screen.queryByText("must-not-render")).not.toBeInTheDocument();
 });
@@ -122,8 +128,10 @@ test("follows audit pagination when a copied detail URL points beyond the first 
       </MemoryRouter>
     </QueryClientProvider>,
   );
-  expect(await screen.findByRole("heading", { name: "添加组织成员" })).toBeVisible();
-  expect(screen.getByText("organization.member.add")).toBeVisible();
+  expect(await screen.findByRole("dialog", { name: "添加组织成员" })).toBeVisible();
+  expect(screen.getByRole("region", { name: "技术信息" })).toHaveTextContent(
+    "organization.member.add",
+  );
   expect(sdk.listAuditEvents).toHaveBeenNthCalledWith(
     1,
     { organizationId, limit: 100 },
@@ -151,7 +159,8 @@ test("stops safely when audit pagination repeats a cursor", async () => {
       </MemoryRouter>
     </QueryClientProvider>,
   );
-  expect(await screen.findByText("操作记录加载失败")).toBeVisible();
+  const dialog = await screen.findByRole("dialog", { name: "操作详情" });
+  expect(await within(dialog).findByText("操作记录加载失败")).toBeVisible();
   expect(sdk.listAuditEvents).toHaveBeenCalledTimes(2);
 });
 
@@ -167,6 +176,7 @@ test("shows a stable not-found state after the final audit page", async () => {
       </MemoryRouter>
     </QueryClientProvider>,
   );
-  expect(await screen.findByText("操作记录加载失败")).toBeVisible();
+  const dialog = await screen.findByRole("dialog", { name: "操作详情" });
+  expect(await within(dialog).findByText("操作记录加载失败")).toBeVisible();
   expect(sdk.listAuditEvents).toHaveBeenCalledTimes(1);
 });

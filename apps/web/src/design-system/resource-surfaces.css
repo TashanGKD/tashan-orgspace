@@ -584,6 +584,38 @@ a.resource-row:focus-visible {
   line-height: 1.65;
 }
 
+.roadmap-page {
+  display: grid;
+  width: min(100%, 1200px);
+  margin: 0 auto;
+  gap: var(--space-5);
+}
+
+.roadmap-state {
+  display: grid;
+  min-height: 220px;
+  place-items: center;
+  align-content: center;
+  gap: var(--space-4);
+  border: 1px dashed var(--border-strong);
+  border-radius: var(--radius-card);
+  padding: var(--space-6);
+  color: var(--text-secondary);
+  background: var(--surface-primary);
+  text-align: center;
+}
+
+.roadmap-state p {
+  margin: 0;
+}
+
+.roadmap-state a {
+  color: var(--brand-navy);
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-decoration: none;
+}
+
 @media (max-width: 720px) {
   .page-hero {
     min-height: 116px;

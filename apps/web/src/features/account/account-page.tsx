@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Laptop, ShieldCheck } from "lucide-react";
 import { useState } from "react";
-import { Link } from "react-router";
+import { useNavigate } from "react-router";
 
 import type { DeviceSummary } from "@tashan/contracts";
 import type { OrgSpaceClient } from "@tashan/sdk";
@@ -15,7 +15,7 @@ import {
   DialogTitle,
 } from "../../design-system/primitives/index.js";
 import { ResourceActionBar } from "../../platform/resources/resource-action-bar.js";
-import { ResourceDetailPage } from "../../platform/resources/resource-detail-page.js";
+import { ResourceDetailDrawer } from "../../platform/resources/resource-detail-drawer.js";
 import { ResourceListPage } from "../../platform/resources/resource-list-page.js";
 import { ResourceRow } from "../../platform/resources/resource-row.js";
 import { ResourceState } from "../../platform/resources/resource-states.js";
@@ -33,57 +33,22 @@ function deviceStatus(device: DeviceSummary) {
   return { label: "可用", tone: "success" as const };
 }
 
-function DeviceDetail({
-  busy,
-  device,
-  onRevoke,
-}: {
-  busy: boolean;
-  device: DeviceSummary;
-  onRevoke(device: DeviceSummary): void;
-}) {
-  const disabled = device.current || device.revokedAt !== null || busy;
+function DeviceDetail({ device }: { device: DeviceSummary }) {
   return (
-    <ResourceDetailPage
-      actions={
-        <ResourceActionBar
-          actions={[
-            {
-              id: "device.revoke",
-              label: busy ? "正在撤销…" : device.current ? "当前设备不可撤销" : "撤销设备",
-              onAction: () => onRevoke(device),
-              tone: "danger" as const,
-            },
-          ].map((action) => ({
-            ...action,
-            onAction: disabled ? () => undefined : action.onAction,
-          }))}
-          mode={disabled ? "readonly" : "ready"}
-        />
-      }
-      eyebrow="登录设备"
-      subtitle={deviceStatus(device).label}
-      title={device.name}
-    >
-      <dl className="resource-definition-list">
-        <div>
-          <dt>操作系统</dt>
-          <dd>{device.os}</dd>
-        </div>
-        <div>
-          <dt>架构</dt>
-          <dd>{device.architecture}</dd>
-        </div>
-        <div>
-          <dt>客户端版本</dt>
-          <dd>{device.clientVersion}</dd>
-        </div>
-        <div>
-          <dt>最近在线</dt>
-          <dd>{device.lastSeenAt}</dd>
-        </div>
-      </dl>
-    </ResourceDetailPage>
+    <dl className="resource-definition-list">
+      <div>
+        <dt>状态</dt>
+        <dd>{deviceStatus(device).label}</dd>
+      </div>
+      <div>
+        <dt>操作系统</dt>
+        <dd>{device.os}</dd>
+      </div>
+      <div>
+        <dt>最近在线</dt>
+        <dd>{device.lastSeenAt}</dd>
+      </div>
+    </dl>
   );
 }
 
@@ -94,6 +59,7 @@ export function AccountPage({
   sdk: OrgSpaceClient;
   selectedDeviceId?: string | undefined;
 }) {
+  const navigate = useNavigate();
   const session = useSession();
   const feedback = useFeedback();
   const queryClient = useQueryClient();
@@ -111,39 +77,19 @@ export function AccountPage({
     },
     onError: feedback.showError,
   });
+  const selectedDevice = devices.data?.items.find((device) => device.id === selectedDeviceId);
 
   if (session.status !== "authenticated") return null;
-  if (devices.isPending) return <ResourceState resourceLabel="设备" state="loading" />;
-  if (devices.isError) return <ResourceState resourceLabel="设备" state="fatal-error" />;
-  if (selectedDeviceId !== undefined) {
-    const selected = devices.data.items.find((device) => device.id === selectedDeviceId);
-    return (
-      <section className="standalone-resource-page">
-        <Link to={routes.account}>返回设备列表</Link>
-        {selected ? (
-          <DeviceDetail busy={revoke.isPending} device={selected} onRevoke={setCandidate} />
-        ) : (
-          <ResourceState resourceLabel="设备" state="fatal-error" />
-        )}
-        <RevokeConfirmation
-          candidate={candidate}
-          onCancel={() => setCandidate(undefined)}
-          onConfirm={() => {
-            if (candidate) revoke.mutate(candidate.id);
-          }}
-        />
-      </section>
-    );
-  }
 
   return (
     <section className="standalone-resource-page">
-      <Link to="/">返回组织空间</Link>
       <ResourceListPage description={pageCopy.devices.description} title="账号与设备">
-        {devices.data.items.length === 0 ? (
+        {devices.isPending ? <ResourceState resourceLabel="设备" state="loading" /> : null}
+        {devices.isError ? <ResourceState resourceLabel="设备" state="fatal-error" /> : null}
+        {!devices.isPending && !devices.isError && devices.data.items.length === 0 ? (
           <ResourceState resourceLabel="设备" state="empty" />
         ) : null}
-        {devices.data.items.map((device) => (
+        {devices.data?.items.map((device) => (
           <div className="device-resource-item" key={device.id}>
             <ResourceRow
               href={routes.device(device.id)}
@@ -179,6 +125,64 @@ export function AccountPage({
           </div>
         ))}
       </ResourceListPage>
+      <ResourceDetailDrawer
+        detail={
+          selectedDevice ? (
+            <DeviceDetail device={selectedDevice} />
+          ) : selectedDeviceId && !devices.isPending ? (
+            <ResourceState resourceLabel="设备" state="fatal-error" />
+          ) : (
+            <ResourceState resourceLabel="设备" state="loading" />
+          )
+        }
+        footer={
+          selectedDevice ? (
+            <ResourceActionBar
+              actions={[
+                {
+                  id: "device.revoke",
+                  label: revoke.isPending
+                    ? "正在撤销…"
+                    : selectedDevice.current
+                      ? "当前设备不可撤销"
+                      : "撤销设备",
+                  onAction: () => setCandidate(selectedDevice),
+                  tone: "danger",
+                },
+              ]}
+              mode={
+                selectedDevice.current || selectedDevice.revokedAt !== null || revoke.isPending
+                  ? "readonly"
+                  : "ready"
+              }
+            />
+          ) : null
+        }
+        onOpenChange={(open) => {
+          if (!open) navigate(routes.account);
+        }}
+        open={selectedDeviceId !== undefined}
+        technical={
+          selectedDevice ? (
+            <dl className="resource-definition-list">
+              <div>
+                <dt>设备 ID</dt>
+                <dd className="tabular-nums">{selectedDevice.id}</dd>
+              </div>
+              <div>
+                <dt>架构</dt>
+                <dd>{selectedDevice.architecture}</dd>
+              </div>
+              <div>
+                <dt>客户端版本</dt>
+                <dd>{selectedDevice.clientVersion}</dd>
+              </div>
+            </dl>
+          ) : null
+        }
+        title={selectedDevice?.name ?? "设备信息"}
+        {...(selectedDevice ? { subtitle: deviceStatus(selectedDevice).label } : {})}
+      />
       <RevokeConfirmation
         candidate={candidate}
         onCancel={() => setCandidate(undefined)}
