@@ -1,6 +1,6 @@
 # Defer Compute and User Web Deployment Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [x]`) syntax for tracking.
 
 **Goal:** Remove compute execution and user website hosting from the current/v1 implementation scope while keeping their four product modules visible in a dedicated navigation group as inert `coming_soon` destinations.
 
@@ -49,7 +49,7 @@ docs/verification/
 - Modify: `docs/superpowers/specs/2026-08-26-full-product-frontend-blueprint.md`
 - Modify: `docs/superpowers/plans/2026-08-26-full-product-delivery.md`
 
-- [ ] **Step 1: Create the deferred-scope registry**
+- [x] **Step 1: Create the deferred-scope registry**
 
 Create `apps/web/src/deferred-product-scope.json` exactly as:
 
@@ -85,7 +85,7 @@ Add this exact marker near the top of every document read by the production gate
 
 The four files are `README.md`, the 2026-08-18 total design, the 2026-08-26 frontend blueprint and the 2026-08-26 full-product delivery plan. Task 3–6 will rewrite their semantics; adding the marker here ensures the new gate can be wired without leaving the repository verifier broken between commits.
 
-- [ ] **Step 2: Write the RED gate self-test**
+- [x] **Step 2: Write the RED gate self-test**
 
 Create `scripts/check-deferred-product-scope.self-test.mjs`. It imports `checkDeferredProductScope`, loads current registry data, constructs a minimal valid fixture and verifies these failures independently:
 
@@ -200,7 +200,7 @@ assert.throws(
 console.log("check-deferred-product-scope.self-test: PASS");
 ```
 
-- [ ] **Step 3: Run the RED self-test**
+- [x] **Step 3: Run the RED self-test**
 
 Run:
 
@@ -210,7 +210,7 @@ node scripts/check-deferred-product-scope.self-test.mjs
 
 Expected: FAIL with `ERR_MODULE_NOT_FOUND` because the production gate does not exist.
 
-- [ ] **Step 4: Implement the gate**
+- [x] **Step 4: Implement the gate**
 
 Create `scripts/check-deferred-product-scope.mjs` with two entry points:
 
@@ -320,7 +320,7 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
 }
 ```
 
-- [ ] **Step 5: Run the gate and self-test GREEN**
+- [x] **Step 5: Run the gate and self-test GREEN**
 
 Run:
 
@@ -331,7 +331,7 @@ node scripts/check-deferred-product-scope.self-test.mjs
 
 Expected: both print `PASS`; production gate reports 4 deferred modules and 4 documents.
 
-- [ ] **Step 6: Wire the gate into the complete verifier**
+- [x] **Step 6: Wire the gate into the complete verifier**
 
 Add these exact steps to `scripts/verify-phase0.sh` before gate discovery:
 
@@ -349,7 +349,7 @@ bash scripts/verify-phase0.self-test.sh
 
 Expected: gate discovery reports 17 gates; verifier self-test passes.
 
-- [ ] **Step 7: Commit the registry and gate**
+- [x] **Step 7: Commit the registry and gate**
 
 ```bash
 git add apps/web/src/deferred-product-scope.json scripts/check-deferred-product-scope.mjs scripts/check-deferred-product-scope.self-test.mjs scripts/verify-phase0.sh scripts/verify-phase0.self-test.sh README.md docs/superpowers/specs/2026-08-18-tashan-orgspace-design.md docs/superpowers/specs/2026-08-26-full-product-frontend-blueprint.md docs/superpowers/plans/2026-08-26-full-product-delivery.md
@@ -367,7 +367,7 @@ git commit -m "ci(product): enforce deferred product scope"
 - Modify: `apps/web/src/design-system/workspace-shell.css`
 - Modify: `apps/web/src/product-modules.json`
 
-- [ ] **Step 1: Write RED registry and navigation tests**
+- [x] **Step 1: Write RED registry and navigation tests**
 
 In `module-catalog.test.ts`, load the real registry and catalog and add:
 
@@ -404,7 +404,7 @@ test("shows deferred directions in a separate future group", () => {
 
 Import `within` from Testing Library.
 
-- [ ] **Step 2: Run RED navigation tests**
+- [x] **Step 2: Run RED navigation tests**
 
 Run:
 
@@ -414,7 +414,7 @@ pnpm --filter @tashan/web test -- module-catalog.test.ts app-shell.test.tsx
 
 Expected: registry test passes against current JSON; navigation test fails because desktop navigation omits the future group.
 
-- [ ] **Step 3: Export the deferred module IDs from the typed catalog**
+- [x] **Step 3: Export the deferred module IDs from the typed catalog**
 
 In `module-catalog.ts`, import and validate the scope:
 
@@ -438,7 +438,7 @@ export const deferredModuleIds = new Set(deferredProductScope.moduleIds);
 
 After parsing modules, assert each deferred ID exists, is `coming_soon` and has no capabilities. This duplicates no values: it reads the same registry used by the CI gate.
 
-- [ ] **Step 4: Add the desktop Future group**
+- [x] **Step 4: Add the desktop Future group**
 
 Update `ModuleLink` to accept `showComingSoon` and expose an accessible name containing the state only for the future group:
 
@@ -473,7 +473,7 @@ Add a third group after “设置与管理”:
 
 Add `showComingSoon: false` to the other groups and pass the flag to `ModuleLink`. Do not add any other `coming_soon` module to this group.
 
-- [ ] **Step 5: Style the state label without restoring navigation noise**
+- [x] **Step 5: Style the state label without restoring navigation noise**
 
 Add to `workspace-shell.css`:
 
@@ -493,7 +493,7 @@ Add to `workspace-shell.css`:
 
 Do not add status labels to tasks, files, messages or other strategic primary entries.
 
-- [ ] **Step 6: Update user-facing descriptions without claiming implementation**
+- [x] **Step 6: Update user-facing descriptions without claiming implementation**
 
 Keep all four module IDs, routes, `status: "coming_soon"` and empty capabilities. Change only descriptions to avoid active verbs:
 
@@ -506,7 +506,7 @@ Keep all four module IDs, routes, `status: "coming_soon"` and empty capabilities
 
 Change `personal.overview` to `查看个人文件、存储用量和未来能力` and `personal.usage` to `查看个人存储用量`.
 
-- [ ] **Step 7: Run GREEN Web tests and build**
+- [x] **Step 7: Run GREEN Web tests and build**
 
 Run:
 
@@ -519,7 +519,7 @@ node scripts/check-deferred-product-scope.mjs
 
 Expected: all pass; navigation test finds exactly four future directions, and the gate still reports empty capabilities.
 
-- [ ] **Step 8: Commit the inert navigation**
+- [x] **Step 8: Commit the inert navigation**
 
 ```bash
 git add apps/web/src/deferred-product-scope.json apps/web/src/product-modules.json apps/web/src/platform/modules apps/web/src/platform/shell apps/web/src/design-system/workspace-shell.css
@@ -532,7 +532,7 @@ git commit -m "feat(web): show deferred product directions"
 - Modify: `docs/superpowers/specs/2026-08-18-tashan-orgspace-design.md`
 - Modify: `docs/superpowers/specs/2026-08-19-public-control-plane-sequencing.md`
 
-- [ ] **Step 1: Preserve the deferred-scope marker and add the supersession note**
+- [x] **Step 1: Preserve the deferred-scope marker and add the supersession note**
 
 The total design already received this marker in Task 1; verify it remains. Add the same marker near the top of public-control-plane sequencing:
 
@@ -546,13 +546,13 @@ In the total design add:
 > 2026-08-28 范围更新：通用计算执行和用户网站/服务托管不属于当前实现或 v1 验收范围；相关方向保留在导航并标记“即将上线”。本更新以 `2026-08-28-defer-compute-and-user-web-deployment-design.md` 为准。
 ```
 
-- [ ] **Step 2: Change the product definition and principles**
+- [x] **Step 2: Change the product definition and principles**
 
 Replace “协作与安全计算平台” with “组织协作与文件平台”. Remove server resource management from the one-line definition. In the four-part loop, change “程序和服务执行” to “任务、审批和组织流程推进”.
 
 Remove active principles for workload paths and public egress. Keep default safety, audit, CLI parity and future AI extensibility.
 
-- [ ] **Step 3: Rewrite v1 scope and subsystem list**
+- [x] **Step 3: Rewrite v1 scope and subsystem list**
 
 Delete compute/build/service/database/domain items from `3.1 v1 业务范围`. Add this subsection immediately after v1 non-goals:
 
@@ -568,7 +568,7 @@ Delete compute/build/service/database/domain items from `3.1 v1 业务范围`. A
 
 Renumber the following subsection and remove runtime/dynamic service entries from the active independent-spec sequence.
 
-- [ ] **Step 4: Remove compute assumptions from active roles, objects and infrastructure**
+- [x] **Step 4: Remove compute assumptions from active roles, objects and infrastructure**
 
 Make these exact conceptual changes:
 
@@ -581,7 +581,7 @@ Make these exact conceptual changes:
 - Docker Compose and Nginx remain platform deployment infrastructure;
 - platform gateway means the existing OrgSpace Web/API gateway, not dynamic user-service routing.
 
-- [ ] **Step 5: Replace the detailed compute/service chapter with a deferred record**
+- [x] **Step 5: Replace the detailed compute/service chapter with a deferred record**
 
 Replace the active compute, resource-pool, service-domain and `service public` chapters with:
 
@@ -595,13 +595,13 @@ OrgSpace 自身继续使用 AUP、Docker Compose、Nginx、PostgreSQL 和 Redis�
 历史计算与服务设计由 `2026-08-28-defer-compute-and-user-web-deployment-design.md` 取代。未来重新启用必须重新完成设计、威胁模型、能力注册和用户确认。
 ```
 
-- [ ] **Step 6: Update public-control-plane sequencing**
+- [x] **Step 6: Update public-control-plane sequencing**
 
 Keep Phase 0 public user access, AUP/ECS ingress and distribution. Replace the secure-compute and dynamic-user-service phases with one deferred section using the same marker and explicitly state that existing gateway only serves OrgSpace itself.
 
 Do not delete production paths, tunnel ports, TLS, backup or secret rules used by the current platform.
 
-- [ ] **Step 7: Validate canonical wording and commit**
+- [x] **Step 7: Validate canonical wording and commit**
 
 Run:
 
@@ -627,7 +627,7 @@ git commit -m "docs(product): narrow the active product scope"
 - Modify: `docs/superpowers/specs/2026-08-26-full-product-frontend-blueprint.md`
 - Modify: `docs/superpowers/specs/2026-08-28-homepage-v2-workbench-visual-system.md`
 
-- [ ] **Step 1: Add deferral markers and current-scope statements**
+- [x] **Step 1: Add deferral markers and current-scope statements**
 
 Add the exact marker to the Web architecture and frontend blueprint:
 
@@ -637,7 +637,7 @@ Add the exact marker to the Web architecture and frontend blueprint:
 
 State that routes for deferred modules exist only to render Coming Soon pages and are not API contracts.
 
-- [ ] **Step 2: Simplify the Web dependency and route diagrams**
+- [x] **Step 2: Simplify the Web dependency and route diagrams**
 
 In Web architecture:
 
@@ -652,7 +652,7 @@ The deferred route block must say:
 Visible deferred routes → ComingSoonPage only → no capability → no write request
 ```
 
-- [ ] **Step 3: Replace detailed compute/service wireframes**
+- [x] **Step 3: Replace detailed compute/service wireframes**
 
 In the frontend blueprint, replace runtime, service, database, domain and `service public` screens with one shared wireframe:
 
@@ -669,11 +669,11 @@ In the frontend blueprint, replace runtime, service, database, domain and `servi
 
 Remove CPU/memory pool cards, deployment forms, service-public actions and domain status from the approved core-screen set.
 
-- [ ] **Step 4: Update the visual-system future-surface references**
+- [x] **Step 4: Update the visual-system future-surface references**
 
 Change “file/runtime/service management” to “file and organization-management surfaces”. State that deferred modules reuse the branded Coming Soon state and do not need separate operational components.
 
-- [ ] **Step 5: Verify and commit the Web documents**
+- [x] **Step 5: Verify and commit the Web documents**
 
 Run:
 
@@ -697,11 +697,11 @@ git commit -m "docs(web): reduce deferred modules to state pages"
 **Files:**
 - Modify: `docs/superpowers/plans/2026-08-26-full-product-delivery.md`
 
-- [ ] **Step 1: Preserve the marker and update the plan header**
+- [x] **Step 1: Preserve the marker and update the plan header**
 
 Verify the exact deferral marker added in Task 1 remains. Change the architecture paragraph to specialized data planes for files and chat only. Remove S3 build artifacts and Docker/BuildKit from the user-feature tech stack; retain Docker Compose and Nginx as platform deployment tools.
 
-- [ ] **Step 2: Remove compute and hosting implementation tasks**
+- [x] **Step 2: Remove compute and hosting implementation tasks**
 
 Delete the executable checklists and file lists under current Task 6 and Task 7. Replace them with a non-checklist section:
 
@@ -713,7 +713,7 @@ The navigation retains four inert `coming_soon` modules. This plan does not crea
 
 Renumber chat, global work and v1 closure tasks so the active task sequence is contiguous.
 
-- [ ] **Step 3: Update v1 closure acceptance**
+- [x] **Step 3: Update v1 closure acceptance**
 
 Remove compute, services, domains and workload recovery from synthetic and production acceptance. The complete synthetic journey must cover:
 
@@ -723,7 +723,7 @@ auth → organizations → files → work/process → OKR → notifications/SMS 
 
 Production recovery retains AUP backup, database restore, tunnel/gateway, file storage, SMS carrier and public Skill/CLI installation checks.
 
-- [ ] **Step 4: Rewrite the release train**
+- [x] **Step 4: Rewrite the release train**
 
 Use:
 
@@ -738,7 +738,7 @@ Phase 5  全面一致性 / 恢复 / 安全 / v1 验收
 Deferred  计算 / 构建 / 用户网站 / 服务 / 数据库 / daemon / 用户域名
 ```
 
-- [ ] **Step 5: Verify no active checklist remains for deferred work**
+- [x] **Step 5: Verify no active checklist remains for deferred work**
 
 Run:
 
@@ -749,7 +749,7 @@ node scripts/check-deferred-product-scope.mjs
 
 Expected: the grep returns no matches and the gate passes.
 
-- [ ] **Step 6: Commit the revised delivery plan**
+- [x] **Step 6: Commit the revised delivery plan**
 
 ```bash
 git add docs/superpowers/plans/2026-08-26-full-product-delivery.md
@@ -764,7 +764,7 @@ git commit -m "docs(plan): defer compute and hosting phases"
 - Modify: `skill/tashan-orgspace/references/safety.md`
 - Modify: `docs/superpowers/specs/2026-08-26-reliable-cli-skill-distribution-design.md`
 
-- [ ] **Step 1: Update README and preserve the marker**
+- [x] **Step 1: Update README and preserve the marker**
 
 Verify the exact marker added in Task 1 remains and change the product description to “独立的组织协作与文件平台”. Replace the current missing-scope paragraph with:
 
@@ -774,7 +774,7 @@ Verify the exact marker added in Task 1 remains and change the product descripti
 
 Keep AUP deployment, alpha.3, installer and public release statements unchanged.
 
-- [ ] **Step 2: Update architecture and distribution boundaries**
+- [x] **Step 2: Update architecture and distribution boundaries**
 
 In `phase0-security-foundation.md`, separate “future active product phases” from “visible deferred directions”. Do not claim AUP production deployment is future; it already exists.
 
@@ -782,7 +782,7 @@ In Skill safety, state that the CLI exposes no compute, service, database, daemo
 
 In reliable-distribution design, replace “本轮不实现” with “延期能力仅保留 Coming Soon 导航，不进入发布 capability”.
 
-- [ ] **Step 3: Run source-wide scope checks**
+- [x] **Step 3: Run source-wide scope checks**
 
 Run:
 
@@ -794,7 +794,7 @@ git diff --check
 
 Expected: no active-scope claim remains; historical matches are explicitly labeled deferred or superseded.
 
-- [ ] **Step 4: Commit supporting documentation**
+- [x] **Step 4: Commit supporting documentation**
 
 ```bash
 git add README.md docs/architecture/phase0-security-foundation.md skill/tashan-orgspace/references/safety.md docs/superpowers/specs/2026-08-26-reliable-cli-skill-distribution-design.md
@@ -807,7 +807,7 @@ git commit -m "docs(scope): align product and distribution boundaries"
 - Create: `docs/verification/deferred-product-scope.md`
 - Modify: `docs/superpowers/plans/2026-08-28-defer-compute-and-user-web-deployment.md`
 
-- [ ] **Step 1: Run complete automated verification**
+- [x] **Step 1: Run complete automated verification**
 
 Run:
 
@@ -823,7 +823,7 @@ ORGSPACE_TEST_CLEANUP_VOLUMES=1 bash scripts/verify-phase0.sh
 
 Expected: all pass; gate discovery reports 17 gates; production stack and E2E remain green.
 
-- [ ] **Step 2: Run browser acceptance for every deferred entry**
+- [x] **Step 2: Run browser acceptance for every deferred entry**
 
 Start the isolated loopback production stack. At 1440px and 390px:
 
@@ -835,7 +835,7 @@ Start the isolated loopback production stack. At 1440px and 390px:
 6. verify there is no form, mutation button, upload control, terminal, log stream, domain, database credential or public/private action;
 7. verify no horizontal overflow and visible keyboard focus.
 
-- [ ] **Step 3: Record verification evidence**
+- [x] **Step 3: Record verification evidence**
 
 Create `docs/verification/deferred-product-scope.md` with:
 
@@ -847,7 +847,7 @@ Create `docs/verification/deferred-product-scope.md` with:
 - distinction between OrgSpace's own AUP deployment and deferred user hosting;
 - any remaining non-blocking debt.
 
-- [ ] **Step 4: Mark plan boxes and commit acceptance**
+- [x] **Step 4: Mark plan boxes and commit acceptance**
 
 Mark every completed checkbox in this plan, run `git diff --check`, then:
 

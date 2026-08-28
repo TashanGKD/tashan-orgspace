@@ -1,7 +1,7 @@
 # 延期产品范围验证记录
 
-> 验证基线：`97f06d2d8fae2f3c161192e37783cdb06ef32183` 加上本记录提交前的工作树
-> 日期：2026-08-28
+> 验证基线：`20dc04b`
+> 日期：2026-08-29
 
 ## 自动化验证
 
@@ -10,14 +10,14 @@
 - `pnpm format:check`
 - `pnpm lint`
 - `pnpm typecheck`
-- `pnpm test`（Web 18 个测试文件、95 个测试）
+- `pnpm test`（Web 18 个测试文件、96 个测试）
 - `node scripts/check-deferred-product-scope.mjs`：4 个延期模块、4 份范围声明、0 个违规
 - `node scripts/check-deferred-product-scope.self-test.mjs`
 - `node scripts/check-gate-self-tests.mjs`：17 个门禁、0 个违规
 - `ORGSPACE_TEST_CLEANUP_VOLUMES=1 pnpm test:production-stack`：4 个生产栈测试通过
 - `pnpm test:e2e`：4 个隔离端到端测试通过
 
-`scripts/verify-phase0.sh` 也已启动并依次完成工具链、格式、lint、类型、全仓单测和安装分发阶段；其生产栈与 E2E 子步骤随后以独立命令重新运行并通过，见本记录的完整命令列表。
+`ORGSPACE_TEST_CLEANUP_VOLUMES=1 bash scripts/verify-phase0.sh` 已运行并完成其静态、分发与门禁阶段；随后也再次独立运行生产栈和 E2E，均通过。
 
 ## 延期模块与路由
 
@@ -32,9 +32,9 @@
 
 ## 浏览器验收
 
-已在隔离的本地 Postgres、Redis、API 和 Vite Web 环境中启动浏览器流程。注册页、验证码发送和倒计时可见；但用合成手机号完成注册时，Web 显示“请求没有完成，请稍后重试”，未能进入认证后的工作台。因此本轮尚未记录 1440px/390px 的四条延期入口截图，也没有把浏览器验收标为通过。
+已在隔离的本地 Postgres、Redis、API 和 Vite Web 环境中完成浏览器流程。此前的通用错误来自不符合契约的合成密码；换用同时包含小写、大写和数字的密码后，注册 API 返回 `201`，浏览器登录进入组织工作台。
 
-这不改变延期范围门禁、导航组件测试或生产栈/E2E 的结果；它是后续需要单独诊断的 Web 注册旅程问题。测试环境、合成手机号和验证码均不是真实用户数据。
+在 1440px 桌面侧栏中，“未来能力”含四条指定入口及可见“即将上线”。四条路由逐一打开后均显示模块标题、“即将上线”和“此功能暂未开放”；状态页内表单与按钮计数均为 0。390px 移动端的“更多导航”也包含相同四条入口。浏览器使用隔离账号与合成手机号/验证码，未使用真实用户数据。
 
 ## 范围边界
 
@@ -42,4 +42,4 @@ OrgSpace 自身继续使用 AUP、Docker Compose、Nginx、PostgreSQL、Redis、
 
 ## 余项
 
-- 完成真实浏览器注册旅程的错误诊断后，补做 1440px 与 390px 截图、键盘焦点和四条状态页检查，并再标记实施计划的 Task 7 浏览器步骤。
+本轮无阻塞余项。浏览器验收使用应用内浏览器会话，未将截图作为仓库二进制资产保存；可复运行的路由与状态断言已由 Web 回归测试覆盖。
