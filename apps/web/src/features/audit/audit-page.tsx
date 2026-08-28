@@ -83,7 +83,6 @@ export function AuditPage({
         signal,
       ),
     getNextPageParam: (page) => page.nextCursor ?? undefined,
-    enabled: selectedEventId === undefined,
   });
   const auditDetail = useQuery({
     queryKey: ["organization", organizationId, "audit", "detail", selectedEventId],
@@ -110,8 +109,7 @@ export function AuditPage({
     );
   }, [activeFilter, events, query]);
   const selectedEvent = auditDetail.data ?? undefined;
-  const displayedEvents =
-    selectedEventId === undefined ? visibleEvents : selectedEvent ? [selectedEvent] : [];
+  const displayedEvents = visibleEvents;
 
   return (
     <>
@@ -137,12 +135,8 @@ export function AuditPage({
           />
         }
       >
-        {selectedEventId === undefined && audit.isPending ? (
-          <ResourceState resourceLabel="操作记录" state="loading" />
-        ) : null}
-        {selectedEventId === undefined && audit.isError ? (
-          <ResourceState resourceLabel="操作记录" state="fatal-error" />
-        ) : null}
+        {audit.isPending ? <ResourceState resourceLabel="操作记录" state="loading" /> : null}
+        {audit.isError ? <ResourceState resourceLabel="操作记录" state="fatal-error" /> : null}
         {selectedEventId !== undefined && auditDetail.isPending ? (
           <ResourceState resourceLabel="操作记录" state="loading" />
         ) : null}

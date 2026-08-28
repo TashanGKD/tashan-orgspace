@@ -1,5 +1,5 @@
 import { QueryClientProvider, useQuery } from "@tanstack/react-query";
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { Navigate, Route, Routes, useParams } from "react-router";
 
 import type { DeviceLoginMetadata } from "@tashan/contracts";
@@ -11,6 +11,7 @@ import { AuditPage } from "./features/audit/audit-page.js";
 import { OrganizationHomePage } from "./features/organization/home-page.js";
 import { MembersPage } from "./features/organization/members-page.js";
 import { ComingSoonPage } from "./features/roadmap/coming-soon-page.js";
+import { Button } from "./design-system/primitives/index.js";
 import {
   OrganizationProvider,
   RequireOrganizationRole,
@@ -23,6 +24,7 @@ import {
 } from "./platform/feedback/feedback-context.js";
 import { productModules } from "./platform/modules/module-catalog.js";
 import { resourceSurface } from "./platform/resources/resource-surfaces.js";
+import { ResourceState } from "./platform/resources/resource-states.js";
 import { routes } from "./platform/routing/route-paths.js";
 import { AppShell } from "./platform/shell/app-shell.js";
 import { SessionProvider, useSession } from "./platform/session/session-context.js";
@@ -166,6 +168,34 @@ function OrganizationListShell({
   );
 }
 
+function AccountOnlyFrame({ children }: { children: ReactNode }) {
+  const session = useSession();
+  const feedback = useFeedback();
+  if (session.status !== "authenticated") return null;
+
+  async function logout(): Promise<void> {
+    feedback.clear();
+    try {
+      await session.logout();
+    } catch (error) {
+      feedback.showError(error);
+    }
+  }
+
+  return (
+    <div className="account-only-shell">
+      <header className="account-only-header">
+        <img alt="他山组织空间" src="/media/brand/logo-complete.webp" />
+        <span>{session.account.displayName}</span>
+        <Button size="small" variant="quiet" onClick={() => void logout()}>
+          退出登录
+        </Button>
+      </header>
+      <main className="account-only-content">{children}</main>
+    </div>
+  );
+}
+
 function OrganizationsArea({ sdk }: { sdk: OrgSpaceClient }) {
   const session = useSession();
   const organizations = useQuery({
@@ -173,10 +203,20 @@ function OrganizationsArea({ sdk }: { sdk: OrgSpaceClient }) {
     queryFn: ({ signal }) => sdk.listOrganizations(signal),
   });
   if (session.status !== "authenticated") return null;
-  if (organizations.isPending) return <p>正在加载组织…</p>;
+  if (organizations.isPending) {
+    return (
+      <AccountOnlyFrame>
+        <ResourceState resourceLabel="组织" state="loading" />
+      </AccountOnlyFrame>
+    );
+  }
   const firstOrganization = organizations.data?.items[0];
   if (firstOrganization === undefined) {
-    return <OrganizationHomePage organizationId="" sdk={sdk} />;
+    return (
+      <AccountOnlyFrame>
+        <OrganizationHomePage organizationId="" sdk={sdk} />
+      </AccountOnlyFrame>
+    );
   }
   return (
     <OrganizationProvider

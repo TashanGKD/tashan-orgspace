@@ -82,7 +82,7 @@ describe("responsive workspace shell", () => {
     expect(css).toContain("width: 208px");
     expect(css).toContain("width: 64px");
     expect(css).toContain("@media (max-width: 760px)");
-    expect(css).toContain("height: 70px");
+    expect(css).toContain("height: calc(70px + env(safe-area-inset-bottom))");
   });
 
   test("collapses explicitly and restores the device-local preference", async () => {

@@ -3,6 +3,7 @@ import { useState, type ReactNode } from "react";
 import { useLocation } from "react-router";
 
 import { pageCopy } from "../../content/user-facing-copy.js";
+import { ResourceState } from "../resources/resource-states.js";
 import { useOrganization } from "../context/organization-context.js";
 import { MobileNavigation } from "./mobile-navigation.js";
 import { readSidebarCollapsed, writeSidebarCollapsed } from "./shell-state.js";
@@ -22,8 +23,25 @@ export function AppShell({
   const [mobileNavigationOpen, setMobileNavigationOpen] = useState(false);
   const organization = useOrganization();
   const location = useLocation();
-  if (organization.status === "loading") return <p>正在加载组织…</p>;
-  if (organization.status === "forbidden") return <p>{pageCopy.forbiddenOrganization}</p>;
+  if (organization.status === "loading") {
+    return (
+      <main className="workspace-boundary-state">
+        <img alt="他山组织空间" src="/media/brand/logo-complete.webp" />
+        <ResourceState resourceLabel="组织" state="loading" />
+      </main>
+    );
+  }
+  if (organization.status === "forbidden") {
+    return (
+      <main className="workspace-boundary-state">
+        <img alt="他山组织空间" src="/media/brand/logo-complete.webp" />
+        <p>{pageCopy.forbiddenOrganization}</p>
+        <button type="button" onClick={() => void onLogout()}>
+          退出登录
+        </button>
+      </main>
+    );
+  }
 
   function updateCollapsed(next: boolean): void {
     writeSidebarCollapsed(next);

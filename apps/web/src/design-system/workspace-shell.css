@@ -7,6 +7,71 @@
   background: var(--surface-canvas);
 }
 
+.account-only-shell {
+  min-height: 100vh;
+  color: var(--text-primary);
+  background: var(--surface-canvas);
+}
+
+.account-only-header {
+  display: flex;
+  min-height: 64px;
+  align-items: center;
+  gap: var(--space-3);
+  border-bottom: 1px solid var(--border-subtle);
+  padding: 0 clamp(16px, 4vw, 48px);
+  background: rgba(255, 255, 255, 0.94);
+}
+
+.account-only-header img {
+  width: 132px;
+  height: 38px;
+  margin-right: auto;
+  object-fit: contain;
+  object-position: left center;
+}
+
+.account-only-header span {
+  color: var(--text-secondary);
+  font-size: 0.82rem;
+}
+
+.account-only-content {
+  padding: 0 24px 32px;
+}
+
+.workspace-boundary-state {
+  display: grid;
+  min-height: 100vh;
+  place-items: center;
+  align-content: center;
+  gap: var(--space-5);
+  padding: var(--space-6);
+  color: var(--text-secondary);
+  background:
+    linear-gradient(rgba(246, 250, 252, 0.88), rgba(246, 250, 252, 0.94)),
+    url("/media/brand/bg-horizontal.webp") center / cover no-repeat;
+}
+
+.workspace-boundary-state > img {
+  width: 150px;
+  height: 44px;
+  object-fit: contain;
+}
+
+.workspace-boundary-state > p {
+  margin: 0;
+}
+
+.workspace-boundary-state > button {
+  min-height: 40px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-control);
+  padding: 0.55rem 0.9rem;
+  color: var(--brand-navy);
+  background: var(--surface-primary);
+}
+
 .workspace-sidebar {
   position: relative;
   z-index: 40;
@@ -314,6 +379,14 @@
 }
 
 @media (max-width: 760px) {
+  .account-only-header span {
+    display: none;
+  }
+
+  .account-only-content {
+    padding-inline: 16px;
+  }
+
   .workspace-sidebar {
     display: none;
   }
@@ -356,7 +429,7 @@
     bottom: 0;
     left: 0;
     display: grid;
-    height: 70px;
+    height: calc(70px + env(safe-area-inset-bottom));
     grid-template-columns: repeat(5, minmax(0, 1fr));
     border-top: 1px solid rgba(14, 46, 79, 0.08);
     padding: 6px 6px max(6px, env(safe-area-inset-bottom));

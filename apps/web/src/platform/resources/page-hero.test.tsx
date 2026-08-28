@@ -17,4 +17,18 @@ describe("PageHero", () => {
     expect(screen.getByText("查看和添加组织成员")).toBeVisible();
     expect(screen.getByRole("button", { name: "添加成员" })).toBeVisible();
   });
+
+  test("detail drawer cards keep their content height instead of stretching", () => {
+    const css = readFileSync(
+      resolve(import.meta.dirname, "../../design-system/resource-surfaces.css"),
+      "utf8",
+    );
+    expect(css).toMatch(
+      /\.resource-detail-drawer-body\s*\{[^}]*align-content:\s*start;[^}]*grid-auto-rows:\s*max-content;/s,
+    );
+    expect(css).toContain("width: min(100%, 480px)");
+    expect(css).toContain("@media (max-width: 760px)");
+  });
 });
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";

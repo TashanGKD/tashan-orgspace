@@ -1,4 +1,6 @@
 import { strict as assert } from "node:assert";
+import { Buffer } from "node:buffer";
+import { createHash } from "node:crypto";
 import {
   copyFileSync,
   cpSync,
@@ -50,7 +52,7 @@ function makeFixture() {
     writeFileSync(
       resolve(designSystem, file),
       file === "brand-tokens.css"
-        ? ":root { --brand-navy: #0e2e4f; --brand-blue: #5b9bd5; --brand-mint: #9fd4c4; --radius-card: 20px; --shadow-card: 0 4px 16px rgba(15, 46, 79, 0.12); }\n"
+        ? ":root { --brand-navy: #0e2e4f; --brand-blue: #5b9bd5; --brand-mint: #9fd4c4; --surface-primary: #ffffff; --surface-secondary: #f1f6f8; --text-secondary: #536a7b; --text-tertiary: #5b7080; --radius-card: 20px; --shadow-card: 0 4px 16px rgba(15, 46, 79, 0.12); }\n"
         : ":root { --fixture: 1; }\n",
     );
   }
@@ -76,11 +78,30 @@ try {
 }
 
 rejectMutation((root) => {
+  writeFileSync(
+    resolve(root, "apps/web/public/media/brand/bg-horizontal.webp"),
+    "corrupted brand asset",
+  );
+}, /brand asset checksum mismatch: mountain-background/);
+
+rejectMutation((root) => {
   const manifestPath = resolve(root, "apps/web/src/design-system/brand-assets.json");
   const manifest = JSON.parse(readFileSync(manifestPath, "utf8"));
-  manifest[0].sha256 = "0".repeat(64);
+  const assetPath = resolve(root, "apps/web/public/media/brand/bg-horizontal.webp");
+  const replacement = Buffer.from("replacement brand asset");
+  writeFileSync(assetPath, replacement);
+  manifest[0].sha256 = createHash("sha256").update(replacement).digest("hex");
   writeFileSync(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`);
-}, /brand asset checksum mismatch: mountain-background/);
+}, /reviewed brand asset metadata mismatch: mountain-background/);
+
+rejectMutation((root) => {
+  const tokenPath = resolve(root, "apps/web/src/design-system/brand-tokens.css");
+  const css = readFileSync(tokenPath, "utf8").replace(
+    "--text-tertiary: #5b7080",
+    "--text-tertiary: #8293a0",
+  );
+  writeFileSync(tokenPath, css);
+}, /text contrast below WCAG AA: --text-tertiary on --surface-primary/);
 
 rejectMutation((root) => {
   const path = resolve(root, "apps/web/src/styles.css");
@@ -96,6 +117,18 @@ rejectMutation((root) => {
   const path = resolve(root, "apps/web/src/design-system/access.css");
   writeFileSync(path, '.access { background: url("https://preview2.tashan.ac.cn/bg.webp"); }\n');
 }, /remote CSS asset/);
+
+rejectMutation((root) => {
+  writeFileSync(
+    resolve(root, "apps/web/src/remote-brand.tsx"),
+    'export const logo = "https://preview2.tashan.ac.cn/logo.webp";\n',
+  );
+}, /remote brand hotlink/);
+
+rejectMutation((root) => {
+  const path = resolve(root, "apps/web/src/design-system/global.css");
+  writeFileSync(path, ".legacy { color: #b53527; }\n");
+}, /legacy visual color.*#b53527/);
 
 rejectMutation((root) => {
   const manifestPath = resolve(root, "apps/web/src/design-system/brand-assets.json");

@@ -197,6 +197,17 @@ describe("routed Phase 0 Web", () => {
     );
   });
 
+  test("keeps account controls available before the user joins an organization", async () => {
+    const sdk = client({
+      listOrganizations: vi.fn().mockResolvedValue({ items: [] }),
+    });
+    await login(sdk);
+    expect(screen.getByRole("img", { name: "他山组织空间" })).toBeVisible();
+    expect(screen.getByRole("heading", { name: "组织首页" })).toBeVisible();
+    expect(screen.getByRole("button", { name: "创建组织" })).toBeVisible();
+    expect(screen.getByRole("button", { name: "退出登录" })).toBeVisible();
+  });
+
   test("shows the API reason when organization creation is rejected", async () => {
     const sdk = client({
       createOrganization: vi

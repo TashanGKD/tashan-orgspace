@@ -115,11 +115,20 @@ test("follows audit pagination when a copied detail URL points beyond the first 
     serverIp: "203.0.113.10",
     device: null,
   };
+  const currentEvent = {
+    id: eventId,
+    capabilityId: "organization.create",
+    result: "success",
+    requestId: "746fb70b-a27e-4a78-a231-aa55ef8c343e",
+    actorSource: "web",
+    occurredAt: "2026-08-19T00:00:00.000Z",
+  };
   const sdk = {
-    listAuditEvents: vi
-      .fn()
-      .mockResolvedValueOnce({ items: [], nextCursor: "older-page" })
-      .mockResolvedValueOnce({ items: [event], nextCursor: null }),
+    listAuditEvents: vi.fn(({ limit, cursor }: { limit: number; cursor?: string }) => {
+      if (limit === 25) return Promise.resolve({ items: [currentEvent], nextCursor: null });
+      if (cursor === undefined) return Promise.resolve({ items: [], nextCursor: "older-page" });
+      return Promise.resolve({ items: [event], nextCursor: null });
+    }),
   } as unknown as OrgSpaceClient;
   render(
     <QueryClientProvider client={createWebQueryClient()}>
@@ -129,16 +138,15 @@ test("follows audit pagination when a copied detail URL points beyond the first 
     </QueryClientProvider>,
   );
   expect(await screen.findByRole("dialog", { name: "添加组织成员" })).toBeVisible();
+  expect(screen.getByRole("link", { name: /创建组织.*成功/, hidden: true })).toBeInTheDocument();
   expect(screen.getByRole("region", { name: "技术信息" })).toHaveTextContent(
     "organization.member.add",
   );
-  expect(sdk.listAuditEvents).toHaveBeenNthCalledWith(
-    1,
+  expect(sdk.listAuditEvents).toHaveBeenCalledWith(
     { organizationId, limit: 100 },
     expect.any(AbortSignal),
   );
-  expect(sdk.listAuditEvents).toHaveBeenNthCalledWith(
-    2,
+  expect(sdk.listAuditEvents).toHaveBeenCalledWith(
     { organizationId, limit: 100, cursor: "older-page" },
     expect.any(AbortSignal),
   );
@@ -147,10 +155,13 @@ test("follows audit pagination when a copied detail URL points beyond the first 
 test("stops safely when audit pagination repeats a cursor", async () => {
   const missingEventId = "de9b9ba8-2f33-4f76-a749-59be28bd4df7";
   const sdk = {
-    listAuditEvents: vi
-      .fn()
-      .mockResolvedValueOnce({ items: [], nextCursor: "repeated" })
-      .mockResolvedValueOnce({ items: [], nextCursor: "repeated" }),
+    listAuditEvents: vi.fn(({ limit, cursor }: { limit: number; cursor?: string }) =>
+      Promise.resolve(
+        limit === 25
+          ? { items: [], nextCursor: null }
+          : { items: [], nextCursor: cursor === undefined ? "repeated" : "repeated" },
+      ),
+    ),
   } as unknown as OrgSpaceClient;
   render(
     <QueryClientProvider client={createWebQueryClient()}>
@@ -161,7 +172,11 @@ test("stops safely when audit pagination repeats a cursor", async () => {
   );
   const dialog = await screen.findByRole("dialog", { name: "操作详情" });
   expect(await within(dialog).findByText("操作记录加载失败")).toBeVisible();
-  expect(sdk.listAuditEvents).toHaveBeenCalledTimes(2);
+  expect(
+    (sdk.listAuditEvents as ReturnType<typeof vi.fn>).mock.calls.filter(
+      ([input]) => input.limit === 100,
+    ),
+  ).toHaveLength(2);
 });
 
 test("shows a stable not-found state after the final audit page", async () => {
@@ -178,5 +193,9 @@ test("shows a stable not-found state after the final audit page", async () => {
   );
   const dialog = await screen.findByRole("dialog", { name: "操作详情" });
   expect(await within(dialog).findByText("操作记录加载失败")).toBeVisible();
-  expect(sdk.listAuditEvents).toHaveBeenCalledTimes(1);
+  expect(
+    (sdk.listAuditEvents as ReturnType<typeof vi.fn>).mock.calls.filter(
+      ([input]) => input.limit === 100,
+    ),
+  ).toHaveLength(1);
 });

@@ -282,7 +282,7 @@ a.resource-row:focus-visible {
 }
 
 .resource-detail-drawer {
-  width: min(100%, 620px);
+  width: min(100%, 480px);
 }
 
 .resource-detail-drawer-header {
@@ -328,7 +328,9 @@ a.resource-row:focus-visible {
 .resource-detail-drawer-body {
   display: grid;
   flex: 1;
+  align-content: start;
   gap: var(--space-4);
+  grid-auto-rows: max-content;
   overflow-y: auto;
   padding: var(--space-6);
 }
@@ -636,7 +638,7 @@ a.resource-row:focus-visible {
   text-decoration: none;
 }
 
-@media (max-width: 720px) {
+@media (max-width: 760px) {
   .page-hero {
     min-height: 116px;
     align-items: stretch;

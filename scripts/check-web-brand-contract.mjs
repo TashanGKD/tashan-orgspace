@@ -20,6 +20,33 @@ const requiredTokens = [
   "--shadow-card: 0 4px 16px rgba(15, 46, 79, 0.12)",
 ];
 
+const reviewedAssets = new Map([
+  [
+    "mountain-background",
+    {
+      publicPath: "media/brand/bg-horizontal.webp",
+      source: "homepage-v2/frontend/public/media/bg_horizontal.webp",
+      sha256: "b155f0f9a65c3262803f58b571c07d675663cd61d405690d7d15366563913c45",
+    },
+  ],
+  [
+    "complete-logo",
+    {
+      publicPath: "media/brand/logo-complete.webp",
+      source: "homepage-v2/frontend/public/media/logo_complete.webp",
+      sha256: "8dfd1d4cffd2886cd118d74e945075414912c6359e74eb235cf2993c052e60a8",
+    },
+  ],
+  [
+    "square-logo",
+    {
+      publicPath: "media/brand/logo-square.webp",
+      source: "homepage-v2/frontend/public/media/logo_square_2.webp",
+      sha256: "3d990e6ca08a3f46e0b184fcfab78b5ad7ee077c4285fee12681b3400f5411cc",
+    },
+  ],
+]);
+
 function isInside(root, path) {
   const offset = relative(root, path);
   return offset !== "" && !offset.startsWith(`..${sep}`) && offset !== ".." && !isAbsolute(offset);
@@ -33,6 +60,38 @@ function listCssFiles(root) {
     if (entry.isFile() && entry.name.endsWith(".css")) files.push(path);
   }
   return files.sort();
+}
+
+function listSourceFiles(root) {
+  const files = [];
+  for (const entry of readdirSync(root, { withFileTypes: true })) {
+    const path = resolve(root, entry.name);
+    if (entry.isDirectory()) files.push(...listSourceFiles(path));
+    if (entry.isFile() && /\.(?:css|html|json|ts|tsx)$/.test(entry.name)) files.push(path);
+  }
+  return files.sort();
+}
+
+function cssHexVariable(css, name) {
+  const match = css.match(new RegExp(`${name}:\\s*(#[a-f0-9]{6})`, "i"));
+  if (match?.[1] === undefined) throw new Error(`missing color token for contrast check: ${name}`);
+  return match[1];
+}
+
+function relativeLuminance(hex) {
+  const channels = [1, 3, 5]
+    .map((index) => Number.parseInt(hex.slice(index, index + 2), 16) / 255)
+    .map((channel) => (channel <= 0.04045 ? channel / 12.92 : ((channel + 0.055) / 1.055) ** 2.4));
+  return 0.2126 * channels[0] + 0.7152 * channels[1] + 0.0722 * channels[2];
+}
+
+function contrastRatio(first, second) {
+  const firstLuminance = relativeLuminance(first);
+  const secondLuminance = relativeLuminance(second);
+  return (
+    (Math.max(firstLuminance, secondLuminance) + 0.05) /
+    (Math.min(firstLuminance, secondLuminance) + 0.05)
+  );
 }
 
 function sha256(path) {
@@ -73,6 +132,15 @@ export function checkWebBrandContract(repositoryRoot) {
     if (!/^[a-f0-9]{64}$/.test(asset.sha256)) {
       throw new Error(`invalid brand asset checksum: ${asset.name}`);
     }
+    const reviewed = reviewedAssets.get(asset.name);
+    if (
+      reviewed === undefined ||
+      reviewed.publicPath !== asset.publicPath ||
+      reviewed.source !== asset.source ||
+      reviewed.sha256 !== asset.sha256
+    ) {
+      throw new Error(`reviewed brand asset metadata mismatch: ${asset.name}`);
+    }
 
     const assetPath = resolve(publicRoot, asset.publicPath);
     if (!isInside(publicRoot, assetPath)) {
@@ -106,6 +174,10 @@ export function checkWebBrandContract(repositoryRoot) {
     if (/url\(\s*["']?https?:\/\//i.test(css)) {
       throw new Error(`remote CSS asset in ${relative(root, path)}`);
     }
+    const legacyColor = css.match(/#(?:1b1b17|b53527|84251d|f5f1e7|e9e5da|4fa8aa)\b/i);
+    if (legacyColor) {
+      throw new Error(`legacy visual color in ${relative(root, path)}: ${legacyColor[0]}`);
+    }
     if (
       /font-family\s*:[^;]*(?:Noto Serif|Songti|STSong|Georgia)/i.test(css) ||
       /font-family\s*:[^;]*(?<!-)\bserif\b/i.test(css)
@@ -117,6 +189,25 @@ export function checkWebBrandContract(repositoryRoot) {
   const tokenCss = readFileSync(resolve(sourceRoot, "design-system/brand-tokens.css"), "utf8");
   for (const token of requiredTokens) {
     if (!tokenCss.includes(token)) throw new Error(`missing reviewed visual token: ${token}`);
+  }
+
+  for (const textToken of ["--text-secondary", "--text-tertiary"]) {
+    for (const surfaceToken of ["--surface-primary", "--surface-secondary"]) {
+      const ratio = contrastRatio(
+        cssHexVariable(tokenCss, textToken),
+        cssHexVariable(tokenCss, surfaceToken),
+      );
+      if (ratio < 4.5) {
+        throw new Error(`text contrast below WCAG AA: ${textToken} on ${surfaceToken}`);
+      }
+    }
+  }
+
+  for (const path of listSourceFiles(sourceRoot)) {
+    const source = readFileSync(path, "utf8");
+    if (/https?:\/\/(?:preview2\.tashan\.ac\.cn|[^\s"']*homepage-v2)/i.test(source)) {
+      throw new Error(`remote brand hotlink in ${relative(root, path)}`);
+    }
   }
 
   return { assets: manifest.length, stylesheets: cssFiles.length, violations: 0 };
