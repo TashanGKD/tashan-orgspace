@@ -2,6 +2,7 @@
 @import "./design-system/global.css";
 @import "./design-system/primitives.css";
 @import "./design-system/workspace-shell.css";
+@import "./design-system/access.css";
 
 :root {
   color: #1b1b17;

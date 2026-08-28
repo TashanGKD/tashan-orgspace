@@ -91,113 +91,115 @@ export function AccessPanel({
 
   const copy = modeCopy[mode];
   return (
-    <main className="access-layout">
-      <section className="access-manifesto" aria-labelledby="product-title">
-        <h1 id="product-title">{pageCopy.login.heading}</h1>
-        <p className="manifesto-copy">{pageCopy.login.description}</p>
-        <dl className="access-principles">
-          {pageCopy.login.principles.map((principle, index) => (
-            <div key={principle}>
-              <dt>{String(index + 1).padStart(2, "0")}</dt>
-              <dd>{principle}</dd>
-            </div>
-          ))}
-        </dl>
-      </section>
+    <main className="access-page">
+      <header className="access-header">
+        <img alt="他山组织空间" src="/media/brand/logo-complete.webp" />
+        <span>他山学科交叉创新协会</span>
+      </header>
 
-      <section className="access-panel" aria-labelledby="access-title">
-        <div className="seal" aria-hidden="true">
-          他山
+      <section className="access-stage">
+        <div className="access-welcome">
+          <p className="access-kicker">组织协作与计算空间</p>
+          <h1 id="product-title">{pageCopy.login.heading}</h1>
+          <p>{pageCopy.login.description}</p>
+          <ul aria-label="账号功能">
+            {pageCopy.login.principles.map((principle) => (
+              <li key={principle}>{principle}</li>
+            ))}
+          </ul>
         </div>
-        <nav className="access-mode-tabs" aria-label="账号入口" role="tablist">
-          <button
-            aria-selected={mode === "login"}
-            role="tab"
-            type="button"
-            onClick={() => switchMode("login")}
-          >
-            登录
-          </button>
-          <button
-            aria-selected={mode === "register"}
-            role="tab"
-            type="button"
-            onClick={() => switchMode("register")}
-          >
-            创建账号
-          </button>
-          <button
-            aria-selected={mode === "password_reset"}
-            role="tab"
-            type="button"
-            onClick={() => switchMode("password_reset")}
-          >
-            重置密码
-          </button>
-        </nav>
-        <h2 id="access-title">{copy.title}</h2>
-        <p className="quiet">{copy.note}</p>
 
-        <form className="access-form" onSubmit={(event) => void submit(event)}>
-          <label>
-            手机号
-            <input
-              autoComplete="tel"
-              inputMode="tel"
-              name="phone"
-              required
-              value={phone}
-              onChange={(event) => setPhone(event.target.value)}
-            />
-          </label>
+        <section className="access-card" aria-labelledby="access-title">
+          <nav className="access-mode-tabs" aria-label="账号入口" role="tablist">
+            <button
+              aria-selected={mode === "login"}
+              role="tab"
+              type="button"
+              onClick={() => switchMode("login")}
+            >
+              登录
+            </button>
+            <button
+              aria-selected={mode === "register"}
+              role="tab"
+              type="button"
+              onClick={() => switchMode("register")}
+            >
+              创建账号
+            </button>
+            <button
+              aria-selected={mode === "password_reset"}
+              role="tab"
+              type="button"
+              onClick={() => switchMode("password_reset")}
+            >
+              重置密码
+            </button>
+          </nav>
+          <h2 id="access-title">{copy.title}</h2>
+          <p className="access-note">{copy.note}</p>
 
-          {mode === "login" ? null : (
+          <form className="access-form" onSubmit={(event) => void submit(event)}>
             <label>
-              验证码
-              <span className="verification-code-row">
-                <input
-                  autoComplete="one-time-code"
-                  inputMode="numeric"
-                  maxLength={6}
-                  name="code"
-                  required
-                  value={code}
-                  onChange={(event) => setCode(event.target.value)}
-                />
-                <button
-                  className="secondary-action"
-                  disabled={busy || countdown > 0 || phone.length === 0}
-                  type="button"
-                  onClick={() => void sendCode()}
-                >
-                  {countdown > 0 ? `${countdown} 秒后可重发` : "发送验证码"}
-                </button>
-              </span>
+              手机号
+              <input
+                autoComplete="tel"
+                inputMode="tel"
+                name="phone"
+                required
+                value={phone}
+                onChange={(event) => setPhone(event.target.value)}
+              />
             </label>
-          )}
 
-          <label>
-            {mode === "register" ? "设置密码" : mode === "password_reset" ? "新密码" : "密码"}
-            <input
-              autoComplete={mode === "login" ? "current-password" : "new-password"}
-              minLength={12}
-              name="password"
-              required
-              type="password"
-              value={password}
-              onChange={(event) => setPassword(event.target.value)}
-            />
-          </label>
-          <button className="primary-action" disabled={busy} type="submit">
-            {busy
-              ? "正在处理…"
-              : mode === "login"
-                ? "登录"
-                : mode === "register"
-                  ? "注册并进入空间"
-                  : "确认重置密码"}
-          </button>
-        </form>
+            {mode === "login" ? null : (
+              <label>
+                验证码
+                <span className="verification-code-row">
+                  <input
+                    autoComplete="one-time-code"
+                    inputMode="numeric"
+                    maxLength={6}
+                    name="code"
+                    required
+                    value={code}
+                    onChange={(event) => setCode(event.target.value)}
+                  />
+                  <button
+                    className="secondary-action"
+                    disabled={busy || countdown > 0 || phone.length === 0}
+                    type="button"
+                    onClick={() => void sendCode()}
+                  >
+                    {countdown > 0 ? `${countdown} 秒后可重发` : "发送验证码"}
+                  </button>
+                </span>
+              </label>
+            )}
+
+            <label>
+              {mode === "register" ? "设置密码" : mode === "password_reset" ? "新密码" : "密码"}
+              <input
+                autoComplete={mode === "login" ? "current-password" : "new-password"}
+                minLength={12}
+                name="password"
+                required
+                type="password"
+                value={password}
+                onChange={(event) => setPassword(event.target.value)}
+              />
+            </label>
+            <button className="primary-action" disabled={busy} type="submit">
+              {busy
+                ? "正在处理…"
+                : mode === "login"
+                  ? "登录"
+                  : mode === "register"
+                    ? "注册并进入空间"
+                    : "确认重置密码"}
+            </button>
+          </form>
+        </section>
       </section>
     </main>
   );

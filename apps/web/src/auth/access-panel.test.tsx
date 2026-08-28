@@ -20,11 +20,21 @@ function actions() {
 }
 
 describe("AccessPanel", () => {
-  test("uses direct product copy instead of architecture language", () => {
-    render(<AccessPanel {...actions()} />);
-    expect(screen.getByRole("heading", { name: "他山组织空间" })).toBeVisible();
+  test("uses the homepage-v2 account-entry composition", () => {
+    const { container } = render(<AccessPanel {...actions()} />);
+    expect(screen.getByRole("img", { name: "他山组织空间" })).toHaveAttribute(
+      "src",
+      "/media/brand/logo-complete.webp",
+    );
+    expect(screen.getByRole("heading", { name: "他山组织空间", level: 1 })).toBeVisible();
     expect(screen.getByText("登录后查看你加入的组织")).toBeVisible();
     expect(screen.getByText("手机号登录")).toBeVisible();
+    expect(screen.getByRole("region", { name: "登录" })).toHaveClass("access-card");
+    expect(screen.getAllByRole("tab")).toHaveLength(3);
+    expect(container.querySelector(".access-stage")).toBeInTheDocument();
+    expect(container.querySelector(".access-manifesto")).not.toBeInTheDocument();
+    expect(container.querySelector(".seal")).not.toBeInTheDocument();
+    expect(screen.queryByText("ORG")).not.toBeInTheDocument();
     expect(screen.queryByText(/真实人员|组织边界/)).not.toBeInTheDocument();
   });
 

@@ -1,0 +1,313 @@
+.access-page {
+  min-height: 100vh;
+  color: var(--text-primary);
+  background: var(--surface-canvas);
+}
+
+.access-header {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  min-height: 72px;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  border-bottom: 1px solid rgba(14, 46, 79, 0.08);
+  padding: 0 clamp(20px, 4vw, 56px);
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(18px);
+}
+
+.access-header img {
+  display: block;
+  width: 144px;
+  height: 42px;
+  object-fit: contain;
+  object-position: left center;
+}
+
+.access-header span {
+  color: var(--text-secondary);
+  font-size: 0.82rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.access-stage {
+  position: relative;
+  display: grid;
+  min-height: calc(100vh - 72px);
+  grid-template-columns: minmax(0, 1fr) 420px;
+  align-items: center;
+  gap: clamp(40px, 7vw, 112px);
+  overflow: hidden;
+  padding: clamp(40px, 7vw, 96px) max(28px, calc((100vw - 1200px) / 2));
+  background:
+    linear-gradient(
+      90deg,
+      rgba(246, 250, 252, 0.88) 0%,
+      rgba(246, 250, 252, 0.72) 48%,
+      rgba(246, 250, 252, 0.5) 100%
+    ),
+    url("/media/brand/bg-horizontal.webp") center / cover no-repeat;
+}
+
+.access-stage::before {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.2), rgba(181, 229, 200, 0.12));
+  content: "";
+  pointer-events: none;
+}
+
+.access-welcome,
+.access-card {
+  position: relative;
+  z-index: 1;
+}
+
+.access-welcome {
+  max-width: 600px;
+  padding: clamp(12px, 2vw, 28px);
+}
+
+.access-kicker {
+  margin: 0 0 var(--space-4);
+  color: var(--brand-navy);
+  font-size: 0.82rem;
+  font-weight: 750;
+  letter-spacing: 0.12em;
+}
+
+.access-welcome h1 {
+  max-width: 8em;
+  margin: 0;
+  color: var(--brand-navy);
+  font-size: clamp(3rem, 6vw, 5.8rem);
+  font-weight: 760;
+  letter-spacing: -0.055em;
+  line-height: 1.05;
+}
+
+.access-welcome > p:not(.access-kicker) {
+  margin: var(--space-5) 0 0;
+  color: var(--text-secondary);
+  font-size: clamp(1rem, 1.5vw, 1.15rem);
+  line-height: 1.8;
+}
+
+.access-welcome ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin: var(--space-6) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.access-welcome li {
+  border: 1px solid rgba(91, 155, 213, 0.22);
+  border-radius: var(--radius-full);
+  padding: 0.5rem 0.82rem;
+  color: var(--brand-navy);
+  background: rgba(255, 255, 255, 0.66);
+  box-shadow: var(--shadow-sm);
+  font-size: 0.78rem;
+  font-weight: 650;
+  backdrop-filter: blur(10px);
+}
+
+.access-card {
+  width: 100%;
+  border: 1px solid rgba(255, 255, 255, 0.88);
+  border-radius: 22px;
+  padding: clamp(28px, 4vw, 40px);
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 20px 60px rgba(15, 46, 79, 0.16);
+  backdrop-filter: blur(22px);
+}
+
+.access-page .access-mode-tabs {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-1);
+  margin: 0 0 var(--space-6);
+  border: 0;
+  border-radius: var(--radius-field);
+  padding: 4px;
+  background: var(--surface-secondary);
+}
+
+.access-page .access-mode-tabs button {
+  min-height: 38px;
+  margin: 0;
+  border: 0;
+  border-radius: 9px;
+  padding: 0.45rem 0.35rem;
+  color: var(--text-secondary);
+  background: transparent;
+  box-shadow: none;
+  font-size: 0.8rem;
+  font-weight: 650;
+  transform: none;
+}
+
+.access-page .access-mode-tabs button[aria-selected="true"] {
+  color: var(--brand-navy);
+  background: var(--surface-primary);
+  box-shadow: var(--shadow-sm);
+}
+
+.access-card h2 {
+  margin: 0;
+  color: var(--brand-navy);
+  font-size: 1.75rem;
+  font-weight: 750;
+  letter-spacing: -0.03em;
+}
+
+.access-note {
+  margin: var(--space-2) 0 0;
+  color: var(--text-secondary);
+  font-size: 0.88rem;
+  line-height: 1.6;
+}
+
+.access-page .access-form {
+  display: grid;
+  gap: var(--space-5);
+  margin-top: var(--space-6);
+}
+
+.access-page .access-form label {
+  display: grid;
+  gap: var(--space-2);
+  color: var(--text-primary);
+  font-size: 0.84rem;
+  font-weight: 650;
+  letter-spacing: 0;
+}
+
+.access-page .access-form input {
+  width: 100%;
+  min-height: 46px;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-field);
+  padding: 0.65rem 0.8rem;
+  color: var(--text-primary);
+  background: rgba(255, 255, 255, 0.92);
+  outline: none;
+  transition:
+    border-color var(--motion-fast) ease-out,
+    box-shadow var(--motion-fast) ease-out;
+}
+
+.access-page .access-form input:focus-visible {
+  border-color: var(--brand-blue);
+  box-shadow: var(--focus-ring);
+}
+
+.access-page .verification-code-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: stretch;
+  gap: var(--space-2);
+}
+
+.access-page .secondary-action,
+.access-page .primary-action {
+  min-height: 46px;
+  border-radius: var(--radius-field);
+  padding: 0.65rem 1rem;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+  transition:
+    transform var(--motion-fast) ease-out,
+    box-shadow var(--motion-fast) ease-out,
+    background var(--motion-fast) ease-out;
+}
+
+.access-page .secondary-action {
+  min-width: 8.5rem;
+  border: 1px solid var(--border-strong);
+  color: var(--brand-navy);
+  background: var(--surface-primary);
+  font-size: 0.78rem;
+}
+
+.access-page .primary-action {
+  border: 0;
+  color: #ffffff;
+  background: var(--brand-gradient);
+  box-shadow: var(--shadow-sm);
+}
+
+.access-page .secondary-action:not(:disabled):hover,
+.access-page .primary-action:not(:disabled):hover {
+  box-shadow: var(--shadow-card);
+  transform: translateY(-1px);
+}
+
+.access-page button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+@media (max-width: 760px) {
+  .access-header {
+    min-height: 60px;
+    padding-inline: 16px;
+  }
+
+  .access-header img {
+    width: 126px;
+    height: 36px;
+  }
+
+  .access-header span {
+    display: none;
+  }
+
+  .access-stage {
+    min-height: calc(100vh - 60px);
+    grid-template-columns: 1fr;
+    align-content: center;
+    gap: 20px;
+    padding: 28px 16px 40px;
+    background:
+      linear-gradient(rgba(246, 250, 252, 0.76), rgba(246, 250, 252, 0.92)),
+      url("/media/brand/bg-horizontal.webp") center / cover no-repeat;
+  }
+
+  .access-welcome {
+    padding: 0 8px;
+  }
+
+  .access-kicker,
+  .access-welcome ul {
+    display: none;
+  }
+
+  .access-welcome h1 {
+    font-size: 2.25rem;
+  }
+
+  .access-welcome > p:not(.access-kicker) {
+    margin-top: var(--space-2);
+    font-size: 0.9rem;
+  }
+
+  .access-card {
+    border-radius: 20px;
+    padding: 24px 20px;
+  }
+
+  .access-page .verification-code-row {
+    grid-template-columns: 1fr;
+  }
+
+  .access-page .secondary-action {
+    width: 100%;
+  }
+}
