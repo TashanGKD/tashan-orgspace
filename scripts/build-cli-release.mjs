@@ -98,6 +98,9 @@ async function main() {
       format: "esm",
       platform: "node",
       target: "node24",
+      banner: {
+        js: 'import { createRequire as __torgCreateRequire } from "node:module"; const require = __torgCreateRequire(import.meta.url);',
+      },
       sourcemap: false,
       legalComments: "none",
       logLevel: "silent",
