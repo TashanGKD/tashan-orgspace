@@ -323,11 +323,11 @@ git commit -m "feat(files): add spaces and file schema"
 - Create: `apps/api/test/files/file-authorization.integration.test.ts`
 - Create: `apps/api/test/files/quota-reservation.integration.test.ts`
 
-- [ ] **Step 1: Write RED authorization tests first**
+- [x] **Step 1: Write RED authorization tests first**
 
 Cover personal owner access, organization public editor access, restricted manager/editor/viewer behavior, administrator metadata-only access, child inheritance, nested boundary override, source+target move authorization, removed Membership, cross-space IDs, and last-manager rejection.
 
-- [ ] **Step 2: Implement one permission resolver**
+- [x] **Step 2: Implement one permission resolver**
 
 Export one shared decision function; routes and services may not duplicate permission SQL:
 
@@ -342,15 +342,15 @@ export async function requireFilePermission(
 
 Resolve the nearest ancestor policy with a recursive CTE. Personal spaces authorize only their owner. Organization administrators receive `metadata` for restricted folders, not `read`.
 
-- [ ] **Step 3: Write RED concurrent quota tests**
+- [x] **Step 3: Write RED concurrent quota tests**
 
 Create two transactions that each attempt to reserve the final available bytes. Exactly one succeeds; the other returns `QUOTA_EXCEEDED`. Test cancellation, expiry and completion each transition the reservation exactly once.
 
-- [ ] **Step 4: Implement transactional quota operations**
+- [x] **Step 4: Implement transactional quota operations**
 
 `SpaceService.reserve`, `commitReservation`, and `releaseReservation` must lock the `spaces` row with `FOR UPDATE`, validate current effective entitlement, and update `reserved_bytes`/`used_bytes` in the same transaction. No API path writes counters directly.
 
-- [ ] **Step 5: Verify and commit**
+- [x] **Step 5: Verify and commit**
 
 Run:
 
