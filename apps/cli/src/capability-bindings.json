@@ -89,6 +89,7 @@
   "chat.compliance.create": "chat compliance create",
   "chat.compliance.read": "chat compliance get",
   "search.query": "search query",
+  "my.work.list": "my-work list",
   "partner.list": "partner list",
   "partner.read": "partner get",
   "partner.create": "partner create",

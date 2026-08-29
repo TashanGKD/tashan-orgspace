@@ -49,6 +49,8 @@ import {
   HealthResponse,
   LoginRequest,
   LoginResponse,
+  MyWorkListQuery,
+  MyWorkListResponse,
   ConversationDirectCreateRequest,
   ConversationGroupCreateRequest,
   ConversationListResponse,
@@ -1244,6 +1246,15 @@ export function createOrgSpaceClient(options: OrgSpaceClientOptions) {
         undefined,
         { authenticated: true, signal },
       );
+    },
+    listMyWork: (input: unknown, signal?: AbortSignal) => {
+      const query = MyWorkListQuery.parse(input),
+        search = new URLSearchParams({ limit: String(query.limit) });
+      if (query.kind) search.set("kind", query.kind);
+      return request("GET", `/v1/my-work?${search}`, MyWorkListResponse, undefined, {
+        authenticated: true,
+        signal,
+      });
     },
 
     listPartners: (organizationId: string, input: unknown, signal?: AbortSignal) => {

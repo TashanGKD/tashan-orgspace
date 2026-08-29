@@ -1,5 +1,11 @@
 [
   {
+    "capabilityId": "my.work.list",
+    "route": "/my-work",
+    "action": "my-work-list",
+    "test": "apps/web/src/features/my-work/my-work-page.test.tsx"
+  },
+  {
     "capabilityId": "auth.verification.send",
     "route": "/",
     "action": "verification-send",

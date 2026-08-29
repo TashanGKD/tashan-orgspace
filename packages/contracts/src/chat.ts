@@ -48,8 +48,12 @@ export const ChatMessageSendRequest = z
     body: z.string().trim().min(1).max(20_000),
     replyToMessageId: z.uuid().optional(),
     attachments: z.array(ChatAttachment).max(20).default([]),
+    mentionAccountIds: z.array(AccountId).max(100).default([]),
   })
-  .strict();
+  .strict()
+  .refine((value) => new Set(value.mentionAccountIds).size === value.mentionAccountIds.length, {
+    message: "duplicate mentioned account",
+  });
 export const ChatMessageEditRequest = z
   .object({ body: z.string().trim().min(1).max(20_000) })
   .strict();
@@ -70,6 +74,7 @@ export const ChatMessage = z
     retractedAt: IsoDateTime.nullable(),
     createdAt: IsoDateTime,
     attachments: z.array(ChatAttachment),
+    mentionAccountIds: z.array(AccountId),
   })
   .strict();
 export const ChatMessageListQuery = z

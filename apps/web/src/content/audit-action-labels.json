@@ -89,6 +89,7 @@
   "chat.compliance.create": "发起聊天合规检查",
   "chat.compliance.read": "查看聊天合规记录",
   "search.query": "搜索组织内容",
+  "my.work.list": "查看我的工作",
   "partner.list": "查看合作方",
   "partner.read": "查看合作方详情",
   "partner.create": "添加合作方",

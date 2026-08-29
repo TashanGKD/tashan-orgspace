@@ -1170,6 +1170,19 @@
     "auditAction": "search.query"
   },
   {
+    "id": "my.work.list",
+    "version": 1,
+    "inputSchema": "MyWorkListQuery",
+    "outputSchema": "MyWorkListResponse",
+    "permissions": ["account.active"],
+    "sideEffect": "none",
+    "idempotent": true,
+    "confirmation": "none",
+    "cli": "my-work list",
+    "web": "required",
+    "auditAction": "my.work.list"
+  },
+  {
     "id": "partner.list",
     "version": 1,
     "inputSchema": "PartnerListQuery",

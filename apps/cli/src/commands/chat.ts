@@ -118,6 +118,7 @@ export function registerChatCommands(program: Command, context: CommandContext) 
     .requiredOption("--body <text>")
     .option("--reply-to <message-id>")
     .option("--attachments <json>", "file and work attachments", "[]")
+    .option("--mention <account-id...>")
     .option("--client-message-id <id>")
     .option("--idempotency-key <key>");
   send.action(
@@ -127,6 +128,7 @@ export function registerChatCommands(program: Command, context: CommandContext) 
       body: string;
       replyTo?: string;
       attachments: string;
+      mention?: string[];
       clientMessageId?: string;
       idempotencyKey?: string;
     }) => {
@@ -140,6 +142,7 @@ export function registerChatCommands(program: Command, context: CommandContext) 
           clientMessageId: options.clientMessageId ?? crypto.randomUUID(),
           body: options.body,
           attachments: JSON.parse(options.attachments),
+          mentionAccountIds: options.mention ?? [],
           ...(options.replyTo ? { replyToMessageId: options.replyTo } : {}),
         },
         { idempotencyKey: key },

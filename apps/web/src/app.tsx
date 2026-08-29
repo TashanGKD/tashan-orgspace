@@ -19,6 +19,7 @@ import {
   NotificationPolicyPage,
 } from "./features/notifications/notification-center.js";
 import { ComingSoonPage } from "./features/roadmap/coming-soon-page.js";
+import { MyWorkPage } from "./features/my-work/my-work-page.js";
 import { Button } from "./design-system/primitives/index.js";
 import {
   OrganizationProvider,
@@ -386,6 +387,50 @@ function AccountArea({ sdk }: { sdk: OrgSpaceClient }) {
   );
 }
 
+function MyWorkShell({ sdk, displayName }: { sdk: OrgSpaceClient; displayName: string }) {
+  const session = useSession();
+  const feedback = useFeedback();
+  async function logout() {
+    feedback.clear();
+    try {
+      await session.logout();
+    } catch (error) {
+      feedback.showError(error);
+    }
+  }
+  return (
+    <AppShell displayName={displayName} onLogout={logout}>
+      <MyWorkPage sdk={sdk} />
+    </AppShell>
+  );
+}
+
+function MyWorkArea({ sdk }: { sdk: OrgSpaceClient }) {
+  const session = useSession();
+  const organizations = useQuery({
+    queryKey: ["organizations"],
+    queryFn: ({ signal }) => sdk.listOrganizations(signal),
+  });
+  if (session.status !== "authenticated") return null;
+  if (organizations.isPending) return <ResourceState resourceLabel="组织" state="loading" />;
+  const firstOrganization = organizations.data?.items[0];
+  if (!firstOrganization)
+    return (
+      <AccountOnlyFrame>
+        <MyWorkPage sdk={sdk} />
+      </AccountOnlyFrame>
+    );
+  return (
+    <OrganizationProvider
+      accountId={session.account.id}
+      organizationId={firstOrganization.id}
+      sdk={sdk}
+    >
+      <MyWorkShell displayName={session.account.displayName} sdk={sdk} />
+    </OrganizationProvider>
+  );
+}
+
 function PersonalRouteContent({ backTo, sdk }: { backTo: string; sdk: OrgSpaceClient }) {
   const comingSoon = productModules.filter(
     (module) => module.context === "personal" && module.status === "coming_soon",
@@ -635,6 +680,7 @@ function AuthenticatedRoutes({ sdk }: { sdk: OrgSpaceClient }) {
       <Route path="/" element={<RootRedirect />} />
       <Route path={organizationSurface.listRoute} element={<OrganizationsArea sdk={sdk} />} />
       <Route path={`${deviceSurface.listRoute}/*`} element={<AccountArea sdk={sdk} />} />
+      <Route path="/my-work" element={<MyWorkArea sdk={sdk} />} />
       <Route path="/personal/*" element={<PersonalArea sdk={sdk} />} />
       <Route path="/org/:organizationId/*" element={<OrganizationArea sdk={sdk} />} />
       <Route path="*" element={<Navigate replace to="/" />} />

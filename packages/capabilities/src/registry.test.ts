@@ -143,6 +143,7 @@ describe("Phase 0 capability source", () => {
         "chat.compliance.create",
         "chat.compliance.read",
         "search.query",
+        "my.work.list",
         "partner.list",
         "partner.read",
         "partner.create",
@@ -162,7 +163,7 @@ describe("Phase 0 capability source", () => {
         "partner.export",
       ].sort(),
     );
-    expect(new Set(phase0Capabilities.map(({ id }) => id)).size).toBe(107);
+    expect(new Set(phase0Capabilities.map(({ id }) => id)).size).toBe(108);
   });
 
   test("keeps revocation and organization writes explicitly guarded", () => {

@@ -42,6 +42,7 @@ import { registerNotificationRoutes } from "./routes/notification-routes.js";
 import { registerChatRoutes } from "./routes/chat-routes.js";
 import { registerChatComplianceRoutes } from "./routes/chat-compliance-routes.js";
 import { registerSearchRoutes } from "./routes/search-routes.js";
+import { registerMyWorkRoutes } from "./routes/my-work-routes.js";
 import { registerPartnerRoutes } from "./routes/partner-routes.js";
 import { registerPhoneRoutes } from "./routes/phone-routes.js";
 import { registerFileRoutes } from "./routes/file-routes.js";
@@ -54,6 +55,7 @@ import { NotificationPolicyService } from "./notifications/notification-policy-s
 import { ChatService } from "./chat/chat-service.js";
 import { ComplianceService } from "./chat/compliance-service.js";
 import { SearchService } from "./search/search-service.js";
+import { MyWorkService } from "./work/my-work-service.js";
 
 export interface BuildAppOptions {
   sql: DatabaseClient;
@@ -170,6 +172,11 @@ export async function buildApp(options: BuildAppOptions): Promise<FastifyInstanc
   await registerSearchRoutes(app, {
     sql: options.sql,
     search: new SearchService(),
+    authenticate,
+  });
+  await registerMyWorkRoutes(app, {
+    sql: options.sql,
+    myWork: new MyWorkService(),
     authenticate,
   });
   if (options.partnerSecurity !== undefined) {

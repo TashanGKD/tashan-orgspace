@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 import { AccountId, IsoDateTime, OrganizationId } from "./common.js";
+import { ResourceRef } from "./collaboration.js";
 
 export const WorkItemType = z.enum(["task", "meeting", "approval", "change_request"]);
 export const WorkItemStatus = z.enum(["open", "completed", "cancelled"]);
@@ -107,3 +108,26 @@ export const WorkItemListQuery = z
 export const WorkItemListResponse = z
   .object({ items: z.array(WorkItemSummary), nextCursor: z.null() })
   .strict();
+
+export const MyWorkKind = z.enum(["task", "meeting", "approval", "reminder", "mention"]);
+export const MyWorkListQuery = z
+  .object({
+    kind: MyWorkKind.optional(),
+    limit: z.coerce.number().int().min(1).max(200).default(100),
+  })
+  .strict();
+export const MyWorkItem = z
+  .object({
+    id: z.string().min(1),
+    kind: MyWorkKind,
+    organizationId: OrganizationId,
+    organizationName: z.string().min(1),
+    title: z.string().min(1),
+    status: z.string().min(1),
+    dueAt: IsoDateTime.nullable(),
+    href: z.string().startsWith("/"),
+    resource: ResourceRef.nullable(),
+    sortAt: IsoDateTime,
+  })
+  .strict();
+export const MyWorkListResponse = z.object({ items: z.array(MyWorkItem) }).strict();

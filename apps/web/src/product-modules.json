@@ -4,10 +4,10 @@
     "label": "我的工作",
     "description": "查看分配给你的任务、审批、会议和消息",
     "context": "global",
-    "status": "coming_soon",
+    "status": "available",
     "route": "/my-work",
     "roles": [],
-    "capabilities": []
+    "capabilities": ["my.work.list"]
   },
   {
     "id": "global.account",

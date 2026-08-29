@@ -44,11 +44,11 @@
 
 ### Task 5: My Work and administration projections
 **Files:** Create `apps/api/src/work/my-work-service.ts`, `apps/api/src/routes/my-work-routes.ts`, `apps/web/src/features/my-work/`, `apps/cli/src/commands/search.ts`; modify admin pages.
-- [ ] Write RED tests for cross-org tasks/approvals/meetings/reminders/@mentions and lost membership.
-- [ ] Run tests; expect projections missing.
-- [ ] Implement reference-only projection, deep-link organization switching and Partner waiting-owner admin view.
-- [ ] Run API/Web/CLI parity tests.
-- [ ] Commit: `git commit -m "feat(workspace): add global work projections"`.
+- [x] Write RED tests for cross-org tasks/approvals/meetings/reminders/@mentions and lost membership.
+- [x] Run tests; expect projections missing.
+- [x] Implement reference-only projection, deep-link organization switching and Partner waiting-owner admin view.
+- [x] Run API/Web/CLI parity tests.
+- [x] Commit: `git commit -m "feat(workspace): add global work projections"`.
 
 ### Task 6: Chat Web/CLI/Skill and Phase 4 acceptance
 **Files:** Create `apps/web/src/features/chat/`, `apps/cli/src/commands/chat.ts`, `skill/tashan-orgspace/references/chat.md`, `tests/e2e/chat-search.test.ts`, `docs/verification/phase4-chat-search.md`.

@@ -54,7 +54,7 @@ interface EventRow {
   payload: Record<string, JSONValue>;
   created_at: Date;
 }
-const message = (row: MessageRow, attachments: ChatAttachment[]) =>
+const message = (row: MessageRow, attachments: ChatAttachment[], mentionAccountIds: string[]) =>
   ChatMessage.parse({
     id: row.id,
     conversationId: row.conversation_id,
@@ -68,6 +68,7 @@ const message = (row: MessageRow, attachments: ChatAttachment[]) =>
     retractedAt: row.retracted_at?.toISOString() ?? null,
     createdAt: row.created_at.toISOString(),
     attachments,
+    mentionAccountIds,
   });
 const event = (row: EventRow) =>
   ChatEvent.parse({
@@ -101,7 +102,14 @@ export class ChatService {
     );
   }
   private async publicMessage(tx: TransactionClient, row: MessageRow) {
-    return message(row, await this.attachments(tx, row.id));
+    const mentions = await tx<{ mentioned_account_id: string }[]>`
+      select mentioned_account_id from chat_mentions where message_id=${row.id} order by mentioned_account_id
+    `;
+    return message(
+      row,
+      await this.attachments(tx, row.id),
+      mentions.map((mention) => mention.mentioned_account_id),
+    );
   }
   private async state(tx: TransactionClient, conversationId: string) {
     const [row] = await tx<
@@ -260,6 +268,15 @@ export class ChatService {
       accountId,
       input.attachments,
     );
+    const members = await tx<{ account_id: string }[]>`
+      select account_id from conversation_members where conversation_id=${conversationId} and left_at is null
+    `;
+    const memberIds = new Set(members.map((member) => member.account_id));
+    for (const mentionedAccountId of input.mentionAccountIds) {
+      if (!memberIds.has(mentionedAccountId))
+        throw new AuthError("CHAT_FORBIDDEN", "mentioned account is not in the conversation");
+      await tx`insert into chat_mentions(message_id,mentioned_account_id)values(${id},${mentionedAccountId})`;
+    }
     await this.appendEvent(tx, {
       conversationId,
       sequence,
@@ -270,6 +287,7 @@ export class ChatService {
         body: input.body,
         replyToMessageId: input.replyToMessageId ?? null,
         attachmentCount: input.attachments.length,
+        mentionCount: input.mentionAccountIds.length,
       },
     });
     return this.publicMessage(tx, row);
