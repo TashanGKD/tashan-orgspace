@@ -1,6 +1,10 @@
 import { strict as assert } from "node:assert";
 
-import { checkFileStorageContract, FILE_CAPABILITY_IDS } from "./check-file-storage-contract.mjs";
+import {
+  checkFileStorageContract,
+  FILE_CAPABILITY_IDS,
+  pendingMigrationNames,
+} from "./check-file-storage-contract.mjs";
 
 const server = FILE_CAPABILITY_IDS.map((id) => ({
   id,
@@ -124,6 +128,18 @@ collidingMigration.actualMigrations.push("009_collaboration_kernel.sql");
 assert.throws(
   () => checkFileStorageContract(collidingMigration),
   /planned migration collides with existing migration/,
+);
+
+assert.deepEqual(
+  pendingMigrationNames(`
+### Task 1: completed
+**Files:** Create \`apps/api/migrations/009_collaboration_kernel.sql\`
+- [x] done
+### Task 2: pending
+**Files:** Create \`apps/api/migrations/010_work_items.sql\`
+- [ ] pending
+`),
+  ["010_work_items.sql"],
 );
 
 assert.doesNotThrow(() => checkFileStorageContract(valid));

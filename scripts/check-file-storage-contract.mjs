@@ -209,6 +209,17 @@ function capabilityIds(source) {
   return [...block.matchAll(/"([a-z]+(?:\.[a-z]+)+)"/g)].map((match) => match[1]);
 }
 
+export function pendingMigrationNames(source) {
+  return source
+    .split(/(?=^### Task )/m)
+    .filter((task) => task.includes("- [ ]"))
+    .flatMap((task) =>
+      [...task.matchAll(/apps\/api\/migrations\/([0-9]{3}_[a-z0-9_]+\.sql)/g)].map(
+        (match) => match[1],
+      ),
+    );
+}
+
 export function checkRepositoryFileStorageContract(repositoryRoot) {
   const read = (path) => readFileSync(resolve(repositoryRoot, path), "utf8");
   const futurePlanSources = [
@@ -229,11 +240,7 @@ export function checkRepositoryFileStorageContract(repositoryRoot) {
     skillMain: read("skill/tashan-orgspace/SKILL.md"),
     fileReference: read("skill/tashan-orgspace/references/files.md"),
     cliFileSource: read("apps/cli/src/commands/file.ts"),
-    plannedMigrations: futurePlanSources.flatMap((source) =>
-      [...source.matchAll(/apps\/api\/migrations\/([0-9]{3}_[a-z0-9_]+\.sql)/g)].map(
-        (match) => match[1],
-      ),
-    ),
+    plannedMigrations: futurePlanSources.flatMap(pendingMigrationNames),
     actualMigrations: readdirSync(resolve(repositoryRoot, "apps/api/migrations")).filter(
       (filename) => /^[0-9]{3}_[a-z0-9_]+\.sql$/.test(filename),
     ),

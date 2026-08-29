@@ -14,11 +14,11 @@
 
 **Files:** Create `apps/api/migrations/009_collaboration_kernel.sql`, `packages/contracts/src/collaboration.ts`, `apps/api/src/collaboration/`, `apps/api/test/collaboration/kernel.integration.test.ts`; modify contract exports.
 
-- [ ] Write RED tests for cross-organization links, duplicate links, immutable DomainEvent, comment authorization and same-transaction Outbox.
-- [ ] Run `pnpm --filter @tashan/api test:integration`; expect missing tables/types.
-- [ ] Implement `ResourceRef`, `ResourceLink`, `Comment`, `ActivityEvent`, `DomainEvent` and repositories; require organization equality and stable schema versions.
-- [ ] Run contracts/API tests and `pnpm typecheck`; expect green.
-- [ ] Commit: `git commit -m "feat(collaboration): add shared event kernel"`.
+- [x] Write RED tests for cross-organization links, duplicate links, immutable DomainEvent, comment authorization and same-transaction Outbox.
+- [x] Run `pnpm --filter @tashan/api test:integration`; expect missing tables/types.
+- [x] Implement `ResourceRef`, `ResourceLink`, `Comment`, `ActivityEvent`, `DomainEvent` and repositories; require organization equality and stable schema versions.
+- [x] Run contracts/API tests and `pnpm typecheck`; expect green.
+- [x] Commit: `git commit -m "feat(collaboration): add shared event kernel"`.
 
 ### Task 2: WorkItem and Assignment state machines
 
