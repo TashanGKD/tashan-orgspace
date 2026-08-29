@@ -44,8 +44,10 @@
 
 ### Task 5: Production release and evidence
 **Files:** Update release manifests, README, architecture status and `docs/verification/v1-full-product-acceptance.md`.
-- [ ] Run format/lint/type/unit/integration/distribution/production/E2E/full gates on a clean commit.
+- [x] Run format/lint/type/unit/integration/distribution/production/E2E/full gates on a clean commit.
 - [ ] Deploy exact SHA using existing safe AUP workflow; verify deployed-commit and public HTTPS.
 - [ ] Run approved real SMS smoke and public Skill/CLI fresh install.
 - [ ] Record counts, SHA, migrations, images, recovery, browser and rollback target.
 - [ ] Commit: `git commit -m "docs(release): record OrgSpace v1 acceptance"`.
+
+Local candidate evidence is recorded in `docs/verification/v1-full-product-acceptance.md` at commit `b3266e713279de4b3d8c95521dacca25be59ceeb`. Production-only items remain unchecked until separately approved and observed.
