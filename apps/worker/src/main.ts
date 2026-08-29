@@ -20,6 +20,11 @@ const sql = postgres(config.databaseUrl, {
   prepare: false,
 });
 const notificationProjector = new NotificationProjector(sql);
+const reminderScheduler = new ReminderScheduler({
+  sql,
+  workerId: `${config.workerId}:reminders`,
+  pollMilliseconds: config.pollMilliseconds,
+});
 const handlers = new Map<string, OutboxHandler>([
   ["capability.succeeded", async () => {}],
   [
@@ -28,6 +33,9 @@ const handlers = new Map<string, OutboxHandler>([
       const domainEventId = event.payload.domainEventId;
       if (typeof domainEventId !== "string") throw new Error("domain event ID is missing");
       await notificationProjector.project(domainEventId);
+      const organizationId = event.payload.organizationId;
+      if (typeof organizationId !== "string") throw new Error("organization ID is missing");
+      await reminderScheduler.scheduleOrganizationDailySummary(organizationId);
     },
   ],
 ]);
@@ -53,11 +61,6 @@ const fileLoop =
         batchSize: config.batchSize,
       })
     : undefined;
-const reminderScheduler = new ReminderScheduler({
-  sql,
-  workerId: `${config.workerId}:reminders`,
-  pollMilliseconds: config.pollMilliseconds,
-});
 const smsLoop =
   config.smsDeliveryEnabled && config.sms !== undefined
     ? (() => {

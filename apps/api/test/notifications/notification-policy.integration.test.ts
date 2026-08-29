@@ -60,6 +60,24 @@ describe("notification policy", () => {
       await sql.begin((tx) => s.resolve(tx, a.member, a.org, "approval_requested", false)),
     ).toMatchObject({ sms: true });
   });
+  test("cancels an already scheduled daily summary when a member opts out", async () => {
+    const a = await fixture(),
+      s = new NotificationPolicyService();
+    await sql`
+      insert into scheduled_reminders(
+        organization_id,recipient_account_id,event_type,resource_type,resource_id,
+        scheduled_for,deterministic_key,payload
+      ) values(
+        ${a.org},${a.member},'daily_summary','organization',${a.org},
+        '2026-08-29T10:00:00Z','daily-existing','{}'
+      )
+    `;
+    await sql.begin((tx) => s.setPreference(tx, a.member, a.org, { dailySummaryEnabled: false }));
+    const [row] = await sql<{ status: string; lease_owner: string | null }[]>`
+      select status,lease_owner from scheduled_reminders where deterministic_key='daily-existing'
+    `;
+    expect(row).toEqual({ status: "cancelled", lease_owner: null });
+  });
   test("publishes timezone versions and makes published policy immutable", async () => {
     const a = await fixture(),
       s = new NotificationPolicyService();

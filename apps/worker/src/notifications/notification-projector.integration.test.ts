@@ -74,6 +74,37 @@ describe("notification projection", () => {
       { recipient_account_id: a.owner, scheduled_for: new Date("2026-03-08T22:00:00Z") },
     ]);
   });
+  test("automatically schedules daily summaries and remains idempotent across polls", async () => {
+    const a = await fixture();
+    await sql`insert into notification_preferences(organization_id,account_id,daily_summary_enabled)values(${a.org},${a.member},false)`;
+    const scheduler = new ReminderScheduler({
+      sql,
+      workerId: "automatic-daily-worker",
+      clock: () => new Date("2026-08-29T08:00:00Z"),
+      dailySummaryScanMilliseconds: 300_000,
+    });
+    expect(await scheduler.processOnce()).toBe(0);
+    expect(await scheduler.processOnce()).toBe(0);
+    const rows = await sql<{ recipient_account_id: string; event_type: string }[]>`
+      select recipient_account_id,event_type from scheduled_reminders
+    `;
+    expect(rows).toEqual([{ recipient_account_id: a.owner, event_type: "daily_summary" }]);
+  });
+  test("restores a cancelled daily summary after the member opts back in", async () => {
+    const a = await fixture();
+    const scheduler = new ReminderScheduler({
+      sql,
+      workerId: "restore-daily-worker",
+      clock: () => new Date("2026-08-29T08:00:00Z"),
+    });
+    expect(await scheduler.scheduleDailySummary(a.org, "Asia/Shanghai")).toBe(2);
+    await sql`update scheduled_reminders set status='cancelled' where recipient_account_id=${a.member} and event_type='daily_summary'`;
+    expect(await scheduler.scheduleDailySummary(a.org, "Asia/Shanghai")).toBe(1);
+    const [row] = await sql<{ status: string }[]>`
+      select status from scheduled_reminders where recipient_account_id=${a.member} and event_type='daily_summary'
+    `;
+    expect(row?.status).toBe("pending");
+  });
   test("projects duplicate events once and schedules exact one-hour reminders", async () => {
     const a = await fixture(),
       now = new Date("2026-08-29T08:00:00.000Z"),
@@ -125,9 +156,24 @@ describe("notification projection", () => {
     await sql`insert into collaboration_resources(organization_id,resource_type,resource_id)values(${a.org},'partner',${partnerId})`;
     const [event] = await sql<
       { id: string }[]
-    >`insert into domain_events(organization_id,aggregate_type,aggregate_id,sequence,event_type,schema_version,actor_account_id,payload)values(${a.org},'partner',${partnerId},1,'partner.follow_up_scheduled',1,${a.owner},'{}')returning id`;
+    >`insert into domain_events(organization_id,aggregate_type,aggregate_id,sequence,event_type,schema_version,actor_account_id,payload)values(${a.org},'partner',${partnerId},1,'partner.interaction_added',1,${a.owner},'{}')returning id`;
     await p.project(event!.id);
-    await sql`update scheduled_reminders set status='processing',lease_owner='dead-worker',lease_expires_at='2026-08-29T10:00:00Z'`;
+    await p.project(event!.id);
+    await sql`update partners set next_follow_up_at='2026-08-29T13:30:00Z' where id=${partnerId}`;
+    const [rescheduled] = await sql<
+      { id: string }[]
+    >`insert into domain_events(organization_id,aggregate_type,aggregate_id,sequence,event_type,schema_version,actor_account_id,payload)values(${a.org},'partner',${partnerId},2,'partner.updated',1,${a.owner},'{}')returning id`;
+    await p.project(rescheduled!.id);
+    expect(
+      await sql<{ status: string; count: number }[]>`
+        select status,count(*)::int count from scheduled_reminders
+        where resource_type='partner' group by status order by status
+      `,
+    ).toEqual([
+      { status: "cancelled", count: 1 },
+      { status: "pending", count: 1 },
+    ]);
+    await sql`update scheduled_reminders set status='processing',lease_owner='dead-worker',lease_expires_at='2026-08-29T10:00:00Z' where status='pending'`;
     const scheduler = new ReminderScheduler({
       sql,
       workerId: "restart-worker",

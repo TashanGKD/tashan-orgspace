@@ -27,7 +27,8 @@ interface ScenarioInput {
     | "files-authorization"
     | "files-recovery"
     | "work-okr"
-    | "partners";
+    | "partners"
+    | "notifications";
   apiUrl: string;
   databaseUrl: string;
   alice: { accountId: string; phone: string; password: string };
@@ -365,6 +366,220 @@ if (input.type === "lifecycle") {
       exportMode,
     }),
   );
+} else if (input.type === "notifications") {
+  if (!input.bob) throw new Error("notifications requires Bob");
+  const bobStore = new MemoryCredentialStore();
+  const bob = dependencies(bobStore, crypto.randomUUID(), input.bob.password, "Bob Notify E2E");
+  await login(bob, input.bob.phone);
+  const organization = await command<{ organization: { id: string } }>(
+    ["org", "create", "--name", "Notification E2E Org", "--yes", "--idempotency-key", "notify-org"],
+    aliceA,
+  );
+  const organizationId = organization.organization.id;
+  await command(
+    [
+      "org",
+      "member",
+      "add",
+      "--org",
+      organizationId,
+      "--account",
+      input.bob.accountId,
+      "--role",
+      "member",
+      "--yes",
+      "--idempotency-key",
+      "notify-member",
+    ],
+    aliceA,
+  );
+  const createWork = (
+    group: "task" | "meeting" | "approval",
+    title: string,
+    key: string,
+    extra: string[] = [],
+  ) =>
+    command<{ item: { id: string } }>(
+      [
+        group,
+        "create",
+        "--org",
+        organizationId,
+        "--title",
+        title,
+        "--assignee",
+        input.bob!.accountId,
+        ...extra,
+        "--yes",
+        "--idempotency-key",
+        key,
+      ],
+      aliceA,
+    );
+  await createWork("approval", "审批请求", "notify-approval");
+  await createWork("task", "紧急任务", "notify-urgent", ["--priority", "urgent"]);
+  await createWork("task", "普通任务不发短信", "notify-ordinary");
+  await createWork("task", "普通任务可短信", "notify-ordinary-sms", ["--send-sms"]);
+  await createWork("task", "普通任务可短信", "notify-ordinary-sms", ["--send-sms"]);
+  const soon = new Date(Date.now() + 30 * 60_000).toISOString();
+  const deadline = await createWork("task", "一小时截止提醒", "notify-deadline", [
+    "--due-at",
+    soon,
+  ]);
+  await createWork("meeting", "一小时会议提醒", "notify-meeting", ["--starts-at", soon]);
+  await command(
+    [
+      "partner",
+      "create",
+      "--org",
+      organizationId,
+      "--data",
+      JSON.stringify({
+        name: "待跟进合作方",
+        cooperationStage: "contacting",
+        tags: [],
+        nextFollowUpAt: new Date(Date.now() - 1_000).toISOString(),
+      }),
+      "--yes",
+      "--idempotency-key",
+      "notify-partner",
+    ],
+    bob,
+  );
+  const { createDatabaseClient } = await import("../../../apps/api/src/db/client.js");
+  const db = createDatabaseClient(input.databaseUrl);
+  const waitFor = async (label: string, check: () => Promise<boolean>) => {
+    const deadlineAt = Date.now() + 10_000;
+    while (Date.now() < deadlineAt) {
+      if (await check()) return;
+      await new Promise((resolve) => setTimeout(resolve, 50));
+    }
+    throw new Error(`notification E2E timed out: ${label}`);
+  };
+  try {
+    await waitFor("projected journeys", async () => {
+      const [row] = await db<{ count: number }[]>`
+        select count(*)::int count from notifications
+        where organization_id=${organizationId} and recipient_account_id=${input.bob!.accountId}
+      `;
+      return (row?.count ?? 0) >= 9;
+    });
+    await waitFor("daily summary schedule", async () => {
+      const [row] = await db<{ count: number }[]>`
+        select count(*)::int count from scheduled_reminders
+        where organization_id=${organizationId} and recipient_account_id=${input.bob!.accountId}
+          and event_type='daily_summary' and status='pending'
+      `;
+      return row?.count === 1;
+    });
+    await db`
+      insert into scheduled_reminders(
+        organization_id,recipient_account_id,event_type,resource_type,resource_id,
+        scheduled_for,status,attempts,lease_owner,lease_expires_at,deterministic_key,payload
+      ) values(
+        ${organizationId},${input.bob.accountId},'deadline_one_hour','work_item',${deadline.item.id},
+        now()-interval '2 minutes','processing',1,'dead-notification-worker',
+        now()-interval '1 minute','e2e-expired-notification-lease',${db.json({ title: "重启恢复提醒" })}
+      )
+    `;
+    await waitFor("expired reminder lease recovery", async () => {
+      const [row] = await db<{ count: number }[]>`
+        select count(*)::int count from notifications where deduplication_key=(
+          select 'reminder:'||id from scheduled_reminders
+          where deterministic_key='e2e-expired-notification-lease'
+        )
+      `;
+      return row?.count === 1;
+    });
+    const listed = await command<{
+      items: Array<{ id: string; title: string; eventType: string; status: string }>;
+    }>(["notification", "list", "--org", organizationId], bob);
+    const first = listed.items[0];
+    if (!first) throw new Error("notification list is empty");
+    const marked = await command<{ status: string }>(
+      [
+        "notification",
+        "mark-read",
+        "--org",
+        organizationId,
+        "--notification",
+        first.id,
+        "--idempotency-key",
+        "notify-mark-read",
+      ],
+      bob,
+    );
+    await command(
+      [
+        "notification",
+        "preference-set",
+        "--org",
+        organizationId,
+        "--daily-summary",
+        "off",
+        "--yes",
+        "--idempotency-key",
+        "notify-daily-off",
+      ],
+      bob,
+    );
+    const currentPolicy = await command<{ organizationVersion: number }>(
+      ["notification", "policy-get", "--org", organizationId],
+      aliceA,
+    );
+    const published = await command<{ policyVersion: number; timezone: string }>(
+      [
+        "notification",
+        "policy-publish",
+        "--org",
+        organizationId,
+        "--timezone",
+        "America/New_York",
+        "--expected-version",
+        String(currentPolicy.organizationVersion),
+        "--yes",
+        "--idempotency-key",
+        "notify-policy",
+      ],
+      aliceA,
+    );
+    const eventCounts = await db<{ event_type: string; count: number }[]>`
+      select event_type,count(*)::int count from notifications
+      where organization_id=${organizationId} and recipient_account_id=${input.bob.accountId}
+      group by event_type order by event_type
+    `;
+    const [sms] = await db<{ count: number }[]>`
+      select count(*)::int count from notification_delivery_attempts attempt
+      left join notifications notification on notification.id=attempt.notification_id
+      left join scheduled_reminders reminder on reminder.id=attempt.reminder_id
+      where coalesce(notification.recipient_account_id,reminder.recipient_account_id)=${input.bob.accountId}
+        and attempt.channel='sms'
+    `;
+    const [explicit] = await db<{ count: number }[]>`
+      select count(*)::int count from notifications
+      where organization_id=${organizationId} and recipient_account_id=${input.bob.accountId}
+        and title='普通任务可短信'
+    `;
+    const [daily] = await db<{ status: string }[]>`
+      select status from scheduled_reminders
+      where organization_id=${organizationId} and recipient_account_id=${input.bob.accountId}
+        and event_type='daily_summary'
+    `;
+    process.stdout.write(
+      JSON.stringify({
+        eventCounts: Object.fromEntries(eventCounts.map((row) => [row.event_type, row.count])),
+        smsAttempts: sms?.count ?? -1,
+        explicitIdempotentCount: explicit?.count ?? -1,
+        dailySummaryStatus: daily?.status,
+        markedRead: marked.status === "read",
+        recoveredExpiredLease: true,
+        policyVersion: published.policyVersion,
+        policyTimezone: published.timezone,
+      }),
+    );
+  } finally {
+    await db.end();
+  }
 } else if (input.type === "work-okr") {
   if (input.bob === undefined) throw new Error("work-okr requires Bob");
   const bobStore = new MemoryCredentialStore();

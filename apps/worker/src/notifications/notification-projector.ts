@@ -25,7 +25,13 @@ export class NotificationProjector {
         await this.process(tx, event);
       else if (
         event.aggregate_type === "partner" &&
-        event.event_type === "partner.follow_up_scheduled"
+        [
+          "partner.created",
+          "partner.updated",
+          "partner.interaction_added",
+          "partner.interaction_corrected",
+          "partner.follow_up_scheduled",
+        ].includes(event.event_type)
       )
         await this.partner(tx, event);
     });
@@ -91,15 +97,25 @@ export class NotificationProjector {
     const [p] = await tx<
       { owner_account_id: string; name: string; next_follow_up_at: Date | null }[]
     >`select owner_account_id,name,next_follow_up_at from partners where id=${event.aggregate_id} and organization_id=${event.organization_id}`;
-    if (p?.next_follow_up_at)
-      await this.remind(
-        tx,
-        event,
-        p.owner_account_id,
-        "partner_follow_up",
-        p.next_follow_up_at,
-        p.name,
-      );
+    const key = p?.next_follow_up_at
+      ? `partner:${event.organization_id}:${event.aggregate_id}:${p.next_follow_up_at.toISOString()}`
+      : null;
+    await tx`
+      update scheduled_reminders set status='cancelled',lease_owner=null,lease_expires_at=null,updated_at=now()
+      where organization_id=${event.organization_id} and resource_type='partner'
+        and resource_id=${event.aggregate_id} and event_type='partner_follow_up'
+        and status in('pending','processing') and deterministic_key<>${key ?? "cancel-all"}
+    `;
+    if (p?.next_follow_up_at && key)
+      await tx`
+        insert into scheduled_reminders(
+          organization_id,recipient_account_id,event_type,resource_type,resource_id,
+          scheduled_for,deterministic_key,payload
+        ) values(
+          ${event.organization_id},${p.owner_account_id},'partner_follow_up','partner',
+          ${event.aggregate_id},${p.next_follow_up_at},${key},${tx.json({ title: p.name })}
+        ) on conflict(deterministic_key) do nothing
+      `;
   }
   private async notify(
     tx: TransactionClient,

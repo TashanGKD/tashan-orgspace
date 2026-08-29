@@ -96,6 +96,13 @@ export class NotificationPolicyService {
     const input = NotificationPreferenceUpdateRequest.parse(raw);
     await requireOrganizationMembership(tx, accountId, organizationId);
     await tx`insert into notification_preferences(organization_id,account_id,daily_summary_enabled)values(${organizationId},${accountId},${input.dailySummaryEnabled})on conflict(organization_id,account_id)do update set daily_summary_enabled=excluded.daily_summary_enabled,updated_at=now()`;
+    if (!input.dailySummaryEnabled) {
+      await tx`
+        update scheduled_reminders set status='cancelled',lease_owner=null,lease_expires_at=null,updated_at=now()
+        where organization_id=${organizationId} and recipient_account_id=${accountId}
+          and event_type='daily_summary' and status in('pending','processing')
+      `;
+    }
     return { organizationId, accountId, ...input };
   }
   public async getPreference(tx: TransactionClient, accountId: string, organizationId: string) {

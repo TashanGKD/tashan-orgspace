@@ -66,23 +66,37 @@ export class ReminderScheduler {
   private stopping = false;
   private readonly clock: () => Date;
   private readonly poll: number;
+  private readonly dailySummaryScanMilliseconds: number;
+  private nextDailySummaryScanAt = 0;
   public constructor(
     private readonly options: {
       sql: DatabaseClient;
       workerId: string;
       clock?: () => Date;
       pollMilliseconds?: number;
+      dailySummaryScanMilliseconds?: number;
     },
   ) {
     if (!/^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$/.test(options.workerId))
       throw new Error("worker ID invalid");
     this.clock = options.clock ?? (() => new Date());
     this.poll = options.pollMilliseconds ?? 500;
+    this.dailySummaryScanMilliseconds = options.dailySummaryScanMilliseconds ?? 5 * 60_000;
+    if (
+      !Number.isInteger(this.dailySummaryScanMilliseconds) ||
+      this.dailySummaryScanMilliseconds < 60_000
+    ) {
+      throw new Error("daily summary scan must be at least one minute");
+    }
   }
   public async processOnce(): Promise<number> {
     if (this.stopping) return 0;
-    const now = this.clock(),
-      lease = new Date(now.getTime() + 60000);
+    const now = this.clock();
+    if (now.getTime() >= this.nextDailySummaryScanAt) {
+      await this.scheduleAllDailySummaries(now);
+      this.nextDailySummaryScanAt = now.getTime() + this.dailySummaryScanMilliseconds;
+    }
+    const lease = new Date(now.getTime() + 60000);
     const rows = await this.options.sql<ReminderRow[]>`
       with candidates as (
         select id from scheduled_reminders
@@ -117,11 +131,44 @@ export class ReminderScheduler {
       const result = await this.options.sql`
         insert into scheduled_reminders(organization_id,recipient_account_id,event_type,resource_type,resource_id,scheduled_for,deterministic_key,payload)
         values(${organizationId},${row.account_id},'daily_summary','organization',${organizationId},${scheduledFor},${`daily:${organizationId}:${row.account_id}:${scheduledFor.toISOString().slice(0, 10)}`},${this.options.sql.json({ title: "每日工作汇总", timeZone })})
-        on conflict(deterministic_key) do nothing returning id
+        on conflict(deterministic_key) do update set
+          status='pending',scheduled_for=excluded.scheduled_for,payload=excluded.payload,
+          lease_owner=null,lease_expires_at=null,updated_at=now()
+        where scheduled_reminders.status='cancelled'
+        returning id
       `;
       inserted += result.length;
     }
     return inserted;
+  }
+  public async scheduleOrganizationDailySummary(organizationId: string, after = this.clock()) {
+    const [organization] = await this.options.sql<{ timezone: string }[]>`
+      select coalesce(policy.timezone,'Asia/Shanghai') timezone
+      from organizations organization
+      left join notification_policy_versions policy
+        on policy.organization_id=organization.id
+        and policy.version=organization.notification_policy_version
+      where organization.id=${organizationId}
+    `;
+    if (!organization) return 0;
+    return this.scheduleDailySummary(organizationId, organization.timezone, after);
+  }
+  private async scheduleAllDailySummaries(after: Date) {
+    const organizations = await this.options.sql<{ id: string; timezone: string }[]>`
+      select organization.id,
+        coalesce(policy.timezone,'Asia/Shanghai') timezone
+      from organizations organization
+      left join notification_policy_versions policy
+        on policy.organization_id=organization.id
+        and policy.version=organization.notification_policy_version
+      where exists (
+        select 1 from memberships membership
+        where membership.organization_id=organization.id and membership.status='active'
+      )
+    `;
+    for (const organization of organizations) {
+      await this.scheduleDailySummary(organization.id, organization.timezone, after);
+    }
   }
   private async deliver(row: ReminderRow) {
     await this.options.sql.begin(async (tx) => {
