@@ -531,6 +531,8 @@ git commit -m "feat(worker): verify and reconcile file objects"
 
 ### Task 8: Register the executable API, SDK, CLI and Skill slice
 
+> **Execution dependency:** Run Task 9 first. Do not register or expose file capabilities until the MinIO data plane and production-shaped storage checks are green.
+
 **Files:**
 - Create: `packages/sdk/src/file-transfer.ts`
 - Modify: `packages/sdk/src/client.ts`
@@ -594,6 +596,8 @@ git commit -m "feat(cli): add resumable file commands"
 ```
 
 ### Task 9: Deploy MinIO locally and in the production-shaped stack
+
+> **Execution order:** This task runs immediately after Task 7 and before Task 8, even though the task number is retained to preserve existing references.
 
 **Files:**
 - Create: `deploy/minio/cors.json`

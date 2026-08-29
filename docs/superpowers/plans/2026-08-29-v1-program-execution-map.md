@@ -3,7 +3,10 @@
 ## Execution order
 
 ```text
-P1-01..12  Spaces / Files / Quotas
+P1-01..07  Storage contracts and file services
+P1-09      MinIO local/AUP data plane
+P1-08      API/SDK/CLI/Skill executable slice
+P1-10..12  Web / gates / acceptance
 P2-01..06  Collaboration / Work / Process / OKR
 P2D-01..05 Partners / Interactions
 P3-01..05  Notifications / SMS / Reminders
