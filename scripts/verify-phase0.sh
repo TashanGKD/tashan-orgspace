@@ -18,7 +18,7 @@ run_step "pnpm typecheck" pnpm typecheck
 run_step "pnpm test" pnpm test
 run_step "pnpm test:distribution" pnpm test:distribution
 run_step "node scripts/check-capability-coverage.mjs" node scripts/check-capability-coverage.mjs
-run_step "node scripts/check-file-cli-skill-contract.mjs" node scripts/check-file-cli-skill-contract.mjs
+run_step "node scripts/check-file-storage-contract.mjs" node scripts/check-file-storage-contract.mjs
 run_step "node scripts/check-phone-auth-surface.mjs" node scripts/check-phone-auth-surface.mjs
 run_step "node scripts/check-release-contract.mjs" node scripts/check-release-contract.mjs
 run_step "node scripts/check-resource-surface-coverage.mjs" node scripts/check-resource-surface-coverage.mjs
@@ -29,7 +29,7 @@ run_step "node scripts/check-deferred-product-scope.mjs" node scripts/check-defe
 run_step "node scripts/check-deferred-product-scope.self-test.mjs" node scripts/check-deferred-product-scope.self-test.mjs
 run_step "node scripts/check-gate-self-tests.mjs" node scripts/check-gate-self-tests.mjs
 run_step "node scripts/check-capability-coverage.self-test.mjs" node scripts/check-capability-coverage.self-test.mjs
-run_step "node scripts/check-file-cli-skill-contract.self-test.mjs" node scripts/check-file-cli-skill-contract.self-test.mjs
+run_step "node scripts/check-file-storage-contract.self-test.mjs" node scripts/check-file-storage-contract.self-test.mjs
 run_step "node scripts/check-phone-auth-surface.self-test.mjs" node scripts/check-phone-auth-surface.self-test.mjs
 run_step "node scripts/check-release-contract.self-test.mjs" node scripts/check-release-contract.self-test.mjs
 run_step "node scripts/check-resource-surface-coverage.self-test.mjs" node scripts/check-resource-surface-coverage.self-test.mjs

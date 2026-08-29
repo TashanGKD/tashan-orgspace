@@ -707,19 +707,19 @@ git commit -m "feat(web): add personal and organization files"
 - Modify: `scripts/verify-phase0.sh`
 - Modify: `scripts/verify-phase0.self-test.sh`
 
-- [ ] **Step 1: Document the user workflow without S3 bypasses**
+- [x] **Step 1: Document the user workflow without S3 bypasses**
 
 The Skill reference covers space discovery, list/get/search, resumable upload, explicit version upload, safe download, trash/restore/delete and folder grants. It must state that agents never call MinIO/S3 directly and never reuse or print presigned URLs.
 
-- [ ] **Step 2: Write the RED gate self-test**
+- [x] **Step 2: Write the RED gate self-test**
 
 Construct fixtures that independently fail for missing CLI binding, missing Skill capability, missing Web action, file module still `coming_soon`, runtime module accidentally `available`, MinIO production port exposure, wildcard CORS, public bucket command, and absent `files.orgspace.tashan.chat` gateway block.
 
-- [ ] **Step 3: Implement and wire the gate**
+- [x] **Step 3: Implement and wire the gate**
 
 `check-file-storage-contract.mjs` reads repository files only, makes no network calls and writes nothing. It checks the 26 exact capability IDs across server/CLI/Web/Skill, two resource surfaces, four available file/space modules, MinIO image pins, private production ports, CORS allowlist and gateway hostname. Wire production gate and self-test into `verify-phase0.sh`; gate discovery must report 18 gates.
 
-- [ ] **Step 4: Run gate negative and positive paths**
+- [x] **Step 4: Run gate negative and positive paths**
 
 Run:
 
@@ -730,7 +730,7 @@ node scripts/check-gate-self-tests.mjs
 bash scripts/verify-phase0.self-test.sh
 ```
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add skill/tashan-orgspace scripts
