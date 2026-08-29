@@ -28,7 +28,8 @@
 
 ### Task 3: Component restart and reconciliation matrix
 **Files:** Extend production-stack tests and recovery verification doc.
-- [ ] Write RED tests for API/Worker/Realtime/Postgres/Redis/MinIO/tunnel restart at active operations. (AUP tunnel restart requires deployment approval.)
+- [x] Write RED tests for API/Worker/Realtime/Postgres/Redis/MinIO restart at active operations.
+- [ ] After deployment approval, restart the real AUP tunnel during an active public check and verify recovery.
 - [x] Run tests; observe unsupported recovery cases.
 - [x] Add only required reconciliation/health behavior to prior phase owners.
 - [x] Run matrix proving no lost/duplicate side effects.
@@ -39,7 +40,8 @@
 - [x] Add RED journey covering every Phase 1–4 transition and cross-organization rejection.
 - [x] Run journey; record actual page/command blockers.
 - [x] For every observed blocker, add a failing regression test in its owning Phase 1–4 module, implement the minimum fix there, and keep the Phase 5 change limited to verification wiring.
-- [ ] Rerun desktop/mobile browser, CLI JSON and fresh Skill install. (Production-login browser pass remains after approved AUP deploy.)
+- [x] Rerun automated desktop/mobile Web checks, CLI JSON journeys and local fresh Skill install.
+- [ ] After deployment approval, rerun the production-login desktop/mobile browser checklist.
 - [x] Commit: `git commit -m "test(v1): add complete user journey"`.
 
 ### Task 5: Production release and evidence

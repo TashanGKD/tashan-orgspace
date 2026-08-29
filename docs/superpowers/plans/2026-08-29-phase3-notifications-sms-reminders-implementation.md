@@ -48,4 +48,4 @@
 - [x] Run E2E; verify idempotency and restart recovery.
 - [ ] Run one separately approved real SMS smoke and query final carrier result.
 - [x] Run full verifier and record accepted vs delivered evidence separately.
-- [ ] Commit: `git commit -m "docs(verification): record Phase 3 acceptance"`.
+- [x] Commit simulated acceptance evidence: `2365f48 docs(verification): record Phase 3 simulated acceptance`.
