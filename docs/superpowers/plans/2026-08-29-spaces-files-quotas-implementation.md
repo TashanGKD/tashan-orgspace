@@ -66,9 +66,9 @@ scripts/check-file-storage-contract.self-test.mjs
 - Modify: `apps/worker/package.json`
 - Modify: `.env.example`
 
-- [ ] **Step 1: Write RED object-store configuration tests**
+- [ ] **Step 1: Create the minimal test package and write RED configuration tests**
 
-Create `packages/object-store/src/object-store.test.ts` with tests that reject HTTP public origins in production, credentials embedded in URLs, empty bucket names, path/query fragments, and identical internal/public origins in production. Include a valid local fixture:
+Create `packages/object-store/package.json` and `packages/object-store/tsconfig.json` with only the standard workspace test/typecheck scripts and Zod test dependency, but no implementation files. Then create `packages/object-store/src/object-store.test.ts` importing the missing implementation and testing rejection of HTTP public origins in production, credentials embedded in URLs, empty bucket names, path/query fragments, and identical internal/public origins in production. Include a valid local fixture:
 
 ```ts
 const local = {
@@ -83,7 +83,7 @@ const local = {
 expect(parseObjectStoreConfig(local, "test")).toMatchObject(local);
 ```
 
-The tests must also prove `objectKey()` ignores user filenames and produces `temporary/<uuid>` or `versions/<uuid>` only.
+The tests must also prove `temporaryObjectKey()` and `versionObjectKey()` accept only UUIDs and produce `temporary/<uuid>` or `versions/<uuid>` without user filenames.
 
 - [ ] **Step 2: Run the RED test**
 
@@ -93,11 +93,11 @@ Run:
 pnpm --filter @tashan/object-store test
 ```
 
-Expected: FAIL because the package and implementation do not exist.
+Expected: FAIL with a missing `client.js`/`index.js` implementation import; the test package itself must be discovered and executed.
 
-- [ ] **Step 3: Create the shared package and pin dependencies**
+- [ ] **Step 3: Complete the shared package and pin runtime dependencies**
 
-Create `packages/object-store/package.json` with `@aws-sdk/client-s3`, `@aws-sdk/s3-request-presigner` and `@aws-sdk/lib-storage` pinned to `3.1120.0`, plus Zod `4.4.3`. Export:
+Update `packages/object-store/package.json` with `@aws-sdk/client-s3`, `@aws-sdk/s3-request-presigner` and `@aws-sdk/lib-storage` pinned to `3.1120.0`, plus Zod `4.4.3`. Implement and export:
 
 ```ts
 export interface ObjectStoreConfig {
