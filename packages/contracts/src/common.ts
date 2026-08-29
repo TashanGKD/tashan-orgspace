@@ -21,6 +21,9 @@ export type SessionId = z.infer<typeof SessionId>;
 export const AuditEventId = z.uuid().brand<"AuditEventId">();
 export type AuditEventId = z.infer<typeof AuditEventId>;
 
+export const NotificationId = z.uuid().brand<"NotificationId">();
+export type NotificationId = z.infer<typeof NotificationId>;
+
 export const SpaceId = z.uuid().brand<"SpaceId">();
 export type SpaceId = z.infer<typeof SpaceId>;
 

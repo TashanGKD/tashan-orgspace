@@ -1,4 +1,5 @@
 import {
+  Bell,
   Blocks,
   Building2,
   CalendarDays,
@@ -50,6 +51,7 @@ const moduleIcons: Readonly<Record<string, LucideIcon>> = {
   "organization.approvals": ClipboardCheck,
   "organization.meetings": CalendarDays,
   "organization.files": FolderOpen,
+  "organization.notifications": Bell,
   "organization.messages": MessageCircle,
   "organization.runtime": Blocks,
   "organization.services": Server,

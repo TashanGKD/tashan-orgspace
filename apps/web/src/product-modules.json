@@ -192,6 +192,22 @@
     ]
   },
   {
+    "id": "organization.notifications",
+    "label": "通知",
+    "description": "查看提醒和通知设置",
+    "context": "organization",
+    "status": "available",
+    "route": "/org/:organizationId/notifications",
+    "roles": ["org_owner", "org_admin", "member"],
+    "capabilities": [
+      "notification.list",
+      "notification.read",
+      "notification.mark.read",
+      "notification.preference.read",
+      "notification.preference.update"
+    ]
+  },
+  {
     "id": "organization.messages",
     "label": "消息",
     "description": "查看群聊和成员消息",
@@ -244,11 +260,11 @@
   {
     "id": "organization.policies",
     "label": "组织制度",
-    "description": "设置组织额度、通知、短信和审批流程",
+    "description": "设置通知时区和组织规则",
     "context": "organization",
-    "status": "coming_soon",
+    "status": "available",
     "route": "/org/:organizationId/admin/policies",
     "roles": ["org_owner", "org_admin"],
-    "capabilities": []
+    "capabilities": ["notification.policy.read", "notification.policy.publish"]
   }
 ]

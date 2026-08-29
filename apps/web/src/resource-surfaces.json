@@ -146,6 +146,15 @@
     ]
   },
   {
+    "resourceType": "organization-notification",
+    "context": "organization",
+    "listRoute": "/org/:organizationId/notifications",
+    "detailRoute": "/org/:organizationId/notifications/:notificationId",
+    "listCapability": "notification.list",
+    "readCapability": "notification.read",
+    "actions": [{ "capabilityId": "notification.mark.read", "confirmation": "none" }]
+  },
+  {
     "resourceType": "organization-partner",
     "context": "organization",
     "listRoute": "/org/:organizationId/partners",

@@ -14,6 +14,10 @@ import { MembersPage } from "./features/organization/members-page.js";
 import { WorkPage } from "./features/work/work-page.js";
 import { OkrPage } from "./features/okr/okr-page.js";
 import { PartnersPage } from "./features/partners/partners-page.js";
+import {
+  NotificationCenter,
+  NotificationPolicyPage,
+} from "./features/notifications/notification-center.js";
 import { ComingSoonPage } from "./features/roadmap/coming-soon-page.js";
 import { Button } from "./design-system/primitives/index.js";
 import {
@@ -45,6 +49,12 @@ const meetingSurface = resourceSurface("organization-meeting");
 const approvalSurface = resourceSurface("organization-approval");
 const objectiveSurface = resourceSurface("organization-objective");
 const partnerSurface = resourceSurface("organization-partner");
+const notificationSurface = resourceSurface("organization-notification");
+const notificationPolicyRoute = (() => {
+  const module = productModules.find((candidate) => candidate.id === "organization.policies");
+  if (!module) throw new Error("organization policy module is missing");
+  return module.route;
+})();
 
 function organizationRelativeRoute(route: string): string {
   const prefix = "/org/:organizationId/";
@@ -206,6 +216,23 @@ function PartnersRoute({ organizationId, sdk }: { organizationId: string; sdk: O
       organizationId={organizationId}
       sdk={sdk}
       selectedPartnerId={partnerId}
+    />
+  );
+}
+
+function NotificationsRoute({
+  organizationId,
+  sdk,
+}: {
+  organizationId: string;
+  sdk: OrgSpaceClient;
+}) {
+  const { notificationId } = useParams<{ notificationId?: string }>();
+  return (
+    <NotificationCenter
+      organizationId={organizationId}
+      sdk={sdk}
+      selectedNotificationId={notificationId}
     />
   );
 }
@@ -562,6 +589,22 @@ function OrganizationRoutes({ sdk, displayName }: { sdk: OrgSpaceClient; display
         <Route
           path={organizationRelativeRoute(partnerSurface.detailRoute)}
           element={<PartnersRoute organizationId={organizationId} sdk={sdk} />}
+        />
+        <Route
+          path={organizationRelativeRoute(notificationSurface.listRoute)}
+          element={<NotificationsRoute organizationId={organizationId} sdk={sdk} />}
+        />
+        <Route
+          path={organizationRelativeRoute(notificationSurface.detailRoute)}
+          element={<NotificationsRoute organizationId={organizationId} sdk={sdk} />}
+        />
+        <Route
+          path={organizationRelativeRoute(notificationPolicyRoute)}
+          element={
+            <RequireOrganizationRole roles={["org_owner", "org_admin"]}>
+              <NotificationPolicyPage organizationId={organizationId} sdk={sdk} />
+            </RequireOrganizationRole>
+          }
         />
         {comingSoon.map((module) => {
           const suffix = module.route.split("/:organizationId/")[1];

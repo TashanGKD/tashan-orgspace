@@ -36,11 +36,11 @@
 
 ### Task 4: API/CLI/Web/Skill surfaces
 **Files:** Create `apps/api/src/routes/notification-routes.ts`, `packages/sdk/src/notifications.ts`, `apps/cli/src/commands/notification.ts`, `apps/web/src/features/notifications/`, `skill/tashan-orgspace/references/notifications.md`; modify capability registries.
-- [ ] Write RED list/detail/read/preference/admin-policy tests and reject attempts to disable mandatory notifications.
-- [ ] Run surface tests; expect missing capabilities.
-- [ ] Implement API, CLI commands and notification center; daily summary is the only persistent member opt-out.
-- [ ] Run parity gates and accessibility tests.
-- [ ] Commit: `git commit -m "feat(web): add notification center"`.
+- [x] Write RED list/detail/read/preference/admin-policy tests and reject attempts to disable mandatory notifications.
+- [x] Run surface tests; expect missing capabilities.
+- [x] Implement API, CLI commands and notification center; daily summary is the only persistent member opt-out.
+- [x] Run parity gates and accessibility tests.
+- [x] Commit: `git commit -m "feat(web): add notification center"`.
 
 ### Task 5: Phase 3 acceptance
 **Files:** Create `tests/e2e/notifications.test.ts` and `docs/verification/phase3-notifications.md`.

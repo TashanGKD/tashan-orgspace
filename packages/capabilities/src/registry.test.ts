@@ -122,6 +122,13 @@ describe("Phase 0 capability source", () => {
         "okr.change.request",
         "okr.change.approve",
         "okr.objective.edit.admin",
+        "notification.list",
+        "notification.read",
+        "notification.mark.read",
+        "notification.preference.read",
+        "notification.preference.update",
+        "notification.policy.read",
+        "notification.policy.publish",
         "partner.list",
         "partner.read",
         "partner.create",
@@ -141,7 +148,7 @@ describe("Phase 0 capability source", () => {
         "partner.export",
       ].sort(),
     );
-    expect(new Set(phase0Capabilities.map(({ id }) => id)).size).toBe(86);
+    expect(new Set(phase0Capabilities.map(({ id }) => id)).size).toBe(93);
   });
 
   test("keeps revocation and organization writes explicitly guarded", () => {

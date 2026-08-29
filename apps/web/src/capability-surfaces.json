@@ -354,6 +354,48 @@
     "test": "apps/web/src/features/okr/okr-page.test.tsx"
   },
   {
+    "capabilityId": "notification.list",
+    "route": "/org/:organizationId/notifications",
+    "action": "notification-list",
+    "test": "apps/web/src/features/notifications/notification-center.test.tsx"
+  },
+  {
+    "capabilityId": "notification.read",
+    "route": "/org/:organizationId/notifications/:notificationId",
+    "action": "notification-read",
+    "test": "apps/web/src/features/notifications/notification-center.test.tsx"
+  },
+  {
+    "capabilityId": "notification.mark.read",
+    "route": "/org/:organizationId/notifications/:notificationId",
+    "action": "notification-mark-read",
+    "test": "apps/web/src/features/notifications/notification-center.test.tsx"
+  },
+  {
+    "capabilityId": "notification.preference.read",
+    "route": "/org/:organizationId/notifications",
+    "action": "notification-preference-read",
+    "test": "apps/web/src/features/notifications/notification-center.test.tsx"
+  },
+  {
+    "capabilityId": "notification.preference.update",
+    "route": "/org/:organizationId/notifications",
+    "action": "notification-preference-update",
+    "test": "apps/web/src/features/notifications/notification-center.test.tsx"
+  },
+  {
+    "capabilityId": "notification.policy.read",
+    "route": "/org/:organizationId/admin/policies",
+    "action": "notification-policy-read",
+    "test": "apps/web/src/features/notifications/notification-center.test.tsx"
+  },
+  {
+    "capabilityId": "notification.policy.publish",
+    "route": "/org/:organizationId/admin/policies",
+    "action": "notification-policy-publish",
+    "test": "apps/web/src/features/notifications/notification-center.test.tsx"
+  },
+  {
     "capabilityId": "partner.list",
     "route": "/org/:organizationId/partners",
     "action": "partner-list",

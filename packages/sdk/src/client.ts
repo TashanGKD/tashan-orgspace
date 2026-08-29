@@ -56,6 +56,14 @@ import {
   OkrChangeRequestResponse,
   OkrProgressUpdateRequest,
   KeyResultProgressResponse,
+  NotificationListQuery,
+  NotificationListResponse,
+  NotificationMarkReadResponse,
+  NotificationPolicyPublishRequest,
+  NotificationPolicyResponse,
+  NotificationPreferenceResponse,
+  NotificationPreferenceUpdateRequest,
+  NotificationReadResponse,
   PasswordResetRequest,
   PasswordResetResponse,
   PartnerBulkTransferRequest,
@@ -112,6 +120,12 @@ import {
 } from "@tashan/contracts";
 
 import type { HttpMethod, Transport } from "./transport.js";
+import {
+  notificationCollectionPath,
+  notificationItemPath,
+  notificationPolicyPath,
+  notificationPreferencePath,
+} from "./notifications.js";
 
 const CapabilityListResponse = z.object({ items: z.array(Capability) }).strict();
 
@@ -967,6 +981,79 @@ export function createOrgSpaceClient(options: OrgSpaceClientOptions) {
         `/v1/organizations/${pathId(organizationId)}/objectives/${pathId(objectiveId)}/admin-edit`,
         ObjectiveMutationResponse,
         OkrChangeRequest.parse(input),
+        { ...mutation, authenticated: true },
+      ),
+
+    listNotifications: (organizationId: string, input: unknown, signal?: AbortSignal) => {
+      const query = NotificationListQuery.parse(input);
+      const search = new URLSearchParams({ limit: String(query.limit) });
+      if (query.status !== undefined) search.set("status", query.status);
+      return request(
+        "GET",
+        `${notificationCollectionPath(pathId(organizationId))}?${search}`,
+        NotificationListResponse,
+        undefined,
+        { authenticated: true, signal },
+      );
+    },
+    readNotification: (organizationId: string, notificationId: string, signal?: AbortSignal) =>
+      request(
+        "GET",
+        notificationItemPath(pathId(organizationId), pathId(notificationId)),
+        NotificationReadResponse,
+        undefined,
+        { authenticated: true, signal },
+      ),
+    markNotificationRead: (
+      organizationId: string,
+      notificationId: string,
+      mutation: MutationOptions,
+    ) =>
+      request(
+        "POST",
+        `${notificationItemPath(pathId(organizationId), pathId(notificationId))}/read`,
+        NotificationMarkReadResponse,
+        {},
+        { ...mutation, authenticated: true },
+      ),
+    readNotificationPreference: (organizationId: string, signal?: AbortSignal) =>
+      request(
+        "GET",
+        notificationPreferencePath(pathId(organizationId)),
+        NotificationPreferenceResponse,
+        undefined,
+        { authenticated: true, signal },
+      ),
+    updateNotificationPreference: (
+      organizationId: string,
+      input: unknown,
+      mutation: MutationOptions,
+    ) =>
+      request(
+        "POST",
+        notificationPreferencePath(pathId(organizationId)),
+        NotificationPreferenceResponse,
+        NotificationPreferenceUpdateRequest.parse(input),
+        { ...mutation, authenticated: true },
+      ),
+    readNotificationPolicy: (organizationId: string, signal?: AbortSignal) =>
+      request(
+        "GET",
+        notificationPolicyPath(pathId(organizationId)),
+        NotificationPolicyResponse,
+        undefined,
+        { authenticated: true, signal },
+      ),
+    publishNotificationPolicy: (
+      organizationId: string,
+      input: unknown,
+      mutation: MutationOptions,
+    ) =>
+      request(
+        "POST",
+        notificationPolicyPath(pathId(organizationId)),
+        NotificationPolicyResponse,
+        NotificationPolicyPublishRequest.parse(input),
         { ...mutation, authenticated: true },
       ),
 

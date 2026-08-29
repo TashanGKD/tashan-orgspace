@@ -98,6 +98,20 @@ export class NotificationPolicyService {
     await tx`insert into notification_preferences(organization_id,account_id,daily_summary_enabled)values(${organizationId},${accountId},${input.dailySummaryEnabled})on conflict(organization_id,account_id)do update set daily_summary_enabled=excluded.daily_summary_enabled,updated_at=now()`;
     return { organizationId, accountId, ...input };
   }
+  public async getPreference(tx: TransactionClient, accountId: string, organizationId: string) {
+    await requireOrganizationMembership(tx, accountId, organizationId);
+    const [row] = await tx<
+      { daily_summary_enabled: boolean }[]
+    >`select daily_summary_enabled from notification_preferences where organization_id=${organizationId} and account_id=${accountId}`;
+    return {
+      organizationId,
+      accountId,
+      dailySummaryEnabled: row?.daily_summary_enabled ?? true,
+    };
+  }
+  public async getPolicy(tx: TransactionClient, accountId: string, organizationId: string) {
+    return this.ensureDefault(tx, accountId, organizationId);
+  }
   public async resolve(
     tx: TransactionClient,
     accountId: string,

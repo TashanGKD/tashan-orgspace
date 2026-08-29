@@ -38,6 +38,7 @@ import { registerCapabilityRoutes } from "./routes/capability-routes.js";
 import { registerDeviceRoutes } from "./routes/device-routes.js";
 import { registerOrganizationRoutes } from "./routes/organization-routes.js";
 import { registerOkrRoutes } from "./routes/okr-routes.js";
+import { registerNotificationRoutes } from "./routes/notification-routes.js";
 import { registerPartnerRoutes } from "./routes/partner-routes.js";
 import { registerPhoneRoutes } from "./routes/phone-routes.js";
 import { registerFileRoutes } from "./routes/file-routes.js";
@@ -45,6 +46,8 @@ import { registerSpaceRoutes } from "./routes/space-routes.js";
 import { registerWorkRoutes } from "./routes/work-routes.js";
 import { SpaceService } from "./spaces/space-service.js";
 import { WorkService } from "./work/work-service.js";
+import { NotificationService } from "./notifications/notification-service.js";
+import { NotificationPolicyService } from "./notifications/notification-policy-service.js";
 
 export interface BuildAppOptions {
   sql: DatabaseClient;
@@ -139,6 +142,13 @@ export async function buildApp(options: BuildAppOptions): Promise<FastifyInstanc
     authenticate,
   });
   await registerOkrRoutes(app, { sql: options.sql, okr, mutations, authenticate });
+  await registerNotificationRoutes(app, {
+    sql: options.sql,
+    notifications: new NotificationService(),
+    policies: new NotificationPolicyService(),
+    mutations,
+    authenticate,
+  });
   if (options.partnerSecurity !== undefined) {
     const partners = new PartnerService({
       cipher: new SensitiveFieldCipher({

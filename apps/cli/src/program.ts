@@ -27,6 +27,10 @@ import { registerSpaceCommands, spaceCapabilityIds } from "./commands/space.js";
 import { registerWorkCommands, workCapabilityIds } from "./commands/work.js";
 import { registerOkrCommands, okrCapabilityIds } from "./commands/okr.js";
 import { registerPartnerCommands, partnerCapabilityIds } from "./commands/partners.js";
+import {
+  notificationCapabilityIds,
+  registerNotificationCommands,
+} from "./commands/notification.js";
 import { resolveCliConfig } from "./config.js";
 import { withMemoryFallback, type CredentialStore } from "./credentials/credential-store.js";
 import { EncryptedFileStore } from "./credentials/encrypted-file-store.js";
@@ -50,6 +54,7 @@ export const registeredCapabilityIds = new Set([
   ...workCapabilityIds,
   ...okrCapabilityIds,
   ...partnerCapabilityIds,
+  ...notificationCapabilityIds,
 ]);
 
 export interface CliDependencies {
@@ -122,6 +127,7 @@ export function buildProgram(output: CliOutput, dependencies: CliDependencies = 
   registerWorkCommands(program, commandContext);
   registerOkrCommands(program, commandContext);
   registerPartnerCommands(program, commandContext);
+  registerNotificationCommands(program, commandContext);
 
   program.action(() => {
     if (program.opts<{ json?: boolean }>().json === true) {

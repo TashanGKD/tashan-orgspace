@@ -2,6 +2,7 @@ import { generateKeyPair } from "jose";
 import { afterAll, beforeAll, beforeEach, describe, expect, test } from "vitest";
 
 import { ErrorEnvelope } from "@tashan/contracts";
+import { phase0Capabilities } from "@tashan/capabilities";
 import { FakeVerificationCodeSender } from "@tashan/testkit";
 
 import { AccessTokenService } from "../../src/auth/access-token.js";
@@ -345,12 +346,14 @@ describe("Phase 0 HTTP capability surface", () => {
     expect(refreshed.headers["set-cookie"]).not.toBe(loginCookie);
   });
 
-  test("exposes all 43 capabilities while auditing the exercised control-plane set", async () => {
+  test("exposes the complete capability registry while auditing the exercised control-plane set", async () => {
     expect((await app.inject({ method: "GET", url: "/v1/health" })).statusCode).toBe(200);
     const capabilities = await app.inject({ method: "GET", url: "/v1/capabilities" });
     expect(capabilities.statusCode).toBe(200);
     const capabilityItems = capabilities.json<{ items: { id: string }[] }>().items;
-    expect(capabilityItems).toHaveLength(43);
+    expect(capabilityItems.map(({ id }) => id).sort()).toEqual(
+      phase0Capabilities.map(({ id }) => id).sort(),
+    );
     expect(
       (
         await app.inject({
