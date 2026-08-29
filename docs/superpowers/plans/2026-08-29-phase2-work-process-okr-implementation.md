@@ -34,11 +34,11 @@
 
 **Files:** Create `apps/api/migrations/011_processes.sql`, `packages/contracts/src/process.ts`, `apps/api/src/process/`, `apps/api/test/process/process-service.integration.test.ts`.
 
-- [ ] Write RED tests for immutable published versions, single/sequence/any/all approval, return, withdraw, transfer and concurrent decisions.
-- [ ] Run targeted tests; expect ProcessDefinition/Instance missing.
-- [ ] Implement definitions, versions, instances, steps and decision events; pin each instance to one published version.
-- [ ] Run tests and prove duplicate approval changes state once.
-- [ ] Commit: `git commit -m "feat(process): add versioned approval engine"`.
+- [x] Write RED tests for immutable published versions, single/sequence/any/all approval, return, withdraw, transfer and concurrent decisions.
+- [x] Run targeted tests; expect ProcessDefinition/Instance missing.
+- [x] Implement definitions, versions, instances, steps and decision events; pin each instance to one published version.
+- [x] Run tests and prove duplicate approval changes state once.
+- [x] Commit: `git commit -m "feat(process): add versioned approval engine"`.
 
 ### Task 4: Task, meeting and approval API/SDK/CLI
 
