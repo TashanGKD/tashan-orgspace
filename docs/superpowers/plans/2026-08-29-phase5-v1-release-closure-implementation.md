@@ -20,11 +20,11 @@
 
 ### Task 2: Backup and restore drills
 **Files:** Create runbooks/scripts/tests for PostgreSQL, MinIO and secrets manifests.
-- [ ] Write RED restore tests for mismatched DB/object checkpoint, missing key version and corrupt backup.
-- [ ] Run dry-run tests; expect restore tooling missing.
-- [ ] Implement explicit-target backup/restore with non-empty-target refusal and checksum manifests.
-- [ ] Run isolated restore and compare logical counts/object hashes.
-- [ ] Commit: `git commit -m "chore(recovery): add v1 restore drills"`.
+- [x] Write RED restore tests for mismatched DB/object checkpoint, missing key version and corrupt backup.
+- [x] Run dry-run tests; expect restore tooling missing.
+- [x] Implement explicit-target backup/restore with non-empty-target refusal and checksum manifests.
+- [x] Run isolated restore and compare logical counts/object hashes.
+- [x] Commit: `git commit -m "chore(recovery): add v1 restore drills"`.
 
 ### Task 3: Component restart and reconciliation matrix
 **Files:** Extend production-stack tests and recovery verification doc.

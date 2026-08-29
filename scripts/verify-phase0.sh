@@ -45,6 +45,7 @@ run_step "bash scripts/publish-public-distribution.self-test.sh" bash scripts/pu
 run_step "bash scripts/smoke-public-distribution.self-test.sh" bash scripts/smoke-public-distribution.self-test.sh
 run_step "bash scripts/configure-orgspace-ingress.self-test.sh" bash scripts/configure-orgspace-ingress.self-test.sh
 run_step "bash scripts/smoke-production.self-test.sh" bash scripts/smoke-production.self-test.sh
+run_step "node scripts/restore-orgspace-backup.self-test.mjs" node scripts/restore-orgspace-backup.self-test.mjs
 run_step "pnpm test:production-stack" env ORGSPACE_TEST_CLEANUP_VOLUMES=1 pnpm test:production-stack
 run_step "pnpm test:e2e" pnpm test:e2e
 

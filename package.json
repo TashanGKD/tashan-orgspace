@@ -29,6 +29,7 @@
     "eslint": "10.8.1",
     "eslint-config-prettier": "10.1.8",
     "jose": "6.2.9",
+    "postgres": "3.4.9",
     "prettier": "3.9.6",
     "redis": "6.2.1",
     "tsx": "4.23.12",
