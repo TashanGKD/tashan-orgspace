@@ -89,3 +89,39 @@ export const PartnerListResponse = z
   .object({ items: z.array(PartnerSummary), nextCursor: z.null() })
   .strict();
 export const PartnerReadResponse = z.object({ partner: PartnerDetail }).strict();
+export const PartnerInteractionChannel = z.enum([
+  "phone",
+  "wechat",
+  "email",
+  "in_person",
+  "meeting",
+  "other",
+]);
+export const PartnerInteractionAddRequest = z
+  .object({
+    contactedAt: IsoDateTime,
+    channel: PartnerInteractionChannel,
+    summary: z.string().trim().min(1).max(20000),
+    requiresFollowUp: z.boolean().default(false),
+    nextFollowUpAt: IsoDateTime.optional(),
+    correctsInteractionId: z.uuid().optional(),
+    followUp: z
+      .object({
+        type: z.enum(["task", "meeting"]),
+        title: z.string().trim().min(1).max(200),
+        dueAt: IsoDateTime.optional(),
+        meetingStartsAt: IsoDateTime.optional(),
+      })
+      .strict()
+      .optional(),
+    links: z
+      .array(
+        z.discriminatedUnion("type", [
+          z.object({ type: z.literal("file"), spaceId: z.uuid(), entryId: z.uuid() }).strict(),
+          z.object({ type: z.enum(["task", "meeting"]), workItemId: z.uuid() }).strict(),
+        ]),
+      )
+      .max(100)
+      .default([]),
+  })
+  .strict();

@@ -11,7 +11,7 @@
 ---
 
 ### Task 1: Notification contracts and policy tables
-**Files:** Create `apps/api/migrations/014_notifications.sql`, `packages/contracts/src/notifications.ts`, `apps/api/src/notifications/notification-policy-service.ts`, `apps/api/test/notifications/notification-policy.integration.test.ts`.
+**Files:** Create `apps/api/migrations/015_notifications.sql`, `packages/contracts/src/notifications.ts`, `apps/api/src/notifications/notification-policy-service.ts`, `apps/api/test/notifications/notification-policy.integration.test.ts`.
 - [ ] Write RED tests for mandatory vs daily-summary-only opt-out, organization timezone and immutable policy versions.
 - [ ] Run API integration tests; expect missing schema.
 - [ ] Implement NotificationPolicy, Notification, ScheduledReminder and DeliveryAttempt tables/contracts.

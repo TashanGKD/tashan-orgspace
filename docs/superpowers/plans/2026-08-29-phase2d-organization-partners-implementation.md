@@ -34,11 +34,11 @@
 
 **Files:** Create `apps/api/src/partners/interaction-service.ts`, tests; modify ResourceLink registry.
 
-- [ ] Write RED tests for append-only interaction, correction chain, file/task/meeting permission, duplicate follow-up task and removed member.
-- [ ] Run tests; expect missing interaction service.
-- [ ] Implement interaction events and idempotent WorkItem creation with bidirectional links.
-- [ ] Run targeted tests and audit assertions.
-- [ ] Commit: `git commit -m "feat(partners): add follow-up history"`.
+- [x] Write RED tests for append-only interaction, correction chain, file/task/meeting permission, duplicate follow-up task and removed member.
+- [x] Run tests; expect missing interaction service.
+- [x] Implement interaction events and idempotent WorkItem creation with bidirectional links.
+- [x] Run targeted tests and audit assertions.
+- [x] Commit: `git commit -m "feat(partners): add follow-up history"`.
 
 ### Task 4: API, SDK, CLI and Skill
 

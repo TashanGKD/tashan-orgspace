@@ -10,6 +10,7 @@ export const CollaborationResourceType = z.enum([
   "objective",
   "key_result",
   "partner",
+  "partner_interaction",
   "conversation",
   "message",
   "member",
