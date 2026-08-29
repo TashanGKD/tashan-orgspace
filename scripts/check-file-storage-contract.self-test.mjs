@@ -14,7 +14,8 @@ const valid = {
   web: FILE_CAPABILITY_IDS.map((capabilityId) => ({ capabilityId })),
   skillCapabilities: FILE_CAPABILITY_IDS,
   skillMain: "Read references/files.md before file work.",
-  fileReference: `${server.map(({ cli }) => `torg ${cli}`).join("\n")}\nNever call MinIO or S3 directly. Never print or reuse presigned URLs.`,
+  fileReference: `${server.map(({ cli }) => `torg ${cli}`).join("\n")}\ntorg file version-restore --space <space-id> --file <file-id> --version-id <version-id>\nNever call MinIO or S3 directly. Never print or reuse presigned URLs.`,
+  cliFileSource: '.requiredOption("--version-id <id>")',
   resources: [
     {
       resourceType: "personal-file",
@@ -108,6 +109,13 @@ assert.throws(() => checkFileStorageContract(publicBucket), /bucket must remain 
 const missingGateway = clone(valid);
 missingGateway.gatewaySource = "proxy_pass http://minio:9000;";
 assert.throws(() => checkFileStorageContract(missingGateway), /file gateway hostname/);
+
+const conflictingVersionOption = clone(valid);
+conflictingVersionOption.cliFileSource = '.requiredOption("--version <id>")';
+assert.throws(
+  () => checkFileStorageContract(conflictingVersionOption),
+  /non-conflicting --version-id option/,
+);
 
 assert.doesNotThrow(() => checkFileStorageContract(valid));
 console.log("check-file-storage-contract.self-test: PASS");

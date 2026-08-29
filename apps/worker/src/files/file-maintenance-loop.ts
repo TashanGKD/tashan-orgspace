@@ -12,6 +12,7 @@ export interface FileMaintenanceObjectStore {
   deleteObject(key: string): Promise<void>;
   abortMultipart(key: string, uploadId: string): Promise<void>;
   headObject(key: string): Promise<{ sizeBytes: number } | undefined>;
+  listObjects(prefix: string): AsyncIterable<string>;
 }
 
 interface JobRow {
@@ -35,6 +36,8 @@ export class FileMaintenanceLoop {
   private readonly batchSize: number;
   private readonly maxAttempts: number;
   private readonly pollMilliseconds: number;
+  private readonly objectSweepMilliseconds: number;
+  private lastObjectSweepAt: number | undefined;
   private stopping = false;
 
   public constructor(
@@ -47,6 +50,7 @@ export class FileMaintenanceLoop {
       batchSize?: number;
       maxAttempts?: number;
       pollMilliseconds?: number;
+      objectSweepMilliseconds?: number;
     },
   ) {
     if (!/^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$/.test(options.workerId)) {
@@ -56,6 +60,7 @@ export class FileMaintenanceLoop {
     this.batchSize = options.batchSize ?? 10;
     this.maxAttempts = options.maxAttempts ?? 10;
     this.pollMilliseconds = options.pollMilliseconds ?? 500;
+    this.objectSweepMilliseconds = options.objectSweepMilliseconds ?? 5 * 60_000;
   }
 
   private now(): Date {
@@ -313,6 +318,7 @@ export class FileMaintenanceLoop {
   }
 
   private async enqueueDueJobs() {
+    await this.cleanupOrphanTemporaryObjects();
     await this.options.sql`
       insert into file_maintenance_jobs (job_type, payload, available_at)
       select 'expire_upload', jsonb_build_object('uploadSessionId', upload.id), ${this.now()}
@@ -339,5 +345,28 @@ export class FileMaintenanceLoop {
             and job.status in ('pending', 'processing')
         )
     `;
+  }
+
+  private async cleanupOrphanTemporaryObjects() {
+    const now = this.now().getTime();
+    if (
+      this.lastObjectSweepAt !== undefined &&
+      now - this.lastObjectSweepAt < this.objectSweepMilliseconds
+    ) {
+      return;
+    }
+    this.lastObjectSweepAt = now;
+    for await (const key of this.options.objectStore.listObjects("temporary/")) {
+      if (!/^temporary\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/.test(key)) {
+        continue;
+      }
+      const [reference] = await this.options.sql<{ exists: boolean }[]>`
+        select exists(
+          select 1 from upload_sessions
+          where temporary_object_key = ${key} and status in ('created', 'uploading', 'verifying')
+        ) as exists
+      `;
+      if (reference?.exists !== true) await this.options.objectStore.deleteObject(key);
+    }
   }
 }

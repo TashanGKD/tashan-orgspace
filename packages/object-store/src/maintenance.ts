@@ -4,6 +4,7 @@ import {
   DeleteObjectCommand,
   GetObjectCommand,
   HeadObjectCommand,
+  ListObjectsV2Command,
   type S3Client,
 } from "@aws-sdk/client-s3";
 
@@ -61,5 +62,22 @@ export class S3FileMaintenanceStore {
       }
       throw error;
     }
+  }
+
+  public async *listObjects(prefix: string): AsyncIterable<string> {
+    let continuationToken: string | undefined;
+    do {
+      const response = await this.client.send(
+        new ListObjectsV2Command({
+          Bucket: this.bucket,
+          Prefix: prefix,
+          ...(continuationToken === undefined ? {} : { ContinuationToken: continuationToken }),
+        }),
+      );
+      for (const object of response.Contents ?? []) {
+        if (object.Key !== undefined) yield object.Key;
+      }
+      continuationToken = response.IsTruncated ? response.NextContinuationToken : undefined;
+    } while (continuationToken !== undefined);
   }
 }

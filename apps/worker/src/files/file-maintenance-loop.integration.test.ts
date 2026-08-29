@@ -35,6 +35,11 @@ class FakeStore implements FileMaintenanceObjectStore {
     const value = this.objects.get(key);
     return value === undefined ? undefined : { sizeBytes: value.byteLength };
   }
+  async *listObjects(prefix: string) {
+    for (const key of this.objects.keys()) {
+      if (key.startsWith(prefix)) yield key;
+    }
+  }
 }
 
 beforeAll(async () => {
@@ -207,5 +212,63 @@ describe("file maintenance loop", () => {
       select status from upload_sessions where id = ${fixture.uploadId}
     `;
     expect(session?.status).toBe("expired");
+  });
+
+  test("removes only valid orphan temporary objects", async () => {
+    const bytes = new Uint8Array([1, 2]);
+    const fixture = await uploadFixture(bytes, "a".repeat(64));
+    await sql`delete from file_maintenance_jobs`;
+    await sql`update upload_sessions set status = 'uploading', expires_at = now() + interval '1 hour'
+      where id = ${fixture.uploadId}`;
+    const orphanId = randomUUID();
+    const orphanKey = `temporary/${orphanId}`;
+    const malformedKey = "temporary/not-a-uuid";
+    const versionLikeKey = `versions/${randomUUID()}`;
+    const store = new FakeStore();
+    store.objects.set(fixture.temporaryKey, bytes);
+    store.objects.set(orphanKey, bytes);
+    store.objects.set(malformedKey, bytes);
+    store.objects.set(versionLikeKey, bytes);
+
+    await new FileMaintenanceLoop({ sql, objectStore: store, workerId: "worker-a" }).processOnce();
+
+    expect(store.objects.has(fixture.temporaryKey)).toBe(true);
+    expect(store.objects.has(orphanKey)).toBe(false);
+    expect(store.objects.has(malformedKey)).toBe(true);
+    expect(store.objects.has(versionLikeKey)).toBe(true);
+  });
+
+  test("marks an available version corrupt when its object is missing", async () => {
+    const fixture = await uploadFixture(new Uint8Array([1]), "a".repeat(64));
+    await sql`delete from file_maintenance_jobs`;
+    const entryId = randomUUID();
+    const versionId = randomUUID();
+    await sql`insert into file_entries (
+      id, space_id, parent_id, kind, name, normalized_name, created_by_account_id
+    ) values (
+      ${entryId}, ${fixture.spaceId}, ${fixture.rootId}, 'file', 'missing.bin', 'missing.bin',
+      ${fixture.accountId}
+    )`;
+    await sql`insert into file_versions (
+      id, file_entry_id, version_number, object_key, size_bytes, content_type,
+      checksum_sha256, status, created_by_account_id
+    ) values (
+      ${versionId}, ${entryId}, 1, ${`versions/${versionId}`}, 1,
+      'application/octet-stream', ${"b".repeat(64)}, 'available', ${fixture.accountId}
+    )`;
+    await sql`update file_entries set current_version_id = ${versionId} where id = ${entryId}`;
+    await sql`insert into file_maintenance_jobs (job_type, payload, available_at)
+      values ('reconcile_version', ${sql.json({ versionId })}, now() - interval '1 second')`;
+
+    await new FileMaintenanceLoop({
+      sql,
+      objectStore: new FakeStore(),
+      workerId: "worker-a",
+    }).processOnce();
+
+    const [version] = await sql<{ status: string }[]>`
+      select status from file_versions where id = ${versionId}
+    `;
+    expect(version?.status).toBe("corrupt");
   });
 });

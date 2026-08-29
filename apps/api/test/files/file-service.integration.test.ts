@@ -118,4 +118,51 @@ describe("file service", () => {
       ]),
     });
   });
+
+  test("lets active organization admins inspect restricted metadata without reading bytes", async () => {
+    const { owner, editor, viewer, space } = await fixture();
+    const service = new FileService(sql, {
+      async sign() {
+        return "https://download.invalid/file";
+      },
+    });
+    const folder = await service.createFolder(editor, space.id, {
+      parentId: space.rootFolderId,
+      name: "Restricted records",
+      accessScope: "restricted",
+      grants: [],
+    });
+    const [file] = await sql<{ id: string }[]>`
+      insert into file_entries (
+        space_id, parent_id, kind, name, normalized_name, created_by_account_id
+      ) values (${space.id}, ${folder.id}, 'file', 'board.pdf', 'board.pdf', ${editor})
+      returning id
+    `;
+    if (file === undefined) throw new Error("file fixture failed");
+
+    await expect(service.list(owner, space.id, space.rootFolderId)).resolves.toEqual([
+      expect.objectContaining({ id: folder.id, name: "Restricted records" }),
+    ]);
+    await expect(service.read(owner, space.id, folder.id)).resolves.toMatchObject({
+      id: folder.id,
+      effectiveRole: "viewer",
+    });
+    await expect(service.search(owner, space.id, "Restricted")).resolves.toEqual([
+      expect.objectContaining({ id: folder.id }),
+    ]);
+    await expect(service.createDownload(owner, space.id, file.id)).rejects.toMatchObject({
+      code: "FILE_FORBIDDEN",
+    });
+
+    await expect(service.list(viewer, space.id, space.rootFolderId)).resolves.toEqual([]);
+    await expect(service.read(viewer, space.id, folder.id)).rejects.toMatchObject({
+      code: "FILE_FORBIDDEN",
+    });
+    await expect(service.search(viewer, space.id, "Restricted")).resolves.toEqual([]);
+
+    await sql`update memberships set status = 'removed', removed_at = now() where account_id = ${owner}`;
+    await expect(service.list(owner, space.id, space.rootFolderId)).rejects.toMatchObject({
+      code: "SPACE_FORBIDDEN",
+    });
+  });
 });

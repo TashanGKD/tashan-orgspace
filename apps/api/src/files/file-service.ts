@@ -124,7 +124,7 @@ export class FileService {
             accountId,
             spaceId,
             entryId: row.id,
-            permission: "read",
+            permission: "metadata",
           });
           visible.push(entry(row));
         } catch (error) {
@@ -142,7 +142,7 @@ export class FileService {
         accountId,
         spaceId,
         entryId,
-        permission: "read",
+        permission: "metadata",
       });
       const row = await this.row(transaction, spaceId, entryId);
       return {
@@ -174,7 +174,7 @@ export class FileService {
             accountId,
             spaceId,
             entryId: row.id,
-            permission: "read",
+            permission: "metadata",
           });
           visible.push(entry(row));
         } catch (error) {

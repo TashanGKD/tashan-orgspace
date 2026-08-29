@@ -45,7 +45,7 @@ torg file mkdir --space <space-id> --parent <folder-id> --name <name> \
 torg file move --space <space-id> --file <entry-id> --parent <folder-id> \
   --expected-version <n> --idempotency-key <fresh-key>
 torg file versions --space <space-id> --file <file-id>
-torg file version-restore --space <space-id> --file <file-id> --version <version-id> \
+torg file version-restore --space <space-id> --file <file-id> --version-id <version-id> \
   --expected-version <n> --yes --idempotency-key <fresh-key>
 torg file trash --space <space-id> --file <entry-id> --yes --idempotency-key <fresh-key>
 torg file restore --space <space-id> --file <entry-id> --expected-version <n> \

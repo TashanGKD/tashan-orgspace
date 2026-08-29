@@ -14,6 +14,7 @@ const spaceId = "35f503c2-a5d7-4250-a337-4f4fd03cf8df";
 const parentId = "84ecfe2e-c11a-4a56-8735-934955bef834";
 const uploadId = "746fb70b-a27e-4a78-a231-aa55ef8c343e";
 const entryId = "b228e557-2214-4f95-b49d-d4ff7d9759d4";
+const versionId = "cc3953dd-f74b-4f9e-ae01-3e5243e5fd21";
 const cleanups: Array<() => Promise<void>> = [];
 afterEach(async () => Promise.all(cleanups.splice(0).map((cleanup) => cleanup())));
 
@@ -152,5 +153,43 @@ describe("file CLI", () => {
     expect(refused.exitCode).toBe(2);
     expect(refused.stderr).toContain("--yes");
     expect(client.deleteFile).not.toHaveBeenCalled();
+  });
+
+  test("restores a file version without colliding with the global version flag", async () => {
+    const client = {
+      restoreFileVersion: vi.fn().mockResolvedValue({
+        entry: { id: entryId },
+        version: { id: versionId },
+      }),
+    } as unknown as OrgSpaceClient;
+    const transfer = { uploadPart: vi.fn(), download: vi.fn() } satisfies FileByteTransport;
+    const result = await runCli(
+      [
+        "file",
+        "version-restore",
+        "--space",
+        spaceId,
+        "--file",
+        entryId,
+        "--version-id",
+        versionId,
+        "--expected-version",
+        "3",
+        "--yes",
+        "--idempotency-key",
+        "version-restore-1",
+        "--json",
+      ],
+      dependencies(client, transfer),
+    );
+    expect(result.exitCode).toBe(0);
+    expect(result.stdout).not.toContain("0.1.0-alpha.3");
+    expect(client.restoreFileVersion).toHaveBeenCalledWith(
+      spaceId,
+      entryId,
+      versionId,
+      { expectedVersion: 3 },
+      { idempotencyKey: "version-restore-1" },
+    );
   });
 });

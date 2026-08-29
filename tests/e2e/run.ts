@@ -1,5 +1,5 @@
 import { spawn, type ChildProcess } from "node:child_process";
-import { mkdtemp, rm } from "node:fs/promises";
+import { mkdtemp, readFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { randomUUID } from "node:crypto";
@@ -65,6 +65,25 @@ async function stopChild(child: ChildProcess | undefined): Promise<void> {
   await Promise.race([exited, deadline]);
 }
 
+async function stopRecordedPid(path: string): Promise<void> {
+  let raw: string;
+  try {
+    raw = await readFile(path, "utf8");
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === "ENOENT") return;
+    throw error;
+  }
+  const pid = Number(raw.trim());
+  if (!Number.isSafeInteger(pid) || pid <= 1) {
+    throw new Error("E2E replacement Worker PID is invalid");
+  }
+  try {
+    process.kill(pid, "SIGTERM");
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code !== "ESRCH") throw error;
+  }
+}
+
 async function startApi(environment: NodeJS.ProcessEnv): Promise<{
   child: ChildProcess;
   apiUrl: string;
@@ -113,6 +132,7 @@ async function waitForHealth(apiUrl: string): Promise<void> {
 
 const temporaryDirectory = await mkdtemp(join(tmpdir(), "torg-e2e-"));
 const codeFile = join(temporaryDirectory, "verification-codes.json");
+const replacementWorkerPidFile = join(temporaryDirectory, "replacement-worker.pid");
 const runId = randomUUID();
 const postgresPort = await reserveLoopbackPort();
 const redisPort = await reserveLoopbackPort();
@@ -168,7 +188,7 @@ try {
   await resetTestDatabase(databaseUrl);
   await migrateDatabase(databaseUrl);
   const serviceEnvironment = {
-    ...process.env,
+    ...composeEnvironment,
     E2E_DATABASE_URL: databaseUrl,
     E2E_REDIS_URL: redisUrl,
     E2E_CODE_FILE: codeFile,
@@ -184,30 +204,29 @@ try {
   const started = await startApi(serviceEnvironment);
   api = started.child;
   await waitForHealth(started.apiUrl);
-  worker = spawn("pnpm", ["--filter", "@tashan/worker", "start"], {
+  const workerEnvironment = {
+    ...serviceEnvironment,
+    DATABASE_URL: databaseUrl,
+    FILE_STORAGE_ENABLED: "true",
+    WORKER_ID: `e2e-${runId}`,
+    OUTBOX_POLL_MILLISECONDS: "50",
+  };
+  worker = spawn(process.execPath, ["--import", "tsx", "apps/worker/src/main.ts"], {
     cwd: process.cwd(),
-    env: {
-      ...process.env,
-      DATABASE_URL: databaseUrl,
-      FILE_STORAGE_ENABLED: "true",
-      WORKER_ID: `e2e-${runId}`,
-      OUTBOX_POLL_MILLISECONDS: "50",
-      S3_ENDPOINT: s3Url,
-      S3_PUBLIC_ORIGIN: s3Url,
-      S3_REGION: "us-east-1",
-      S3_BUCKET: "orgspace-files",
-      S3_ACCESS_KEY_ID: s3AccessKeyId,
-      S3_SECRET_ACCESS_KEY: s3SecretAccessKey,
-      S3_FORCE_PATH_STYLE: "true",
-    },
+    env: workerEnvironment,
     shell: false,
     stdio: ["ignore", "inherit", "inherit"],
   });
   await run("pnpm", ["exec", "vitest", "run", "--config", "vitest.e2e.config.ts"], {
-    ...serviceEnvironment,
+    ...workerEnvironment,
     E2E_API_URL: started.apiUrl,
+    E2E_WORKER_PID: String(worker.pid),
+    E2E_COMPOSE_PROJECT: composeProject,
+    E2E_COMPOSE_FILE: composeFile,
+    E2E_REPLACEMENT_WORKER_PID_FILE: replacementWorkerPidFile,
   });
 } finally {
+  await stopRecordedPid(replacementWorkerPidFile);
   await stopChild(worker);
   await stopChild(api);
   await run(

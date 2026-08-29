@@ -281,7 +281,7 @@ export function registerFileCommands(program: Command, context: CommandContext):
     .command("version-restore")
     .requiredOption("--space <id>")
     .requiredOption("--file <id>")
-    .requiredOption("--version <id>")
+    .requiredOption("--version-id <id>")
     .requiredOption("--expected-version <n>")
     .option("--yes")
     .option("--idempotency-key <key>");
@@ -289,7 +289,7 @@ export function registerFileCommands(program: Command, context: CommandContext):
     async (o: {
       space: string;
       file: string;
-      version: string;
+      versionId: string;
       expectedVersion: string;
       yes?: boolean;
       idempotencyKey?: string;
@@ -300,11 +300,11 @@ export function registerFileCommands(program: Command, context: CommandContext):
       ).client.restoreFileVersion(
         o.space,
         o.file,
-        o.version,
+        o.versionId,
         { expectedVersion: Number(o.expectedVersion) },
         { idempotencyKey: key },
       );
-      context.emit(versionRestore, result, `Restored version ${o.version}`);
+      context.emit(versionRestore, result, `Restored version ${o.versionId}`);
     },
   );
   const trash = file

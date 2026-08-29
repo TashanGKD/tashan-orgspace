@@ -97,6 +97,13 @@ export function checkFileStorageContract(input) {
   if (!/never (?:print or reuse|reuse or print) presigned urls/i.test(input.fileReference)) {
     throw new Error("file Skill must forbid printing or reusing presigned URLs");
   }
+  if (
+    !input.cliFileSource.includes('.requiredOption("--version-id <id>")') ||
+    !/version-restore[^\n]*--version-id\s+<version-id>/.test(input.fileReference) ||
+    /version-restore[^\n]*--version\s+<version-id>/.test(input.fileReference)
+  ) {
+    throw new Error("file version restore must use the non-conflicting --version-id option");
+  }
 
   const resources = new Map(input.resources.map((resource) => [resource.resourceType, resource]));
   const expectedResources = {
@@ -207,6 +214,7 @@ export function checkRepositoryFileStorageContract(repositoryRoot) {
     skillCapabilities: skillDocument.capabilities,
     skillMain: read("skill/tashan-orgspace/SKILL.md"),
     fileReference: read("skill/tashan-orgspace/references/files.md"),
+    cliFileSource: read("apps/cli/src/commands/file.ts"),
     resources: JSON.parse(read("apps/web/src/resource-surfaces.json")),
     modules: JSON.parse(read("apps/web/src/product-modules.json")),
     localCompose: parse(localComposeSource),

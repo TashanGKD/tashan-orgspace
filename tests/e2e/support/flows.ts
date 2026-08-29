@@ -160,7 +160,10 @@ export async function runCliScenario<T>(input: Record<string, unknown>): Promise
   child.stderr.on("data", (chunk: string) => {
     stderr += chunk;
   });
-  child.stdin.end(JSON.stringify({ ...input, apiUrl: e2eEnvironment().apiUrl }));
+  const environment = e2eEnvironment();
+  child.stdin.end(
+    JSON.stringify({ ...input, apiUrl: environment.apiUrl, databaseUrl: environment.databaseUrl }),
+  );
   const exitCode = await new Promise<number | null>((resolve, reject) => {
     child.once("error", reject);
     child.once("exit", resolve);

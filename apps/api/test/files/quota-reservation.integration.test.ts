@@ -86,4 +86,51 @@ describe("quota reservations", () => {
     `;
     expect(usage).toEqual({ used_bytes: "5", reserved_bytes: "0" });
   });
+
+  test("applies entitlement increases and makes an over-limit decrease read-only", async () => {
+    const [admin] = await sql<{ id: string }[]>`
+      insert into accounts (display_name, password_hash, phone_e164, phone_verified_at)
+      values ('Admin', 'hash', '+8613800138797', now()) returning id
+    `;
+    const [member] = await sql<{ id: string }[]>`
+      insert into accounts (display_name, password_hash, phone_e164, phone_verified_at)
+      values ('Member', 'hash', '+8613800138796', now()) returning id
+    `;
+    const [organization] = await sql<{ id: string }[]>`
+      insert into organizations (name) values ('Quota Org') returning id
+    `;
+    if (admin === undefined || member === undefined || organization === undefined) {
+      throw new Error("quota entitlement fixture failed");
+    }
+    await sql`insert into memberships (organization_id, account_id, role, status) values
+      (${organization.id}, ${admin.id}, 'org_owner', 'active'),
+      (${organization.id}, ${member.id}, 'member', 'active')`;
+    const space = await sql.begin((transaction) => createPersonalSpace(transaction, member.id));
+    const gib = 1024 ** 3;
+    await sql`update spaces set used_bytes = ${60 * gib} where id = ${space.id}`;
+    const service = new SpaceService(sql);
+
+    await expect(
+      service.setPersonalQuota(admin.id, organization.id, member.id, 100 * gib),
+    ).resolves.toMatchObject({ space: { quotaBytes: 100 * gib, writeState: "writable" } });
+    await expect(
+      service.setPersonalQuota(admin.id, organization.id, member.id, 50 * gib),
+    ).resolves.toMatchObject({ space: { quotaBytes: 50 * gib, writeState: "quota_readonly" } });
+
+    const uploadId = crypto.randomUUID();
+    await sql`
+      insert into upload_sessions (
+        id, space_id, parent_id, created_by_account_id, file_name, normalized_name,
+        content_type, expected_size_bytes, temporary_object_key, part_size_bytes,
+        part_count, status, expires_at, idempotency_key
+      ) values (
+        ${uploadId}, ${space.id}, ${space.rootFolderId}, ${member.id}, 'blocked.bin', 'blocked.bin',
+        'application/octet-stream', 1, ${`temporary/${uploadId}`}, 16777216,
+        1, 'created', now() + interval '1 hour', 'readonly-reservation'
+      )
+    `;
+    await expect(
+      service.reserve({ spaceId: space.id, uploadSessionId: uploadId, bytes: 1 }),
+    ).rejects.toMatchObject({ code: "SPACE_READONLY" });
+  });
 });

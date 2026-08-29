@@ -1,12 +1,28 @@
+import { createHash } from "node:crypto";
+import { spawn } from "node:child_process";
+import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+
 import { createFetchTransport, createOrgSpaceClient, type SdkCredentialStore } from "@tashan/sdk";
+import { createNodeFileByteTransport } from "@tashan/sdk/file-transfer";
+import {
+  createInternalS3Client,
+  createPresignS3Client,
+  parseObjectStoreConfig,
+  S3FileDataStore,
+  S3FileMaintenanceStore,
+} from "@tashan/object-store";
 
 import { MemoryCredentialStore } from "../../../apps/cli/src/credentials/memory-store.js";
+import { CliSessionCredentials } from "../../../apps/cli/src/credentials/session-credentials.js";
 import { runCli, type CliDependencies } from "../../../apps/cli/src/program.js";
 
 interface ScenarioInput {
-  type: "lifecycle" | "cross-org" | "audit" | "files";
+  type: "lifecycle" | "cross-org" | "audit" | "files" | "files-authorization" | "files-recovery";
   apiUrl: string;
-  alice: { phone: string; password: string };
+  databaseUrl: string;
+  alice: { accountId: string; phone: string; password: string };
   bob?: { accountId: string; phone: string; password: string };
 }
 
@@ -17,6 +33,10 @@ const input = JSON.parse(serializedInput) as ScenarioInput;
 const apiHost = new URL(input.apiUrl).hostname.toLowerCase();
 if (!["127.0.0.1", "localhost", "[::1]"].includes(apiHost)) {
   throw new Error("CLI E2E API URL must use loopback");
+}
+const databaseHost = new URL(input.databaseUrl).hostname.toLowerCase();
+if (!["127.0.0.1", "localhost", "[::1]"].includes(databaseHost)) {
+  throw new Error("CLI E2E database URL must use loopback");
 }
 
 function dependencies(
@@ -58,6 +78,25 @@ async function rejected(args: string[], effects: CliDependencies) {
 
 async function login(effects: CliDependencies, phone: string): Promise<void> {
   await command(["auth", "login", "--phone", phone], effects);
+}
+
+async function runProcess(binary: string, args: string[]): Promise<void> {
+  const child = spawn(binary, args, {
+    cwd: process.cwd(),
+    env: process.env,
+    shell: false,
+    stdio: ["ignore", "ignore", "pipe"],
+  });
+  let stderr = "";
+  child.stderr.setEncoding("utf8");
+  child.stderr.on("data", (chunk: string) => {
+    stderr += chunk;
+  });
+  const exitCode = await new Promise<number | null>((resolve, reject) => {
+    child.once("error", reject);
+    child.once("exit", resolve);
+  });
+  if (exitCode !== 0) throw new Error(`${binary} failed (${exitCode}): ${stderr}`);
 }
 
 const aliceStoreA = new MemoryCredentialStore();
@@ -143,7 +182,566 @@ if (input.type === "lifecycle") {
       ),
     }),
   );
+} else if (input.type === "files-authorization") {
+  if (input.bob === undefined) throw new Error("files-authorization requires Bob");
+  const bobStore = new MemoryCredentialStore();
+  const bob = dependencies(bobStore, crypto.randomUUID(), input.bob.password, "Bob Mac E2E");
+  await login(aliceB, input.alice.phone);
+  await login(bob, input.bob.phone);
+  const organizationA = await command<{ organization: { id: string } }>(
+    ["org", "create", "--name", "Files Org A", "--yes", "--idempotency-key", "files-auth-org-a"],
+    aliceA,
+  );
+  const organizationB = await command<{ organization: { id: string } }>(
+    ["org", "create", "--name", "Files Org B", "--yes", "--idempotency-key", "files-auth-org-b"],
+    aliceA,
+  );
+  await command(
+    [
+      "org",
+      "member",
+      "add",
+      "--org",
+      organizationA.organization.id,
+      "--account",
+      input.bob.accountId,
+      "--role",
+      "member",
+      "--yes",
+      "--idempotency-key",
+      "files-auth-member",
+    ],
+    aliceA,
+  );
+  type SpaceItem = {
+    id: string;
+    type: "personal" | "organization";
+    accountId: string | null;
+    organizationId: string | null;
+    rootFolderId: string;
+  };
+  const aliceSpaces = await command<{ items: SpaceItem[] }>(["space", "list"], aliceA);
+  const bobSpaces = await command<{ items: SpaceItem[] }>(["space", "list"], bob);
+  const alicePersonal = aliceSpaces.items.find((space) => space.type === "personal");
+  const orgASpace = aliceSpaces.items.find(
+    (space) => space.organizationId === organizationA.organization.id,
+  );
+  const orgBSpace = aliceSpaces.items.find(
+    (space) => space.organizationId === organizationB.organization.id,
+  );
+  const bobPersonal = bobSpaces.items.find((space) => space.type === "personal");
+  if (
+    alicePersonal === undefined ||
+    bobPersonal === undefined ||
+    orgASpace === undefined ||
+    orgBSpace === undefined
+  ) {
+    throw new Error("required file spaces are missing");
+  }
+
+  const publicFolder = await command<{ entry: { id: string } }>(
+    [
+      "file",
+      "mkdir",
+      "--space",
+      orgASpace.id,
+      "--parent",
+      orgASpace.rootFolderId,
+      "--name",
+      "Public collaboration",
+      "--access",
+      "organization_public",
+      "--idempotency-key",
+      "files-auth-public",
+    ],
+    aliceA,
+  );
+  const publicChild = await command<{ entry: { id: string } }>(
+    [
+      "file",
+      "mkdir",
+      "--space",
+      orgASpace.id,
+      "--parent",
+      publicFolder.entry.id,
+      "--name",
+      "Bob public child",
+      "--access",
+      "organization_public",
+      "--idempotency-key",
+      "files-auth-public-child",
+    ],
+    bob,
+  );
+
+  const managerFolder = await command<{ entry: { id: string } }>(
+    [
+      "file",
+      "mkdir",
+      "--space",
+      orgASpace.id,
+      "--parent",
+      orgASpace.rootFolderId,
+      "--name",
+      "Bob restricted",
+      "--access",
+      "restricted",
+      "--idempotency-key",
+      "files-auth-manager",
+    ],
+    bob,
+  );
+  const adminMetadata = await command<{ entry: { id: string; effectiveRole: string } }>(
+    ["file", "get", "--space", orgASpace.id, "--file", managerFolder.entry.id],
+    aliceA,
+  );
+  const adminDownload = await rejected(
+    [
+      "file",
+      "download",
+      "--space",
+      orgASpace.id,
+      "--file",
+      managerFolder.entry.id,
+      "--output",
+      join(tmpdir(), `forbidden-${crypto.randomUUID()}`),
+      "--idempotency-key",
+      "files-auth-admin-download",
+    ],
+    aliceA,
+  );
+  const recovered = await command<{ grants: Array<{ accountId: string; role: string }> }>(
+    [
+      "folder",
+      "manager-recover",
+      "--space",
+      orgASpace.id,
+      "--folder",
+      managerFolder.entry.id,
+      "--account",
+      input.alice.accountId,
+      "--reason",
+      "E2E manager recovery",
+      "--expected-version",
+      "1",
+      "--yes",
+      "--idempotency-key",
+      "files-auth-recover",
+    ],
+    aliceA,
+  );
+
+  const editorFolder = await command<{ entry: { id: string } }>(
+    [
+      "file",
+      "mkdir",
+      "--space",
+      orgASpace.id,
+      "--parent",
+      orgASpace.rootFolderId,
+      "--name",
+      "Editor folder",
+      "--access",
+      "restricted",
+      "--idempotency-key",
+      "files-auth-editor",
+    ],
+    aliceA,
+  );
+  await command(
+    [
+      "folder",
+      "grant",
+      "--space",
+      orgASpace.id,
+      "--folder",
+      editorFolder.entry.id,
+      "--account",
+      input.bob.accountId,
+      "--role",
+      "editor",
+      "--expected-version",
+      "1",
+      "--yes",
+      "--idempotency-key",
+      "files-auth-editor-grant",
+    ],
+    aliceA,
+  );
+  const editorChild = await command<{ entry: { id: string } }>(
+    [
+      "file",
+      "mkdir",
+      "--space",
+      orgASpace.id,
+      "--parent",
+      editorFolder.entry.id,
+      "--name",
+      "Editor child",
+      "--access",
+      "restricted",
+      "--idempotency-key",
+      "files-auth-editor-child",
+    ],
+    bob,
+  );
+  const editorCannotManage = await rejected(
+    [
+      "folder",
+      "grant",
+      "--space",
+      orgASpace.id,
+      "--folder",
+      editorFolder.entry.id,
+      "--account",
+      input.bob.accountId,
+      "--role",
+      "manager",
+      "--expected-version",
+      "2",
+      "--yes",
+      "--idempotency-key",
+      "files-auth-editor-escalate",
+    ],
+    bob,
+  );
+
+  const viewerFolder = await command<{ entry: { id: string } }>(
+    [
+      "file",
+      "mkdir",
+      "--space",
+      orgASpace.id,
+      "--parent",
+      orgASpace.rootFolderId,
+      "--name",
+      "Viewer folder",
+      "--access",
+      "restricted",
+      "--idempotency-key",
+      "files-auth-viewer",
+    ],
+    aliceA,
+  );
+  await command(
+    [
+      "folder",
+      "grant",
+      "--space",
+      orgASpace.id,
+      "--folder",
+      viewerFolder.entry.id,
+      "--account",
+      input.bob.accountId,
+      "--role",
+      "viewer",
+      "--expected-version",
+      "1",
+      "--yes",
+      "--idempotency-key",
+      "files-auth-viewer-grant",
+    ],
+    aliceA,
+  );
+  const viewerRead = await command<{ entry: { id: string } }>(
+    ["file", "get", "--space", orgASpace.id, "--file", viewerFolder.entry.id],
+    bob,
+  );
+  const viewerCannotWrite = await rejected(
+    [
+      "file",
+      "mkdir",
+      "--space",
+      orgASpace.id,
+      "--parent",
+      viewerFolder.entry.id,
+      "--name",
+      "Forbidden child",
+      "--access",
+      "restricted",
+      "--idempotency-key",
+      "files-auth-viewer-child",
+    ],
+    bob,
+  );
+  const personalIsolation = await rejected(
+    ["file", "list", "--space", alicePersonal.id, "--parent", alicePersonal.rootFolderId],
+    bob,
+  );
+  const crossOrganization = await rejected(
+    ["file", "list", "--space", orgBSpace.id, "--parent", orgBSpace.rootFolderId],
+    bob,
+  );
+
+  const { createDatabaseClient } = await import("../../../apps/api/src/db/client.js");
+  const sql = createDatabaseClient(input.databaseUrl);
+  try {
+    await sql`update memberships set status = 'removed', removed_at = now()
+      where organization_id = ${organizationA.organization.id} and account_id = ${input.bob.accountId}`;
+  } finally {
+    await sql.end();
+  }
+  const removedMember = await rejected(
+    ["file", "list", "--space", orgASpace.id, "--parent", orgASpace.rootFolderId],
+    bob,
+  );
+
+  process.stdout.write(
+    JSON.stringify({
+      personalSpacesDistinct: alicePersonal.id !== bobPersonal.id,
+      publicChildId: publicChild.entry.id,
+      adminMetadata,
+      adminDownload,
+      managerRecovered: recovered.grants.some(
+        (grant) => grant.accountId === input.alice.accountId && grant.role === "manager",
+      ),
+      editorChildId: editorChild.entry.id,
+      editorCannotManage,
+      viewerReadId: viewerRead.entry.id,
+      viewerCannotWrite,
+      personalIsolation,
+      crossOrganization,
+      removedMember,
+    }),
+  );
+} else if (input.type === "files-recovery") {
+  const spaces = await command<{ items: Array<{ id: string; rootFolderId: string }> }>(
+    ["space", "list"],
+    aliceA,
+  );
+  const personal = spaces.items[0];
+  if (personal === undefined) throw new Error("personal space is missing");
+  const composeProject = process.env.E2E_COMPOSE_PROJECT;
+  const composeFile = process.env.E2E_COMPOSE_FILE;
+  const replacementWorkerPidFile = process.env.E2E_REPLACEMENT_WORKER_PID_FILE;
+  const workerPid = Number(process.env.E2E_WORKER_PID);
+  if (
+    composeFile !== "deploy/compose.local.yml" ||
+    composeProject === undefined ||
+    !/^tashan-orgspace-e2e-[0-9]+$/.test(composeProject) ||
+    replacementWorkerPidFile === undefined ||
+    !replacementWorkerPidFile.startsWith(`${tmpdir()}/`) ||
+    !Number.isSafeInteger(workerPid) ||
+    workerPid <= 1
+  ) {
+    throw new Error("recovery E2E control scope is invalid");
+  }
+  const s3Config = parseObjectStoreConfig(
+    {
+      endpoint: process.env.S3_ENDPOINT,
+      publicOrigin: process.env.S3_PUBLIC_ORIGIN,
+      region: process.env.S3_REGION,
+      bucket: process.env.S3_BUCKET,
+      accessKeyId: process.env.S3_ACCESS_KEY_ID,
+      secretAccessKey: process.env.S3_SECRET_ACCESS_KEY,
+      forcePathStyle: process.env.S3_FORCE_PATH_STYLE === "true",
+    },
+    "test",
+  );
+  const internalClient = createInternalS3Client(s3Config);
+  const dataStore = new S3FileDataStore({
+    internalClient,
+    presignClient: createPresignS3Client(s3Config),
+    bucket: s3Config.bucket,
+  });
+  const maintenanceStore = new S3FileMaintenanceStore(internalClient, s3Config.bucket);
+  const directory = await mkdtemp(join(tmpdir(), "torg-files-recovery-e2e-"));
+  try {
+    const source = join(directory, "recovery.bin");
+    const bytes = Buffer.alloc(17 * 1024 * 1024, 73);
+    await writeFile(source, bytes);
+    const credentials = await CliSessionCredentials.load(
+      aliceStoreA,
+      `session:${input.apiUrl}`,
+      aliceDeviceA,
+    );
+    const client = createOrgSpaceClient({
+      transport: createFetchTransport({ baseUrl: input.apiUrl, timeoutMilliseconds: 15_000 }),
+      credentials,
+      deviceId: aliceDeviceA,
+      clientChannel: "cli",
+      invocationSource: "ai_via_cli",
+    });
+    const upload = await client.createUpload(
+      personal.id,
+      {
+        parentId: personal.rootFolderId,
+        fileName: "recovery.bin",
+        expectedSizeBytes: bytes.byteLength,
+        contentType: "application/octet-stream",
+      },
+      { idempotencyKey: "files-recovery-create" },
+    );
+    const firstUrl = await client.createUploadPartUrls(
+      personal.id,
+      upload.uploadSession.id,
+      { partNumbers: [1] },
+      { idempotencyKey: "files-recovery-part-one" },
+    );
+    const firstPart = bytes.subarray(0, upload.uploadSession.partSizeBytes);
+    await createNodeFileByteTransport().uploadPart({
+      url: firstUrl.items[0]?.url ?? "",
+      bytes: firstPart,
+      checksumSha256: createHash("sha256").update(firstPart).digest("base64"),
+    });
+
+    await runProcess("docker", [
+      "compose",
+      "-f",
+      composeFile,
+      "-p",
+      composeProject,
+      "restart",
+      "minio",
+    ]);
+    await runProcess("docker", [
+      "compose",
+      "-f",
+      composeFile,
+      "-p",
+      composeProject,
+      "up",
+      "-d",
+      "--wait",
+      "minio",
+    ]);
+    const afterMinioRestart = await client.readUpload(personal.id, upload.uploadSession.id);
+
+    process.kill(workerPid, "SIGTERM");
+    const workerExitDeadline = Date.now() + 5_000;
+    while (Date.now() < workerExitDeadline) {
+      try {
+        process.kill(workerPid, 0);
+      } catch (error) {
+        if ((error as NodeJS.ErrnoException).code === "ESRCH") break;
+        throw error;
+      }
+      await new Promise((resolve) => setTimeout(resolve, 25));
+    }
+
+    const orphanKey = `temporary/${crypto.randomUUID()}`;
+    const orphanUploadId = await dataStore.createMultipart({
+      key: orphanKey,
+      contentType: "application/octet-stream",
+    });
+    const orphanUrl = await dataStore.presignPart({
+      key: orphanKey,
+      uploadId: orphanUploadId,
+      partNumber: 1,
+      expiresInSeconds: 60,
+    });
+    const orphanBytes = Buffer.from("orphan temporary object", "utf8");
+    const orphanChecksum = createHash("sha256").update(orphanBytes).digest("base64");
+    const orphanPart = await createNodeFileByteTransport().uploadPart({
+      url: orphanUrl,
+      bytes: orphanBytes,
+      checksumSha256: orphanChecksum,
+    });
+    await dataStore.completeMultipart({
+      key: orphanKey,
+      uploadId: orphanUploadId,
+      parts: [{ partNumber: 1, etag: orphanPart.etag, checksumSha256: orphanChecksum }],
+    });
+
+    await command(
+      [
+        "upload",
+        "resume",
+        source,
+        "--space",
+        personal.id,
+        "--upload",
+        upload.uploadSession.id,
+        "--idempotency-key",
+        "files-recovery-resume",
+      ],
+      aliceA,
+    );
+    const replacementWorker = spawn(
+      process.execPath,
+      ["--import", "tsx", "apps/worker/src/main.ts"],
+      {
+        cwd: process.cwd(),
+        env: { ...process.env, WORKER_ID: `${process.env.WORKER_ID ?? "e2e"}-restart` },
+        shell: false,
+        stdio: ["ignore", "ignore", "ignore"],
+      },
+    );
+    if (replacementWorker.pid === undefined) throw new Error("replacement Worker PID is missing");
+    await writeFile(replacementWorkerPidFile, String(replacementWorker.pid), { flag: "wx" });
+    replacementWorker.unref();
+
+    let entryId: string | undefined;
+    const verificationDeadline = Date.now() + 8_000;
+    while (Date.now() < verificationDeadline) {
+      const listing = await command<{ items: Array<{ id: string; name: string }> }>(
+        ["file", "list", "--space", personal.id, "--parent", personal.rootFolderId],
+        aliceA,
+      );
+      entryId = listing.items.find((entry) => entry.name === "recovery.bin")?.id;
+      if (entryId !== undefined) break;
+      await new Promise((resolve) => setTimeout(resolve, 50));
+    }
+    if (entryId === undefined) throw new Error("replacement worker did not verify the upload");
+
+    let orphanCleaned = false;
+    const orphanDeadline = Date.now() + 8_000;
+    while (Date.now() < orphanDeadline) {
+      if ((await maintenanceStore.headObject(orphanKey)) === undefined) {
+        orphanCleaned = true;
+        break;
+      }
+      await new Promise((resolve) => setTimeout(resolve, 50));
+    }
+
+    const { createDatabaseClient } = await import("../../../apps/api/src/db/client.js");
+    const sql = createDatabaseClient(input.databaseUrl);
+    let versionId: string;
+    let versionKey: string;
+    try {
+      const [version] = await sql<{ id: string; object_key: string }[]>`
+        select version.id, version.object_key
+        from file_entries entry join file_versions version on version.id = entry.current_version_id
+        where entry.id = ${entryId}
+      `;
+      if (version === undefined) throw new Error("verified version is missing");
+      versionId = version.id;
+      versionKey = version.object_key;
+      await maintenanceStore.deleteObject(versionKey);
+      await sql`insert into file_maintenance_jobs (job_type, payload, available_at)
+        values ('reconcile_version', ${sql.json({ versionId })}, now() - interval '1 second')`;
+      const corruptDeadline = Date.now() + 8_000;
+      let status = "available";
+      while (Date.now() < corruptDeadline) {
+        const [row] = await sql<{ status: string }[]>`
+          select status from file_versions where id = ${versionId}
+        `;
+        status = row?.status ?? "missing";
+        if (status === "corrupt") break;
+        await new Promise((resolve) => setTimeout(resolve, 50));
+      }
+      const usage = await command<{ reservedBytes: number }>(
+        ["space", "usage", "--space", personal.id],
+        aliceA,
+      );
+      process.stdout.write(
+        JSON.stringify({
+          partsAfterMinioRestart: afterMinioRestart.uploadedParts.map((part) => part.partNumber),
+          verifiedEntryId: entryId,
+          orphanCleaned,
+          missingVersionStatus: status,
+          reservedBytes: usage.reservedBytes,
+        }),
+      );
+    } finally {
+      await sql.end();
+    }
+  } finally {
+    internalClient.destroy();
+    await rm(directory, { recursive: true });
+  }
 } else if (input.type === "files") {
+  await login(aliceB, input.alice.phone);
   const spaces = await command<{ items: Array<{ id: string; rootFolderId: string }> }>(
     ["space", "list"],
     aliceA,
@@ -154,22 +752,77 @@ if (input.type === "lifecycle") {
   try {
     const source = join(directory, "source.txt");
     const destination = join(directory, "downloaded.txt");
-    await writeFile(source, "real MinIO bytes\n");
+    const restoredDestination = join(directory, "restored.txt");
+    const originalBytes = Buffer.alloc(33 * 1024 * 1024);
+    for (let index = 0; index < originalBytes.length; index += 1) {
+      originalBytes[index] = index % 251;
+    }
+    await writeFile(source, originalBytes);
+
+    const credentialsA = await CliSessionCredentials.load(
+      aliceStoreA,
+      `session:${input.apiUrl}`,
+      aliceDeviceA,
+    );
+    const clientA = createOrgSpaceClient({
+      transport: createFetchTransport({ baseUrl: input.apiUrl, timeoutMilliseconds: 15_000 }),
+      credentials: credentialsA,
+      deviceId: aliceDeviceA,
+      clientChannel: "cli",
+      invocationSource: "ai_via_cli",
+    });
+    const created = await clientA.createUpload(
+      personal.id,
+      {
+        parentId: personal.rootFolderId,
+        fileName: "source.txt",
+        expectedSizeBytes: originalBytes.byteLength,
+        contentType: "application/octet-stream",
+      },
+      { idempotencyKey: "files-upload-create" },
+    );
+    const partUrls = await clientA.createUploadPartUrls(
+      personal.id,
+      created.uploadSession.id,
+      { partNumbers: [1, 2] },
+      { idempotencyKey: "files-upload-first-two-parts" },
+    );
+    const byteTransport = createNodeFileByteTransport();
+    for (const item of partUrls.items) {
+      const offset = (item.partNumber - 1) * created.uploadSession.partSizeBytes;
+      const bytes = originalBytes.subarray(offset, offset + created.uploadSession.partSizeBytes);
+      await byteTransport.uploadPart({
+        url: item.url,
+        bytes,
+        checksumSha256: createHash("sha256").update(bytes).digest("base64"),
+      });
+    }
+    const credentialsB = await CliSessionCredentials.load(
+      aliceStoreB,
+      `session:${input.apiUrl}`,
+      aliceDeviceB,
+    );
+    const clientB = createOrgSpaceClient({
+      transport: createFetchTransport({ baseUrl: input.apiUrl, timeoutMilliseconds: 15_000 }),
+      credentials: credentialsB,
+      deviceId: aliceDeviceB,
+      clientChannel: "cli",
+      invocationSource: "ai_via_cli",
+    });
+    const interrupted = await clientB.readUpload(personal.id, created.uploadSession.id);
     await command(
       [
-        "file",
         "upload",
+        "resume",
         source,
         "--space",
         personal.id,
-        "--parent",
-        personal.rootFolderId,
-        "--content-type",
-        "text/plain",
+        "--upload",
+        created.uploadSession.id,
         "--idempotency-key",
-        "files-upload",
+        "files-upload-resume-device-b",
       ],
-      aliceA,
+      aliceB,
     );
 
     let entry:
@@ -193,10 +846,6 @@ if (input.type === "lifecycle") {
     }
     if (entry === undefined) throw new Error("uploaded file did not become available");
 
-    const versions = await command<{ items: unknown[] }>(
-      ["file", "versions", "--space", personal.id, "--file", entry.id],
-      aliceA,
-    );
     await command(
       [
         "file",
@@ -212,7 +861,95 @@ if (input.type === "lifecycle") {
       ],
       aliceA,
     );
+    const downloadedBytes = await readFile(destination);
+    const sameNameConflict = await rejected(
+      [
+        "file",
+        "upload",
+        source,
+        "--space",
+        personal.id,
+        "--parent",
+        personal.rootFolderId,
+        "--idempotency-key",
+        "files-upload-name-conflict",
+      ],
+      aliceA,
+    );
+
+    const versionTwoBytes = Buffer.from("version two bytes\n", "utf8");
+    await writeFile(source, versionTwoBytes);
     await command(
+      [
+        "file",
+        "upload",
+        source,
+        "--space",
+        personal.id,
+        "--parent",
+        personal.rootFolderId,
+        "--target-file",
+        entry.id,
+        "--content-type",
+        "text/plain",
+        "--idempotency-key",
+        "files-upload-version-two",
+      ],
+      aliceA,
+    );
+    let versions: { items: Array<{ id: string; versionNumber: number }> } | undefined;
+    const versionDeadline = Date.now() + 8_000;
+    while (Date.now() < versionDeadline) {
+      versions = await command<{ items: Array<{ id: string; versionNumber: number }> }>(
+        ["file", "versions", "--space", personal.id, "--file", entry.id],
+        aliceA,
+      );
+      if (versions.items.length === 2) break;
+      await new Promise((resolve) => setTimeout(resolve, 50));
+    }
+    if (versions === undefined || versions.items.length !== 2) {
+      throw new Error("second file version did not become available");
+    }
+    const current = await command<{ entry: { lockVersion: number } }>(
+      ["file", "get", "--space", personal.id, "--file", entry.id],
+      aliceA,
+    );
+    const firstVersion = versions.items.find((version) => version.versionNumber === 1);
+    if (firstVersion === undefined) throw new Error("first file version is missing");
+    await command(
+      [
+        "file",
+        "version-restore",
+        "--space",
+        personal.id,
+        "--file",
+        entry.id,
+        "--version-id",
+        firstVersion.id,
+        "--expected-version",
+        String(current.entry.lockVersion),
+        "--yes",
+        "--idempotency-key",
+        "files-version-restore",
+      ],
+      aliceA,
+    );
+    await command(
+      [
+        "file",
+        "download",
+        "--space",
+        personal.id,
+        "--file",
+        entry.id,
+        "--output",
+        restoredDestination,
+        "--idempotency-key",
+        "files-restored-download",
+      ],
+      aliceB,
+    );
+    const secondTrash = await command<{ expiresAt: string }>(
       [
         "file",
         "trash",
@@ -259,26 +996,43 @@ if (input.type === "lifecycle") {
       ],
       aliceA,
     );
-    const deleted = await command<{ queued: boolean }>(
-      [
-        "file",
-        "delete",
-        "--space",
-        personal.id,
-        "--file",
-        entry.id,
-        "--yes",
-        "--idempotency-key",
-        "files-delete",
-      ],
+    const { createDatabaseClient } = await import("../../../apps/api/src/db/client.js");
+    const sql = createDatabaseClient(input.databaseUrl);
+    try {
+      await sql`update trash_entries set expires_at = now() - interval '1 second'
+        where entry_id = ${entry.id}`;
+    } finally {
+      await sql.end();
+    }
+    let purged = false;
+    const purgeDeadline = Date.now() + 8_000;
+    while (Date.now() < purgeDeadline) {
+      const probe = await rejected(
+        ["file", "get", "--space", personal.id, "--file", entry.id],
+        aliceA,
+      );
+      if (probe.stderr.includes("FILE_NOT_FOUND")) {
+        purged = true;
+        break;
+      }
+      await new Promise((resolve) => setTimeout(resolve, 50));
+    }
+    const usage = await command<{ usedBytes: number; reservedBytes: number }>(
+      ["space", "usage", "--space", personal.id],
       aliceA,
     );
     process.stdout.write(
       JSON.stringify({
-        downloadedText: await readFile(destination, "utf8"),
+        interruptedParts: interrupted.uploadedParts.map((part) => part.partNumber),
+        downloadedMatches: downloadedBytes.equals(originalBytes),
+        sameNameConflict,
         versions: versions.items.length,
+        restoredBytesMatch: (await readFile(restoredDestination)).equals(originalBytes),
         restoredName: restored.entry.name,
-        deleteQueued: deleted.queued,
+        secondTrashExpiresAt: secondTrash.expiresAt,
+        purged,
+        usedBytes: usage.usedBytes,
+        reservedBytes: usage.reservedBytes,
       }),
     );
   } finally {
@@ -301,6 +1055,3 @@ if (input.type === "lifecycle") {
     }),
   );
 }
-import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
-import { tmpdir } from "node:os";
-import { join } from "node:path";
