@@ -147,6 +147,23 @@ describe("typed SDK request boundary", () => {
       "okr.change.request": "requestOkrChange",
       "okr.change.approve": "approveOkrChange",
       "okr.objective.edit.admin": "adminEditObjective",
+      "partner.list": "listPartners",
+      "partner.read": "readPartner",
+      "partner.create": "createPartner",
+      "partner.update": "updatePartner",
+      "partner.archive": "archivePartner",
+      "partner.restore": "restorePartner",
+      "partner.transfer": "transferPartner",
+      "partner.bulk.transfer": "bulkTransferPartners",
+      "partner.duplicate.list": "listPartnerDuplicates",
+      "partner.awaiting.owner.list": "listAwaitingPartners",
+      "partner.contact.read": "readPartnerContact",
+      "partner.interaction.list": "listPartnerInteractions",
+      "partner.interaction.add": "addPartnerInteraction",
+      "partner.interaction.correct": "correctPartnerInteraction",
+      "partner.link.create": "linkPartnerResource",
+      "partner.link.unlink": "unlinkPartnerResource",
+      "partner.export": "exportPartners",
     } as const satisfies Record<CapabilityId, keyof typeof sdk>;
 
     expect(Object.keys(methods).sort()).toEqual(phase0Capabilities.map(({ id }) => id).sort());

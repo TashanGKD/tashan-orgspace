@@ -59,6 +59,15 @@ async function main(): Promise<void> {
       presignClient: createPresignS3Client(config.objectStore),
       bucket: config.objectStore.bucket,
     }),
+    ...(config.partnerSecurity.enabled
+      ? {
+          partnerSecurity: {
+            activeKeyVersion: config.partnerSecurity.activeKeyVersion,
+            fieldKeys: config.partnerSecurity.fieldKeys,
+            blindIndexKey: config.partnerSecurity.blindIndexKey,
+          },
+        }
+      : {}),
   });
 
   const shutdown = async () => {

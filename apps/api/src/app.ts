@@ -19,6 +19,11 @@ import { initializeRequestContext, requestContext } from "./http/request-context
 import { resolveClientIp, validateTrustedProxyCidrs } from "./http/trusted-proxy.js";
 import { OrganizationService } from "./organizations/organization-service.js";
 import { OkrService } from "./okr/okr-service.js";
+import { PartnerService } from "./partners/partner-service.js";
+import { InteractionService } from "./partners/interaction-service.js";
+import { PartnerLinkService } from "./partners/partner-link-service.js";
+import { SensitiveFieldCipher } from "./security/sensitive-field-cipher.js";
+import { BlindIndex } from "./security/blind-index.js";
 import { ProcessService } from "./process/process-service.js";
 import { FileService, type FileDownloadSigner } from "./files/file-service.js";
 import { UploadService, type MultipartObjectStore } from "./files/upload-service.js";
@@ -33,6 +38,7 @@ import { registerCapabilityRoutes } from "./routes/capability-routes.js";
 import { registerDeviceRoutes } from "./routes/device-routes.js";
 import { registerOrganizationRoutes } from "./routes/organization-routes.js";
 import { registerOkrRoutes } from "./routes/okr-routes.js";
+import { registerPartnerRoutes } from "./routes/partner-routes.js";
 import { registerPhoneRoutes } from "./routes/phone-routes.js";
 import { registerFileRoutes } from "./routes/file-routes.js";
 import { registerSpaceRoutes } from "./routes/space-routes.js";
@@ -51,6 +57,11 @@ export interface BuildAppOptions {
   trustedProxyCidrs: readonly string[];
   corsOrigins: readonly string[];
   fileDataStore: MultipartObjectStore & FileDownloadSigner;
+  partnerSecurity?: {
+    activeKeyVersion: number;
+    fieldKeys: ReadonlyMap<number, Uint8Array>;
+    blindIndexKey: Uint8Array;
+  };
 }
 
 function capabilityForRequest(request: FastifyRequest): CapabilityId | undefined {
@@ -128,6 +139,23 @@ export async function buildApp(options: BuildAppOptions): Promise<FastifyInstanc
     authenticate,
   });
   await registerOkrRoutes(app, { sql: options.sql, okr, mutations, authenticate });
+  if (options.partnerSecurity !== undefined) {
+    const partners = new PartnerService({
+      cipher: new SensitiveFieldCipher({
+        activeVersion: options.partnerSecurity.activeKeyVersion,
+        keys: options.partnerSecurity.fieldKeys,
+      }),
+      blindIndex: new BlindIndex(options.partnerSecurity.blindIndexKey),
+    });
+    await registerPartnerRoutes(app, {
+      sql: options.sql,
+      partners,
+      interactions: new InteractionService(partners),
+      links: new PartnerLinkService(partners),
+      mutations,
+      authenticate,
+    });
+  }
 
   app.addHook("onSend", async (request, reply, payload) => {
     const capabilityId = capabilityForRequest(request);

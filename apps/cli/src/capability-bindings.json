@@ -67,5 +67,22 @@
   "okr.progress.update": "okr progress",
   "okr.change.request": "okr change-request",
   "okr.change.approve": "okr approve",
-  "okr.objective.edit.admin": "okr admin-edit"
+  "okr.objective.edit.admin": "okr admin-edit",
+  "partner.list": "partner list",
+  "partner.read": "partner get",
+  "partner.create": "partner create",
+  "partner.update": "partner update",
+  "partner.archive": "partner archive",
+  "partner.restore": "partner restore",
+  "partner.transfer": "partner transfer",
+  "partner.bulk.transfer": "partner bulk-transfer",
+  "partner.duplicate.list": "partner duplicates",
+  "partner.awaiting.owner.list": "partner awaiting-owner",
+  "partner.contact.read": "partner contact",
+  "partner.interaction.list": "partner interaction list",
+  "partner.interaction.add": "partner interaction add",
+  "partner.interaction.correct": "partner interaction correct",
+  "partner.link.create": "partner link",
+  "partner.link.unlink": "partner unlink",
+  "partner.export": "partner export"
 }

@@ -58,6 +58,24 @@ import {
   KeyResultProgressResponse,
   PasswordResetRequest,
   PasswordResetResponse,
+  PartnerBulkTransferRequest,
+  PartnerBulkTransferResponse,
+  PartnerCreateRequest,
+  PartnerDuplicateListResponse,
+  PartnerExportRequest,
+  PartnerExportResponse,
+  PartnerInteractionAddRequest,
+  PartnerInteractionListResponse,
+  PartnerInteractionReadResponse,
+  PartnerLinkRequest,
+  PartnerLinkResponse,
+  PartnerListQuery,
+  PartnerListResponse,
+  PartnerReadResponse,
+  PartnerTransferRequest,
+  PartnerUnlinkResponse,
+  PartnerUpdateRequest,
+  PartnerVersionRequest,
   ProcessDecisionRequest,
   ProcessDefinitionCreateRequest,
   ProcessDefinitionStateResponse,
@@ -949,6 +967,194 @@ export function createOrgSpaceClient(options: OrgSpaceClientOptions) {
         `/v1/organizations/${pathId(organizationId)}/objectives/${pathId(objectiveId)}/admin-edit`,
         ObjectiveMutationResponse,
         OkrChangeRequest.parse(input),
+        { ...mutation, authenticated: true },
+      ),
+
+    listPartners: (organizationId: string, input: unknown, signal?: AbortSignal) => {
+      const query = PartnerListQuery.parse(input);
+      const search = new URLSearchParams({ owner: query.owner, limit: String(query.limit) });
+      if (query.ownerAccountId !== undefined) search.set("ownerAccountId", query.ownerAccountId);
+      if (query.recordState !== undefined) search.set("recordState", query.recordState);
+      if (query.cooperationStage !== undefined)
+        search.set("cooperationStage", query.cooperationStage);
+      return request(
+        "GET",
+        `/v1/organizations/${pathId(organizationId)}/partners?${search}`,
+        PartnerListResponse,
+        undefined,
+        { authenticated: true, signal },
+      );
+    },
+    readPartner: (organizationId: string, partnerId: string, signal?: AbortSignal) =>
+      request(
+        "GET",
+        `/v1/organizations/${pathId(organizationId)}/partners/${pathId(partnerId)}`,
+        PartnerReadResponse,
+        undefined,
+        { authenticated: true, signal },
+      ),
+    createPartner: (organizationId: string, input: unknown, mutation: MutationOptions) =>
+      request(
+        "POST",
+        `/v1/organizations/${pathId(organizationId)}/partners`,
+        PartnerReadResponse,
+        PartnerCreateRequest.parse(input),
+        { ...mutation, authenticated: true },
+      ),
+    updatePartner: (
+      organizationId: string,
+      partnerId: string,
+      input: unknown,
+      mutation: MutationOptions,
+    ) =>
+      request(
+        "POST",
+        `/v1/organizations/${pathId(organizationId)}/partners/${pathId(partnerId)}/update`,
+        PartnerReadResponse,
+        PartnerUpdateRequest.parse(input),
+        { ...mutation, authenticated: true },
+      ),
+    archivePartner: (
+      organizationId: string,
+      partnerId: string,
+      input: unknown,
+      mutation: MutationOptions,
+    ) =>
+      request(
+        "POST",
+        `/v1/organizations/${pathId(organizationId)}/partners/${pathId(partnerId)}/archive`,
+        PartnerReadResponse,
+        PartnerVersionRequest.parse(input),
+        { ...mutation, authenticated: true },
+      ),
+    restorePartner: (
+      organizationId: string,
+      partnerId: string,
+      input: unknown,
+      mutation: MutationOptions,
+    ) =>
+      request(
+        "POST",
+        `/v1/organizations/${pathId(organizationId)}/partners/${pathId(partnerId)}/restore`,
+        PartnerReadResponse,
+        PartnerVersionRequest.parse(input),
+        { ...mutation, authenticated: true },
+      ),
+    transferPartner: (
+      organizationId: string,
+      partnerId: string,
+      input: unknown,
+      mutation: MutationOptions,
+    ) =>
+      request(
+        "POST",
+        `/v1/organizations/${pathId(organizationId)}/partners/${pathId(partnerId)}/transfer`,
+        PartnerReadResponse,
+        PartnerTransferRequest.parse(input),
+        { ...mutation, authenticated: true },
+      ),
+    bulkTransferPartners: (organizationId: string, input: unknown, mutation: MutationOptions) =>
+      request(
+        "POST",
+        `/v1/organizations/${pathId(organizationId)}/partners/bulk-transfer`,
+        PartnerBulkTransferResponse,
+        PartnerBulkTransferRequest.parse(input),
+        { ...mutation, authenticated: true },
+      ),
+    listPartnerDuplicates: (organizationId: string, signal?: AbortSignal) =>
+      request(
+        "GET",
+        `/v1/organizations/${pathId(organizationId)}/partners/duplicate-candidates`,
+        PartnerDuplicateListResponse,
+        undefined,
+        { authenticated: true, signal },
+      ),
+    listAwaitingPartners: (organizationId: string, signal?: AbortSignal) =>
+      request(
+        "GET",
+        `/v1/organizations/${pathId(organizationId)}/partners/awaiting-owner`,
+        PartnerListResponse,
+        undefined,
+        { authenticated: true, signal },
+      ),
+    readPartnerContact: (organizationId: string, partnerId: string, signal?: AbortSignal) =>
+      request(
+        "GET",
+        `/v1/organizations/${pathId(organizationId)}/partners/${pathId(partnerId)}/contact`,
+        PartnerReadResponse,
+        undefined,
+        { authenticated: true, signal },
+      ),
+    listPartnerInteractions: (organizationId: string, partnerId: string, signal?: AbortSignal) =>
+      request(
+        "GET",
+        `/v1/organizations/${pathId(organizationId)}/partners/${pathId(partnerId)}/interactions`,
+        PartnerInteractionListResponse,
+        undefined,
+        { authenticated: true, signal },
+      ),
+    addPartnerInteraction: (
+      organizationId: string,
+      partnerId: string,
+      input: unknown,
+      mutation: MutationOptions,
+    ) =>
+      request(
+        "POST",
+        `/v1/organizations/${pathId(organizationId)}/partners/${pathId(partnerId)}/interactions`,
+        PartnerInteractionReadResponse,
+        PartnerInteractionAddRequest.parse(input),
+        { ...mutation, authenticated: true },
+      ),
+    correctPartnerInteraction: (
+      organizationId: string,
+      partnerId: string,
+      interactionId: string,
+      input: unknown,
+      mutation: MutationOptions,
+    ) =>
+      request(
+        "POST",
+        `/v1/organizations/${pathId(organizationId)}/partners/${pathId(partnerId)}/interactions/${pathId(interactionId)}/corrections`,
+        PartnerInteractionReadResponse,
+        PartnerInteractionAddRequest.parse({
+          ...(input as object),
+          correctsInteractionId: interactionId,
+        }),
+        { ...mutation, authenticated: true },
+      ),
+    linkPartnerResource: (
+      organizationId: string,
+      partnerId: string,
+      input: unknown,
+      mutation: MutationOptions,
+    ) =>
+      request(
+        "POST",
+        `/v1/organizations/${pathId(organizationId)}/partners/${pathId(partnerId)}/links`,
+        PartnerLinkResponse,
+        PartnerLinkRequest.parse(input),
+        { ...mutation, authenticated: true },
+      ),
+    unlinkPartnerResource: (
+      organizationId: string,
+      partnerId: string,
+      linkId: string,
+      mutation: MutationOptions,
+    ) =>
+      request(
+        "DELETE",
+        `/v1/organizations/${pathId(organizationId)}/partners/${pathId(partnerId)}/links/${pathId(linkId)}`,
+        PartnerUnlinkResponse,
+        undefined,
+        { ...mutation, authenticated: true },
+      ),
+    exportPartners: (organizationId: string, input: unknown, mutation: MutationOptions) =>
+      request(
+        "POST",
+        `/v1/organizations/${pathId(organizationId)}/partners/export`,
+        PartnerExportResponse,
+        PartnerExportRequest.parse(input),
         { ...mutation, authenticated: true },
       ),
 

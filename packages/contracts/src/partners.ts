@@ -53,6 +53,22 @@ export const PartnerVersionRequest = z
 export const PartnerTransferRequest = z
   .object({ accountId: AccountId, expectedVersion: z.number().int().min(1) })
   .strict();
+export const PartnerBulkTransferRequest = z
+  .object({
+    accountId: AccountId,
+    items: z
+      .array(z.object({ partnerId: z.uuid(), expectedVersion: z.number().int().min(1) }).strict())
+      .min(1)
+      .max(500),
+  })
+  .strict();
+export const PartnerLinkRequest = z.discriminatedUnion("type", [
+  z.object({ type: z.literal("file"), spaceId: z.uuid(), entryId: z.uuid() }).strict(),
+  z.object({ type: z.enum(["task", "meeting"]), workItemId: z.uuid() }).strict(),
+]);
+export const PartnerExportRequest = z
+  .object({ owner: z.literal("all"), format: z.literal("csv").default("csv") })
+  .strict();
 
 export const PartnerSummary = z
   .object({
@@ -124,4 +140,44 @@ export const PartnerInteractionAddRequest = z
       .max(100)
       .default([]),
   })
+  .strict();
+export const PartnerInteractionSummary = z
+  .object({
+    id: z.uuid(),
+    partnerId: z.uuid(),
+    organizationId: OrganizationId,
+    contactedAt: IsoDateTime,
+    channel: PartnerInteractionChannel,
+    summary: z.string(),
+    recordedByAccountId: AccountId,
+    requiresFollowUp: z.boolean(),
+    nextFollowUpAt: IsoDateTime.nullable(),
+    correctsInteractionId: z.uuid().nullable(),
+    followUpWorkItemId: z.uuid().nullable(),
+    createdAt: IsoDateTime,
+  })
+  .strict();
+export const PartnerInteractionListResponse = z
+  .object({ items: z.array(PartnerInteractionSummary) })
+  .strict();
+export const PartnerInteractionReadResponse = z
+  .object({ interaction: PartnerInteractionSummary })
+  .strict();
+export const PartnerLinkResponse = z.object({ linkId: z.uuid(), reverseLinkId: z.uuid() }).strict();
+export const PartnerUnlinkResponse = z.object({ removed: z.literal(true) }).strict();
+export const PartnerBulkTransferResponse = z.object({ updated: z.number().int().min(0) }).strict();
+export const PartnerDuplicateListResponse = z
+  .object({
+    groups: z.array(
+      z
+        .object({
+          field: z.enum(["phone", "wechat", "email"]),
+          partnerIds: z.array(z.uuid()).min(2),
+        })
+        .strict(),
+    ),
+  })
+  .strict();
+export const PartnerExportResponse = z
+  .object({ count: z.number().int().min(0), content: z.string() })
   .strict();

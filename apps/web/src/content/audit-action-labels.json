@@ -67,5 +67,22 @@
   "okr.progress.update": "更新关键结果进度",
   "okr.change.request": "申请修改 OKR",
   "okr.change.approve": "审批 OKR 修改",
-  "okr.objective.edit.admin": "管理员修改 OKR"
+  "okr.objective.edit.admin": "管理员修改 OKR",
+  "partner.list": "查看合作方",
+  "partner.read": "查看合作方详情",
+  "partner.create": "添加合作方",
+  "partner.update": "修改合作方",
+  "partner.archive": "归档合作方",
+  "partner.restore": "恢复合作方",
+  "partner.transfer": "转交合作方",
+  "partner.bulk.transfer": "批量转交合作方",
+  "partner.duplicate.list": "查看重复合作方",
+  "partner.awaiting.owner.list": "查看待接管合作方",
+  "partner.contact.read": "查看合作方联系方式",
+  "partner.interaction.list": "查看合作方跟进",
+  "partner.interaction.add": "添加合作方跟进",
+  "partner.interaction.correct": "更正合作方跟进",
+  "partner.link.create": "关联合作方资料",
+  "partner.link.unlink": "取消合作方关联",
+  "partner.export": "导出合作方"
 }

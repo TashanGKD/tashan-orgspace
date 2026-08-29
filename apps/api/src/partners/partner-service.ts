@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 import type { JSONValue } from "postgres";
 import {
+  PartnerBulkTransferRequest,
   PartnerCreateRequest,
   PartnerListQuery,
   PartnerTransferRequest,
@@ -348,6 +349,82 @@ export class PartnerService {
       { id: string }[]
     >`update partners partner set record_state = 'awaiting_owner', version = version + 1, updated_at = now() where organization_id = ${organizationId} and record_state <> 'awaiting_owner' and not exists (select 1 from memberships where organization_id = partner.organization_id and account_id = partner.owner_account_id and status = 'active') returning id`;
     return rows.length;
+  }
+  private async requireAdmin(tx: TransactionClient, accountId: string, organizationId: string) {
+    try {
+      await requireOrganizationMembership(tx, accountId, organizationId, [
+        "org_owner",
+        "org_admin",
+      ]);
+    } catch {
+      throw new AuthError("PARTNER_NOT_FOUND", "partner is unavailable");
+    }
+  }
+  public async bulkTransfer(
+    tx: TransactionClient,
+    accountId: string,
+    organizationId: string,
+    raw: unknown,
+  ) {
+    const input = PartnerBulkTransferRequest.parse(raw);
+    await this.requireAdmin(tx, accountId, organizationId);
+    let updated = 0;
+    for (const item of input.items) {
+      await this.transfer(tx, accountId, organizationId, item.partnerId, {
+        accountId: input.accountId,
+        expectedVersion: item.expectedVersion,
+      });
+      updated += 1;
+    }
+    return { updated };
+  }
+  public async duplicateCandidates(
+    tx: TransactionClient,
+    accountId: string,
+    organizationId: string,
+  ) {
+    await this.requireAdmin(tx, accountId, organizationId);
+    const groups: Array<{ field: "phone" | "wechat" | "email"; partnerIds: string[] }> = [];
+    for (const [field, column] of [
+      ["phone", "phone_blind_index"],
+      ["wechat", "wechat_blind_index"],
+      ["email", "email_blind_index"],
+    ] as const) {
+      const rows = await tx.unsafe<{ partner_ids: string[] }[]>(
+        `select array_agg(id order by id) partner_ids from partners where organization_id = $1 and ${column} is not null group by ${column} having count(*) > 1`,
+        [organizationId],
+      );
+      for (const row of rows) groups.push({ field, partnerIds: row.partner_ids });
+    }
+    return { groups };
+  }
+  public async exportAll(tx: TransactionClient, accountId: string, organizationId: string) {
+    await this.requireAdmin(tx, accountId, organizationId);
+    const rows = await tx<
+      PartnerRow[]
+    >`select * from partners where organization_id = ${organizationId} order by name,id`;
+    const quote = (value: unknown) => `"${String(value ?? "").replaceAll('"', '""')}"`;
+    const lines = ["name,organization,department,title,phone,wechat,email,address,stage,owner"];
+    for (const row of rows) {
+      const item = this.detail(row);
+      lines.push(
+        [
+          item.name,
+          item.organizationName,
+          item.department,
+          item.jobTitle,
+          item.phone,
+          item.wechat,
+          item.email,
+          item.address,
+          item.cooperationStage,
+          item.ownerAccountId,
+        ]
+          .map(quote)
+          .join(","),
+      );
+    }
+    return { count: rows.length, content: `${lines.join("\n")}\n` };
   }
   private async event(
     tx: TransactionClient,

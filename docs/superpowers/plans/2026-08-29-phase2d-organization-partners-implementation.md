@@ -44,11 +44,11 @@
 
 **Files:** Create partner routes/SDK/CLI commands and `skill/tashan-orgspace/references/partners.md`; modify capability registries.
 
-- [ ] Write RED parity tests for list/get/create/update/archive/restore/transfer/interactions/link/export and explicit admin `--owner all`.
-- [ ] Run API/SDK/CLI/gate tests; expect missing bindings.
-- [ ] Implement capabilities; require confirmation for export/bulk transfer and create export files as `0600`.
-- [ ] Run parity and sensitive-output tests.
-- [ ] Commit: `git commit -m "feat(cli): add partner directory commands"`.
+- [x] Write RED parity tests for list/get/create/update/archive/restore/transfer/interactions/link/export and explicit admin `--owner all`.
+- [x] Run API/SDK/CLI/gate tests; expect missing bindings.
+- [x] Implement capabilities; require confirmation for export/bulk transfer and create export files as `0600`.
+- [x] Run parity and sensitive-output tests.
+- [x] Commit: `git commit -m "feat(cli): add partner directory commands"`.
 
 ### Task 5: Web list/detail and acceptance
 

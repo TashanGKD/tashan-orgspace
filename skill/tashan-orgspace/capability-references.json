@@ -69,6 +69,23 @@
     "okr.progress.update",
     "okr.change.request",
     "okr.change.approve",
-    "okr.objective.edit.admin"
+    "okr.objective.edit.admin",
+    "partner.list",
+    "partner.read",
+    "partner.create",
+    "partner.update",
+    "partner.archive",
+    "partner.restore",
+    "partner.transfer",
+    "partner.bulk.transfer",
+    "partner.duplicate.list",
+    "partner.awaiting.owner.list",
+    "partner.contact.read",
+    "partner.interaction.list",
+    "partner.interaction.add",
+    "partner.interaction.correct",
+    "partner.link.create",
+    "partner.link.unlink",
+    "partner.export"
   ]
 }
