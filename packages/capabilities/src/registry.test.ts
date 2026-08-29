@@ -50,7 +50,7 @@ describe("capability registry invariants", () => {
 });
 
 describe("Phase 0 capability source", () => {
-  test("contains exactly the approved 62 unique IDs", () => {
+  test("contains exactly the approved 69 unique IDs", () => {
     expect(phase0Capabilities.map(({ id }) => id).sort()).toEqual(
       [
         "system.health.read",
@@ -115,9 +115,16 @@ describe("Phase 0 capability source", () => {
         "process.instance.start",
         "process.instance.read",
         "process.instance.decide",
+        "okr.objective.list",
+        "okr.objective.read",
+        "okr.objective.create",
+        "okr.progress.update",
+        "okr.change.request",
+        "okr.change.approve",
+        "okr.objective.edit.admin",
       ].sort(),
     );
-    expect(new Set(phase0Capabilities.map(({ id }) => id)).size).toBe(62);
+    expect(new Set(phase0Capabilities.map(({ id }) => id)).size).toBe(69);
   });
 
   test("keeps revocation and organization writes explicitly guarded", () => {

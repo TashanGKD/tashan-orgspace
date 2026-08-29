@@ -46,6 +46,16 @@ import {
   OrganizationMemberAddRequest,
   OrganizationMemberAddResponse,
   OrganizationMemberListResponse,
+  ObjectiveCreateRequest,
+  ObjectiveListQuery,
+  ObjectiveListResponse,
+  ObjectiveMutationResponse,
+  ObjectiveStateResponse,
+  OkrChangeApprovalRequest,
+  OkrChangeRequest,
+  OkrChangeRequestResponse,
+  OkrProgressUpdateRequest,
+  KeyResultProgressResponse,
   PasswordResetRequest,
   PasswordResetResponse,
   ProcessDecisionRequest,
@@ -857,6 +867,88 @@ export function createOrgSpaceClient(options: OrgSpaceClientOptions) {
         `/v1/organizations/${pathId(organizationId)}/process-instances/${pathId(instanceId)}/decisions`,
         ProcessInstanceStateResponse,
         ProcessDecisionRequest.parse(input),
+        { ...mutation, authenticated: true },
+      ),
+
+    listObjectives: (organizationId: string, input: unknown, signal?: AbortSignal) => {
+      const query = ObjectiveListQuery.parse(input);
+      const search = new URLSearchParams({ limit: String(query.limit) });
+      if (query.cycle !== undefined) search.set("cycle", query.cycle);
+      if (query.ownerAccountId !== undefined) search.set("ownerAccountId", query.ownerAccountId);
+      return request(
+        "GET",
+        `/v1/organizations/${pathId(organizationId)}/objectives?${search}`,
+        ObjectiveListResponse,
+        undefined,
+        { authenticated: true, signal },
+      );
+    },
+    readObjective: (organizationId: string, objectiveId: string, signal?: AbortSignal) =>
+      request(
+        "GET",
+        `/v1/organizations/${pathId(organizationId)}/objectives/${pathId(objectiveId)}`,
+        ObjectiveStateResponse,
+        undefined,
+        { authenticated: true, signal },
+      ),
+    createObjective: (organizationId: string, input: unknown, mutation: MutationOptions) =>
+      request(
+        "POST",
+        `/v1/organizations/${pathId(organizationId)}/objectives`,
+        ObjectiveStateResponse,
+        ObjectiveCreateRequest.parse(input),
+        { ...mutation, authenticated: true },
+      ),
+    updateKeyResultProgress: (
+      organizationId: string,
+      keyResultId: string,
+      input: unknown,
+      mutation: MutationOptions,
+    ) =>
+      request(
+        "POST",
+        `/v1/organizations/${pathId(organizationId)}/key-results/${pathId(keyResultId)}/progress`,
+        KeyResultProgressResponse,
+        OkrProgressUpdateRequest.parse(input),
+        { ...mutation, authenticated: true },
+      ),
+    requestOkrChange: (
+      organizationId: string,
+      objectiveId: string,
+      input: unknown,
+      mutation: MutationOptions,
+    ) =>
+      request(
+        "POST",
+        `/v1/organizations/${pathId(organizationId)}/objectives/${pathId(objectiveId)}/change-requests`,
+        OkrChangeRequestResponse,
+        OkrChangeRequest.parse(input),
+        { ...mutation, authenticated: true },
+      ),
+    approveOkrChange: (
+      organizationId: string,
+      changeRequestId: string,
+      input: unknown,
+      mutation: MutationOptions,
+    ) =>
+      request(
+        "POST",
+        `/v1/organizations/${pathId(organizationId)}/okr-change-requests/${pathId(changeRequestId)}/approve`,
+        ObjectiveMutationResponse,
+        OkrChangeApprovalRequest.parse(input),
+        { ...mutation, authenticated: true },
+      ),
+    adminEditObjective: (
+      organizationId: string,
+      objectiveId: string,
+      input: unknown,
+      mutation: MutationOptions,
+    ) =>
+      request(
+        "POST",
+        `/v1/organizations/${pathId(organizationId)}/objectives/${pathId(objectiveId)}/admin-edit`,
+        ObjectiveMutationResponse,
+        OkrChangeRequest.parse(input),
         { ...mutation, authenticated: true },
       ),
 

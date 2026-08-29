@@ -18,6 +18,7 @@ import { auditInputForRequest } from "./http/request-audit.js";
 import { initializeRequestContext, requestContext } from "./http/request-context.js";
 import { resolveClientIp, validateTrustedProxyCidrs } from "./http/trusted-proxy.js";
 import { OrganizationService } from "./organizations/organization-service.js";
+import { OkrService } from "./okr/okr-service.js";
 import { ProcessService } from "./process/process-service.js";
 import { FileService, type FileDownloadSigner } from "./files/file-service.js";
 import { UploadService, type MultipartObjectStore } from "./files/upload-service.js";
@@ -31,6 +32,7 @@ import { registerAuthRoutes } from "./routes/auth-routes.js";
 import { registerCapabilityRoutes } from "./routes/capability-routes.js";
 import { registerDeviceRoutes } from "./routes/device-routes.js";
 import { registerOrganizationRoutes } from "./routes/organization-routes.js";
+import { registerOkrRoutes } from "./routes/okr-routes.js";
 import { registerPhoneRoutes } from "./routes/phone-routes.js";
 import { registerFileRoutes } from "./routes/file-routes.js";
 import { registerSpaceRoutes } from "./routes/space-routes.js";
@@ -100,6 +102,7 @@ export async function buildApp(options: BuildAppOptions): Promise<FastifyInstanc
   const mutations = new MutationCoordinator(options.sql, audit, options.phoneCodePepper);
   const work = new WorkService();
   const processes = new ProcessService();
+  const okr = new OkrService();
   const authenticate = authenticateWith(auth);
 
   installErrorHandler(app);
@@ -124,6 +127,7 @@ export async function buildApp(options: BuildAppOptions): Promise<FastifyInstanc
     mutations,
     authenticate,
   });
+  await registerOkrRoutes(app, { sql: options.sql, okr, mutations, authenticate });
 
   app.addHook("onSend", async (request, reply, payload) => {
     const capabilityId = capabilityForRequest(request);

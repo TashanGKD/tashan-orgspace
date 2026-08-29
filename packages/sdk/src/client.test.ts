@@ -140,6 +140,13 @@ describe("typed SDK request boundary", () => {
       "process.instance.start": "startProcessInstance",
       "process.instance.read": "readProcessInstance",
       "process.instance.decide": "decideProcessInstance",
+      "okr.objective.list": "listObjectives",
+      "okr.objective.read": "readObjective",
+      "okr.objective.create": "createObjective",
+      "okr.progress.update": "updateKeyResultProgress",
+      "okr.change.request": "requestOkrChange",
+      "okr.change.approve": "approveOkrChange",
+      "okr.objective.edit.admin": "adminEditObjective",
     } as const satisfies Record<CapabilityId, keyof typeof sdk>;
 
     expect(Object.keys(methods).sort()).toEqual(phase0Capabilities.map(({ id }) => id).sort());

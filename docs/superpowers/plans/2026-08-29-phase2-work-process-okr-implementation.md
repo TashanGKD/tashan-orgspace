@@ -54,11 +54,11 @@
 
 **Files:** Create `apps/api/migrations/012_okr.sql`, `packages/contracts/src/okr.ts`, `apps/api/src/okr/`, `apps/api/src/routes/okr-routes.ts`, tests under `apps/api/test/okr/`.
 
-- [ ] Write RED tests for numeric/linked_tasks/manual, invalid weights, cross-org task link, historical snapshots, immediate progress and forbidden direct substantive edit.
-- [ ] Run targeted tests; expect OKR service missing.
-- [ ] Implement Objective/KR/formula snapshots; route substantive edits through `okr_change_request` WorkItem and approval.
-- [ ] Run integration tests including stale approval and administrator direct-edit audit equivalence.
-- [ ] Commit: `git commit -m "feat(okr): add approved objective changes"`.
+- [x] Write RED tests for numeric/linked_tasks/manual, invalid weights, cross-org task link, historical snapshots, immediate progress and forbidden direct substantive edit.
+- [x] Run targeted tests; expect OKR service missing.
+- [x] Implement Objective/KR/formula snapshots; route substantive edits through `okr_change_request` WorkItem and approval.
+- [x] Run integration tests including stale approval and administrator direct-edit audit equivalence.
+- [x] Commit: `git commit -m "feat(okr): add approved objective changes"`.
 
 ### Task 6: Phase 2 Web, Skill and acceptance
 

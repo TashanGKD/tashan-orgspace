@@ -62,6 +62,13 @@
     "process.version.publish",
     "process.instance.start",
     "process.instance.read",
-    "process.instance.decide"
+    "process.instance.decide",
+    "okr.objective.list",
+    "okr.objective.read",
+    "okr.objective.create",
+    "okr.progress.update",
+    "okr.change.request",
+    "okr.change.approve",
+    "okr.objective.edit.admin"
   ]
 }

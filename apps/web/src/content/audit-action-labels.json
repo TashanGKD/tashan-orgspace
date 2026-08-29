@@ -60,5 +60,12 @@
   "process.version.publish": "发布流程版本",
   "process.instance.start": "启动审批流程",
   "process.instance.read": "查看审批进度",
-  "process.instance.decide": "处理审批"
+  "process.instance.decide": "处理审批",
+  "okr.objective.list": "查看 OKR",
+  "okr.objective.read": "查看 OKR 详情",
+  "okr.objective.create": "创建 OKR",
+  "okr.progress.update": "更新关键结果进度",
+  "okr.change.request": "申请修改 OKR",
+  "okr.change.approve": "审批 OKR 修改",
+  "okr.objective.edit.admin": "管理员修改 OKR"
 }

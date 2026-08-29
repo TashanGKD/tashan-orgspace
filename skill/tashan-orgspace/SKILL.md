@@ -39,6 +39,8 @@ Read [files.md](references/files.md) before listing spaces, uploading or downloa
 
 Read [work.md](references/work.md) before creating or changing tasks, meetings, approvals, assignments, transfers or approval processes.
 
+Read [okr.md](references/okr.md) before creating objectives, updating progress, or requesting and approving substantive OKR changes.
+
 Use the login token stored by the CLI as the real user and device identity. Do not create subaccounts to represent additional computers.
 
 ## Execute commands
