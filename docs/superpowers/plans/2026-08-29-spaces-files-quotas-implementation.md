@@ -163,7 +163,7 @@ git commit -m "feat(storage): add private S3 foundation"
 - Modify: `packages/contracts/src/error.ts`
 - Modify: `packages/contracts/src/index.ts`
 
-- [ ] **Step 1: Write RED contract tests**
+- [x] **Step 1: Write RED contract tests**
 
 Test these branded IDs and enums:
 
@@ -178,7 +178,7 @@ UploadSessionStatus = "created" | "uploading" | "verifying" | "completed" | "can
 
 Reject negative byte counts, values above `Number.MAX_SAFE_INTEGER`, empty/`.`/`..` names, `/`, `\\`, NUL, control characters, non-NFC names, invalid part numbers and duplicate part numbers.
 
-- [ ] **Step 2: Define request and response schemas**
+- [x] **Step 2: Define request and response schemas**
 
 `spaces.ts` must export `SpaceSummary`, `SpaceListResponse`, `SpaceReadResponse`, `SpaceUsageResponse` and `PersonalQuotaSetRequest/Response`.
 
@@ -199,7 +199,7 @@ FolderGrantSetRequest/Response, FolderGrantRevokeResponse, FolderManagerRecoverR
 
 Every response uses ISO timestamps and decimal-safe integer byte counts. `UploadCreateResponse` returns `partSizeBytes`, `partCount`, `expiresAt`, and no S3 credentials.
 
-- [ ] **Step 3: Add stable error codes**
+- [x] **Step 3: Add stable error codes**
 
 Append exactly:
 
@@ -210,9 +210,9 @@ UPLOAD_NOT_FOUND, UPLOAD_EXPIRED, UPLOAD_INCOMPLETE, UPLOAD_CHECKSUM_MISMATCH,
 FOLDER_MANAGER_REQUIRED, FOLDER_LAST_MANAGER
 ```
 
-Map them in `apps/api/src/http/error-handler.ts` during Task 6: 404 for missing objects, 403 for forbidden, 409 for state/name/version/manager conflicts, 413 for quota, and 400 for incomplete/checksum input errors.
+Map them immediately in `apps/api/src/http/error-handler.ts`: 404 for missing objects, 403 for forbidden/manager-required, 409 for readonly/name/version/last-manager conflicts, 410 for expired upload, 413 for quota, and 400 for incomplete/checksum input errors. This keeps the exhaustive `Record<ErrorCode, number>` compiling in the same commit as the contract change.
 
-- [ ] **Step 4: Freeze the 26 Phase 1 capability IDs in the file contract**
+- [x] **Step 4: Freeze the 26 Phase 1 capability IDs in the file contract**
 
 Export `FileCapabilityId` as the exact enum below for later Task 8 registry insertion. Do not add these IDs to the live server registry yet, because they have no mounted API/CLI implementation at this point:
 
@@ -229,7 +229,7 @@ folder.grant.revoke, folder.manager.recover
 
 Task 8 registers read capabilities with `sideEffect: "none"`; URL creation and all mutations with `write`; trash/delete/grant revoke/upload cancel with `revoke`. Confirmation is required for quota changes, trash, permanent delete, permission-scope changes, grant revoke and manager recovery.
 
-- [ ] **Step 5: Verify and commit**
+- [x] **Step 5: Verify and commit**
 
 Run:
 
@@ -417,11 +417,10 @@ git add apps/api/src/files/upload-service.ts apps/api/src/config.ts apps/api/src
 git commit -m "feat(files): add resumable upload sessions"
 ```
 
-### Task 6: Implement file operations and error mapping
+### Task 6: Implement file operations
 
 **Files:**
 - Create: `apps/api/src/files/file-service.ts`
-- Modify: `apps/api/src/http/error-handler.ts`
 
 - [ ] **Step 1: Write RED service contract tests**
 
@@ -466,9 +465,9 @@ Tests must assert authorization, audit input, idempotency result and stable doma
 
 Only `available` versions receive GET URLs, valid at most 5 minutes. The signed response sets safe content disposition and does not inline active HTML/SVG/script content. URL creation is audited as `file.download.create`.
 
-- [ ] **Step 4: Map errors without mounting unavailable routes**
+- [ ] **Step 4: Keep services unmounted until the vertical capability slice**
 
-Map the Task 2 error codes exactly and ensure unknown failures remain `INTERNAL_ERROR` without leaking object keys or S3 details. Keep file services unmounted until Task 8 can add API, SDK, CLI and Skill in one gate-consistent submission.
+Keep file services unmounted until Task 8 can add API, SDK, CLI and Skill in one gate-consistent submission. Service tests must prove thrown errors contain stable public codes and never include object keys or S3 details.
 
 - [ ] **Step 5: Verify and commit**
 
@@ -483,7 +482,7 @@ pnpm typecheck
 Commit:
 
 ```bash
-git add apps/api/src/files apps/api/src/http/error-handler.ts apps/api/test/files
+git add apps/api/src/files apps/api/test/files
 git commit -m "feat(api): expose space and file operations"
 ```
 

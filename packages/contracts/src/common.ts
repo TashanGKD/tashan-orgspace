@@ -21,6 +21,18 @@ export type SessionId = z.infer<typeof SessionId>;
 export const AuditEventId = z.uuid().brand<"AuditEventId">();
 export type AuditEventId = z.infer<typeof AuditEventId>;
 
+export const SpaceId = z.uuid().brand<"SpaceId">();
+export type SpaceId = z.infer<typeof SpaceId>;
+
+export const FileEntryId = z.uuid().brand<"FileEntryId">();
+export type FileEntryId = z.infer<typeof FileEntryId>;
+
+export const FileVersionId = z.uuid().brand<"FileVersionId">();
+export type FileVersionId = z.infer<typeof FileVersionId>;
+
+export const UploadSessionId = z.uuid().brand<"UploadSessionId">();
+export type UploadSessionId = z.infer<typeof UploadSessionId>;
+
 export const PhoneVerificationChallengeId = z.uuid().brand<"PhoneVerificationChallengeId">();
 export type PhoneVerificationChallengeId = z.infer<typeof PhoneVerificationChallengeId>;
 
@@ -29,6 +41,9 @@ export type RequestId = z.infer<typeof RequestId>;
 
 export const IsoDateTime = z.iso.datetime({ offset: true });
 export type IsoDateTime = z.infer<typeof IsoDateTime>;
+
+export const SafeByteCount = z.number().int().min(0).max(Number.MAX_SAFE_INTEGER);
+export type SafeByteCount = z.infer<typeof SafeByteCount>;
 
 export const PrincipalType = z.enum(["human", "system", "ai_employee", "service_account"]);
 export type PrincipalType = z.infer<typeof PrincipalType>;
