@@ -27,6 +27,7 @@ set -eu
 printf 'ssh %s\n' "$*" >> "${ORGSPACE_TEST_TRANSPORT_LOG:?}"
 case "$*" in
   *"stat -c %a"*) printf '%s\n' "${FAKE_SECRET_MODE:-600}" ;;
+  *"SERVICE_VERSION="*) printf '%s\n' "${FAKE_SERVICE_VERSION:-1.0.0}" ;;
   *"curl -fsS"*) printf '%s\n' '{"status":"ok","version":"0.1.0-alpha.2"}' ;;
 esac
 EOF
@@ -90,6 +91,16 @@ expect_failure "remote secret file must have mode 600" env \
   "$deployer" --apply --confirm-production
 if grep -q '^rsync ' "$transport_log"; then
   echo "rsync ran before secret permission rejection" >&2
+  exit 1
+fi
+
+: > "$transport_log"
+expect_failure "remote SERVICE_VERSION must equal local release manifest version" env \
+  PATH="$fake_bin:$PATH" ORGSPACE_DEPLOY_TESTING=1 \
+  ORGSPACE_TEST_TRANSPORT_LOG="$transport_log" FAKE_SERVICE_VERSION=0.1.0-alpha.3 \
+  "$deployer" --apply --confirm-production
+if grep -q '^rsync ' "$transport_log"; then
+  echo "rsync ran before service version rejection" >&2
   exit 1
 fi
 

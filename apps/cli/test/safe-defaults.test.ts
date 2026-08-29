@@ -2,11 +2,12 @@ import { describe, expect, test, vi } from "vitest";
 
 import { resolveCliConfig } from "../src/config.js";
 import { runCli } from "../src/program.js";
+import cliPackage from "../package.json" with { type: "json" };
 
 describe("safe CLI defaults", () => {
   test("reports the release contract version", async () => {
     const result = await runCli(["--version"]);
-    expect(result).toEqual({ stdout: "0.1.0-alpha.3\n", stderr: "", exitCode: 0 });
+    expect(result).toEqual({ stdout: `${cliPackage.version}\n`, stderr: "", exitCode: 0 });
   });
 
   test("no args prints help without credential or network access", async () => {

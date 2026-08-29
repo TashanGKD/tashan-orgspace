@@ -94,6 +94,7 @@ EOF
 [ "$remote_root" = "/home/aup/tashan-orgspace" ] || die "deployment contract is outside the OrgSpace boundary"
 [ "$compose_project" = "tashan-orgspace-prod" ] || die "deployment contract is outside the OrgSpace boundary"
 secret_file="$remote_root/shared/.env.production"
+release_version="$(node -p "JSON.parse(require('node:fs').readFileSync('$repository_root/release/cli-release.json')).version")"
 
 print_plan() {
   cat <<EOF
@@ -128,6 +129,8 @@ read_only_preflight() {
   orgspace_ssh "$aup_host" "set -eu; command -v docker >/dev/null; docker compose version >/dev/null; command -v curl >/dev/null; test -d '$remote_root' || test ! -e '$remote_root'; if test -e '$remote_root/shared/public-downloads'; then test -d '$remote_root/shared/public-downloads'; test ! -L '$remote_root/shared/public-downloads'; fi; if ss -ltn | grep -q ':$aup_port '; then docker ps --format '{{.Names}}' | grep -q '^tashan-orgspace-prod-'; fi"
   secret_mode="$(orgspace_ssh "$aup_host" "if test -f '$secret_file'; then stat -c %a '$secret_file'; else echo missing; fi")"
   [ "$secret_mode" = "600" ] || die "remote secret file must have mode 600: $secret_file"
+  remote_service_version="$(orgspace_ssh "$aup_host" "sed -n 's/^SERVICE_VERSION=//p' '$secret_file' | tail -n 1")"
+  [ "$remote_service_version" = "$release_version" ] || die "remote SERVICE_VERSION must equal local release manifest version"
   echo "deploy-orgspace preflight: PASS ($aup_host $remote_root)"
 }
 
