@@ -11,7 +11,8 @@ trap 'rm -rf "$temporary_root"' EXIT INT TERM
 
 version="$(node -p "JSON.parse(require('node:fs').readFileSync('$repository_root/release/cli-release.json')).version")"
 mkdir -p "$fixture/v$version"
-mapfile -t assets < <(node -e '
+assets=()
+while IFS= read -r asset; do assets+=("$asset"); done < <(node -e '
   const r=JSON.parse(require("node:fs").readFileSync(process.argv[1]));
   console.log(r.skillAsset); for (const p of r.platforms) console.log(p.asset);
 ' "$repository_root/release/cli-release.json")

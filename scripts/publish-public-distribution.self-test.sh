@@ -146,15 +146,15 @@ test "$(grep -c '^rsync ' "$transport_log" || true)" -eq 0
 : >"$transport_log"
 expect_failure "remote version already exists" env FAKE_REMOTE_EXISTS=1 \
   PATH="$fake_bin:$PATH" ORGSPACE_PUBLISH_TESTING=1 \
-  ORGSPACE_TEST_REPOSITORY_ROOT="$repository_root" ORGSPACE_TEST_TRANSPORT_LOG="$transport_log" \
+  ORGSPACE_TEST_VERSION="$version" ORGSPACE_TEST_REPOSITORY_ROOT="$repository_root" ORGSPACE_TEST_TRANSPORT_LOG="$transport_log" \
   "$publisher" --apply --confirm-production --source-dir "$source_dir"
 test "$(grep -c '^rsync ' "$transport_log" || true)" -eq 0
 
 : >"$transport_log"
 run_publisher --apply --confirm-production --source-dir "$source_dir" >/dev/null
 grep -q '^rsync ' "$transport_log"
-grep -q '\.staging/v0\.1\.0-alpha\.3' "$transport_log"
-grep -q 'mv.*v0\.1\.0-alpha\.3' "$transport_log"
+grep -Fq ".staging/v$version" "$transport_log"
+grep -q "mv.*v$version" "$transport_log"
 grep -q 'install-skill\.sh' "$transport_log"
 
 echo "publish-public-distribution.self-test: PASS"
