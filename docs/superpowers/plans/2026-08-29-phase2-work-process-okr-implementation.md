@@ -44,11 +44,11 @@
 
 **Files:** Create `apps/api/src/routes/work-routes.ts`, `packages/sdk/src/work.ts`, `apps/cli/src/commands/work.ts`; modify app mount, capability registry and CLI bindings.
 
-- [ ] Write RED route/SDK/CLI tests for list/get/create/action, stable errors, explicit `--org`, confirmation and JSON output.
-- [ ] Run API/SDK/CLI tests; expect missing capabilities and commands.
-- [ ] Register and implement capabilities for task, meeting, approval, assignment dispute/transfer and process decisions.
-- [ ] Run parity gates and targeted tests; remove any server capability without CLI binding.
-- [ ] Commit: `git commit -m "feat(cli): expose organization work commands"`.
+- [x] Write RED route/SDK/CLI tests for list/get/create/action, stable errors, explicit `--org`, confirmation and JSON output.
+- [x] Run API/SDK/CLI tests; expect missing capabilities and commands.
+- [x] Register and implement capabilities for task, meeting, approval, assignment dispute/transfer and process decisions.
+- [x] Run parity gates and targeted tests; remove any server capability without CLI binding.
+- [x] Commit: `git commit -m "feat(cli): expose organization work commands"`.
 
 ### Task 5: OKR formulas and change approval
 

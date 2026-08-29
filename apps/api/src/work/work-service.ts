@@ -1,6 +1,10 @@
 import { randomUUID } from "node:crypto";
 
-import { WorkItemCreateRequest, WorkItemTransitionRequest } from "@tashan/contracts";
+import {
+  WorkItemCreateRequest,
+  WorkItemListQuery,
+  WorkItemTransitionRequest,
+} from "@tashan/contracts";
 
 import { AuthError } from "../auth/auth-errors.js";
 import { CollaborationRepository } from "../collaboration/collaboration-repository.js";
@@ -77,6 +81,47 @@ export class WorkService {
       select * from work_assignments where work_item_id = ${workItemId} order by created_at, id
     `;
     return { item: item(row), assignments: assignments.map(assignment) };
+  }
+
+  public async list(
+    transaction: TransactionClient,
+    accountId: string,
+    organizationId: string,
+    raw: unknown,
+  ) {
+    const input = WorkItemListQuery.parse(raw);
+    await requireOrganizationMembership(transaction, accountId, organizationId);
+    const type = input.type ?? null;
+    const status = input.status ?? null;
+    const assigneeId = input.assigneeAccountId ?? null;
+    const rows = await transaction<WorkRow[]>`
+      select item.* from work_items item
+      where item.organization_id = ${organizationId}
+        and (${type}::text is null or item.type = ${type})
+        and (${status}::text is null or item.status = ${status})
+        and (${assigneeId}::uuid is null or exists(
+          select 1 from work_assignments assignment
+          where assignment.work_item_id = item.id
+            and assignment.assignee_account_id = ${assigneeId}
+        ))
+      order by item.due_at nulls last, item.created_at desc, item.id
+      limit ${input.limit}
+    `;
+    return rows.map(item);
+  }
+
+  public async read(
+    transaction: TransactionClient,
+    accountId: string,
+    organizationId: string,
+    workItemId: string,
+  ) {
+    await requireOrganizationMembership(transaction, accountId, organizationId);
+    const result = await this.state(transaction, workItemId);
+    if (result.item.organizationId !== organizationId) {
+      throw new AuthError("WORK_NOT_FOUND", "work item not found");
+    }
+    return result;
   }
 
   private async requireActiveTarget(

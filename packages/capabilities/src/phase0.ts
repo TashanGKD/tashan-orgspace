@@ -4,7 +4,7 @@ import rawDefinitions from "./phase0-capabilities.json" with { type: "json" };
 import { buildRegistry } from "./registry.js";
 import { Capability } from "./schema.js";
 
-const definitions = z.array(Capability).length(43).parse(rawDefinitions);
+const definitions = z.array(Capability).length(62).parse(rawDefinitions);
 
 export const phase0Registry = buildRegistry(definitions);
 export const phase0Capabilities = Object.freeze([...phase0Registry.values()]);

@@ -24,6 +24,7 @@ import {
   registerOrganizationCommands,
 } from "./commands/organization.js";
 import { registerSpaceCommands, spaceCapabilityIds } from "./commands/space.js";
+import { registerWorkCommands, workCapabilityIds } from "./commands/work.js";
 import { resolveCliConfig } from "./config.js";
 import { withMemoryFallback, type CredentialStore } from "./credentials/credential-store.js";
 import { EncryptedFileStore } from "./credentials/encrypted-file-store.js";
@@ -44,6 +45,7 @@ export const registeredCapabilityIds = new Set([
   ...spaceCapabilityIds,
   ...fileCapabilityIds,
   ...folderCapabilityIds,
+  ...workCapabilityIds,
 ]);
 
 export interface CliDependencies {
@@ -113,6 +115,7 @@ export function buildProgram(output: CliOutput, dependencies: CliDependencies = 
   registerSpaceCommands(program, commandContext);
   registerFileCommands(program, commandContext);
   registerFolderCommands(program, commandContext);
+  registerWorkCommands(program, commandContext);
 
   program.action(() => {
     if (program.opts<{ json?: boolean }>().json === true) {

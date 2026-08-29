@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { AccountId } from "./common.js";
+import { AccountId, IsoDateTime, OrganizationId } from "./common.js";
 
 export const ProcessApprovalMode = z.enum(["single", "sequence", "any", "all"]);
 export const ProcessInstanceStatus = z.enum([
@@ -84,3 +84,56 @@ export const ProcessDecisionRequest = z.discriminatedUnion("action", [
     })
     .strict(),
 ]);
+
+export const ProcessDefinitionSummary = z
+  .object({
+    id: z.uuid(),
+    organizationId: OrganizationId,
+    name: z.string(),
+    createdByAccountId: AccountId,
+    version: z.number().int().min(1),
+    createdAt: IsoDateTime,
+    updatedAt: IsoDateTime,
+  })
+  .strict();
+export const ProcessVersionSummary = z
+  .object({
+    id: z.uuid(),
+    definitionId: z.uuid(),
+    versionNumber: z.number().int().min(1),
+    mode: ProcessApprovalMode,
+    status: z.enum(["draft", "published"]),
+    publishedAt: IsoDateTime.nullable(),
+    createdAt: IsoDateTime,
+  })
+  .strict();
+export const ProcessDefinitionStateResponse = z
+  .object({ definition: ProcessDefinitionSummary, version: ProcessVersionSummary })
+  .strict();
+export const ProcessInstanceSummary = z
+  .object({
+    id: z.uuid(),
+    organizationId: OrganizationId,
+    definitionVersionId: z.uuid(),
+    initiatorAccountId: AccountId,
+    subject: z.record(z.string(), z.json()),
+    status: ProcessInstanceStatus,
+    version: z.number().int().min(1),
+    createdAt: IsoDateTime,
+    updatedAt: IsoDateTime,
+  })
+  .strict();
+export const ProcessInstanceStepSummary = z
+  .object({
+    id: z.uuid(),
+    position: z.number().int().min(1),
+    approverAccountId: AccountId,
+    transferredFromAccountId: AccountId.nullable(),
+    status: ProcessStepStatus,
+    createdAt: IsoDateTime,
+    updatedAt: IsoDateTime,
+  })
+  .strict();
+export const ProcessInstanceStateResponse = z
+  .object({ instance: ProcessInstanceSummary, steps: z.array(ProcessInstanceStepSummary) })
+  .strict();

@@ -37,6 +37,8 @@ Read [authentication.md](references/authentication.md) before registering, loggi
 
 Read [files.md](references/files.md) before listing spaces, uploading or downloading files, changing versions, using trash, or changing folder access.
 
+Read [work.md](references/work.md) before creating or changing tasks, meetings, approvals, assignments, transfers or approval processes.
+
 Use the login token stored by the CLI as the real user and device identity. Do not create subaccounts to represent additional computers.
 
 ## Execute commands

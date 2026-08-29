@@ -43,6 +43,25 @@
     "folder.access.set",
     "folder.grant.set",
     "folder.grant.revoke",
-    "folder.manager.recover"
+    "folder.manager.recover",
+    "work.item.list",
+    "work.item.read",
+    "work.item.create",
+    "task.create",
+    "meeting.create",
+    "approval.create",
+    "work.item.assign",
+    "work.assignment.dispute",
+    "work.assignment.transfer.request",
+    "work.assignment.transfer.approve",
+    "work.item.complete",
+    "work.item.reopen",
+    "work.item.cancel",
+    "process.definition.create",
+    "process.version.create",
+    "process.version.publish",
+    "process.instance.start",
+    "process.instance.read",
+    "process.instance.decide"
   ]
 }

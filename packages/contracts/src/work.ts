@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { AccountId, IsoDateTime } from "./common.js";
+import { AccountId, IsoDateTime, OrganizationId } from "./common.js";
 
 export const WorkItemType = z.enum(["task", "meeting", "approval", "change_request"]);
 export const WorkItemStatus = z.enum(["open", "completed", "cancelled"]);
@@ -61,3 +61,48 @@ export const WorkItemTransitionRequest = z.discriminatedUnion("action", [
   z.object({ action: z.literal("reopen"), expectedVersion: Version }).strict(),
   z.object({ action: z.literal("cancel"), expectedVersion: Version }).strict(),
 ]);
+
+export const WorkItemSummary = z
+  .object({
+    id: z.uuid(),
+    organizationId: OrganizationId,
+    type: WorkItemType,
+    title: z.string(),
+    description: z.string(),
+    priority: WorkPriority,
+    status: WorkItemStatus,
+    dueAt: IsoDateTime.nullable(),
+    meetingStartsAt: IsoDateTime.nullable(),
+    createdByAccountId: AccountId,
+    version: z.number().int().min(1),
+    createdAt: IsoDateTime,
+    updatedAt: IsoDateTime,
+  })
+  .strict();
+export const WorkAssignmentSummary = z
+  .object({
+    id: z.uuid(),
+    assigneeAccountId: AccountId,
+    assignedByAccountId: AccountId,
+    status: AssignmentStatus,
+    disputeReason: z.string().nullable(),
+    transferTargetAccountId: AccountId.nullable(),
+    transferReason: z.string().nullable(),
+    createdAt: IsoDateTime,
+    updatedAt: IsoDateTime,
+  })
+  .strict();
+export const WorkItemStateResponse = z
+  .object({ item: WorkItemSummary, assignments: z.array(WorkAssignmentSummary) })
+  .strict();
+export const WorkItemListQuery = z
+  .object({
+    type: WorkItemType.optional(),
+    status: WorkItemStatus.optional(),
+    assigneeAccountId: AccountId.optional(),
+    limit: z.coerce.number().int().min(1).max(200).default(50),
+  })
+  .strict();
+export const WorkItemListResponse = z
+  .object({ items: z.array(WorkItemSummary), nextCursor: z.null() })
+  .strict();

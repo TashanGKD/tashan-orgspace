@@ -295,6 +295,18 @@ export class ProcessService {
     return { instance: this.instance(instance), steps: steps.map((step) => this.step(step)) };
   }
 
+  public async read(
+    transaction: TransactionClient,
+    accountId: string,
+    organizationId: string,
+    instanceId: string,
+  ) {
+    await requireOrganizationMembership(transaction, accountId, organizationId);
+    const result = await this.state(transaction, instanceId);
+    if (result.instance.organizationId !== organizationId) this.notFound();
+    return result;
+  }
+
   public async decide(
     transaction: TransactionClient,
     accountId: string,

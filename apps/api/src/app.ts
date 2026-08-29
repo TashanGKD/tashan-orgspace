@@ -18,6 +18,7 @@ import { auditInputForRequest } from "./http/request-audit.js";
 import { initializeRequestContext, requestContext } from "./http/request-context.js";
 import { resolveClientIp, validateTrustedProxyCidrs } from "./http/trusted-proxy.js";
 import { OrganizationService } from "./organizations/organization-service.js";
+import { ProcessService } from "./process/process-service.js";
 import { FileService, type FileDownloadSigner } from "./files/file-service.js";
 import { UploadService, type MultipartObjectStore } from "./files/upload-service.js";
 import {
@@ -33,7 +34,9 @@ import { registerOrganizationRoutes } from "./routes/organization-routes.js";
 import { registerPhoneRoutes } from "./routes/phone-routes.js";
 import { registerFileRoutes } from "./routes/file-routes.js";
 import { registerSpaceRoutes } from "./routes/space-routes.js";
+import { registerWorkRoutes } from "./routes/work-routes.js";
 import { SpaceService } from "./spaces/space-service.js";
+import { WorkService } from "./work/work-service.js";
 
 export interface BuildAppOptions {
   sql: DatabaseClient;
@@ -95,6 +98,8 @@ export async function buildApp(options: BuildAppOptions): Promise<FastifyInstanc
   const files = new FileService(options.sql, options.fileDataStore);
   const uploads = new UploadService({ sql: options.sql, objectStore: options.fileDataStore });
   const mutations = new MutationCoordinator(options.sql, audit, options.phoneCodePepper);
+  const work = new WorkService();
+  const processes = new ProcessService();
   const authenticate = authenticateWith(auth);
 
   installErrorHandler(app);
@@ -112,6 +117,13 @@ export async function buildApp(options: BuildAppOptions): Promise<FastifyInstanc
   await registerAuditRoutes(app, { sql: options.sql, authenticate });
   await registerSpaceRoutes(app, { spaces, mutations, authenticate });
   await registerFileRoutes(app, { files, uploads, mutations, authenticate });
+  await registerWorkRoutes(app, {
+    sql: options.sql,
+    work,
+    processes,
+    mutations,
+    authenticate,
+  });
 
   app.addHook("onSend", async (request, reply, payload) => {
     const capabilityId = capabilityForRequest(request);

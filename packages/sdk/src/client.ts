@@ -48,6 +48,12 @@ import {
   OrganizationMemberListResponse,
   PasswordResetRequest,
   PasswordResetResponse,
+  ProcessDecisionRequest,
+  ProcessDefinitionCreateRequest,
+  ProcessDefinitionStateResponse,
+  ProcessInstanceStateResponse,
+  ProcessStartRequest,
+  ProcessVersionCreateRequest,
   PersonalQuotaSetRequest,
   PersonalQuotaSetResponse,
   RefreshRequest,
@@ -69,6 +75,11 @@ import {
   VerificationSendRequest,
   VerificationSendResponse,
   WhoAmIResponse,
+  WorkItemCreateRequest,
+  WorkItemListQuery,
+  WorkItemListResponse,
+  WorkItemStateResponse,
+  WorkItemTransitionRequest,
   type ErrorCode,
 } from "@tashan/contracts";
 
@@ -690,6 +701,162 @@ export function createOrgSpaceClient(options: OrgSpaceClientOptions) {
         `/v1/spaces/${pathId(spaceId)}/folders/${pathId(folderId)}/manager-recovery`,
         FolderManagerRecoverResponse,
         FolderManagerRecoverRequest.parse(input),
+        { ...mutation, authenticated: true },
+      ),
+
+    listWorkItems: (organizationId: string, input: unknown, signal?: AbortSignal) => {
+      const query = WorkItemListQuery.parse(input);
+      const search = new URLSearchParams({ limit: String(query.limit) });
+      if (query.type !== undefined) search.set("type", query.type);
+      if (query.status !== undefined) search.set("status", query.status);
+      if (query.assigneeAccountId !== undefined)
+        search.set("assigneeAccountId", query.assigneeAccountId);
+      return request(
+        "GET",
+        `/v1/organizations/${pathId(organizationId)}/work-items?${search}`,
+        WorkItemListResponse,
+        undefined,
+        { authenticated: true, signal },
+      );
+    },
+
+    readWorkItem: (organizationId: string, workItemId: string, signal?: AbortSignal) =>
+      request(
+        "GET",
+        `/v1/organizations/${pathId(organizationId)}/work-items/${pathId(workItemId)}`,
+        WorkItemStateResponse,
+        undefined,
+        { authenticated: true, signal },
+      ),
+
+    createWorkItem: (organizationId: string, input: unknown, mutation: MutationOptions) =>
+      request(
+        "POST",
+        `/v1/organizations/${pathId(organizationId)}/work-items`,
+        WorkItemStateResponse,
+        WorkItemCreateRequest.parse(input),
+        { ...mutation, authenticated: true },
+      ),
+
+    createTask: (organizationId: string, input: unknown, mutation: MutationOptions) =>
+      request(
+        "POST",
+        `/v1/organizations/${pathId(organizationId)}/tasks`,
+        WorkItemStateResponse,
+        WorkItemCreateRequest.parse({ ...(input as object), type: "task" }),
+        { ...mutation, authenticated: true },
+      ),
+
+    createMeeting: (organizationId: string, input: unknown, mutation: MutationOptions) =>
+      request(
+        "POST",
+        `/v1/organizations/${pathId(organizationId)}/meetings`,
+        WorkItemStateResponse,
+        WorkItemCreateRequest.parse({ ...(input as object), type: "meeting" }),
+        { ...mutation, authenticated: true },
+      ),
+
+    createApproval: (organizationId: string, input: unknown, mutation: MutationOptions) =>
+      request(
+        "POST",
+        `/v1/organizations/${pathId(organizationId)}/approvals`,
+        WorkItemStateResponse,
+        WorkItemCreateRequest.parse({ ...(input as object), type: "approval" }),
+        { ...mutation, authenticated: true },
+      ),
+
+    transitionWorkItem: (
+      organizationId: string,
+      workItemId: string,
+      input: unknown,
+      mutation: MutationOptions,
+    ) => {
+      const body = WorkItemTransitionRequest.parse(input);
+      const base = `/v1/organizations/${pathId(organizationId)}/work-items/${pathId(workItemId)}`;
+      const route =
+        body.action === "assign"
+          ? `${base}/assign`
+          : body.action === "complete" || body.action === "reopen" || body.action === "cancel"
+            ? `${base}/${body.action}`
+            : `${base}/assignments/${pathId(body.assignmentId)}/${
+                body.action === "dispute"
+                  ? "dispute"
+                  : body.action === "request_transfer"
+                    ? "transfer-request"
+                    : "transfer-approve"
+              }`;
+      return request("POST", route, WorkItemStateResponse, body, {
+        ...mutation,
+        authenticated: true,
+      });
+    },
+
+    createProcessDefinition: (organizationId: string, input: unknown, mutation: MutationOptions) =>
+      request(
+        "POST",
+        `/v1/organizations/${pathId(organizationId)}/process-definitions`,
+        ProcessDefinitionStateResponse,
+        ProcessDefinitionCreateRequest.parse(input),
+        { ...mutation, authenticated: true },
+      ),
+
+    createProcessVersion: (
+      organizationId: string,
+      definitionId: string,
+      input: unknown,
+      mutation: MutationOptions,
+    ) =>
+      request(
+        "POST",
+        `/v1/organizations/${pathId(organizationId)}/process-definitions/${pathId(definitionId)}/versions`,
+        ProcessDefinitionStateResponse,
+        ProcessVersionCreateRequest.parse(input),
+        { ...mutation, authenticated: true },
+      ),
+
+    publishProcessVersion: (organizationId: string, versionId: string, mutation: MutationOptions) =>
+      request(
+        "POST",
+        `/v1/organizations/${pathId(organizationId)}/process-versions/${pathId(versionId)}/publish`,
+        ProcessDefinitionStateResponse,
+        {},
+        { ...mutation, authenticated: true },
+      ),
+
+    startProcessInstance: (
+      organizationId: string,
+      versionId: string,
+      input: unknown,
+      mutation: MutationOptions,
+    ) =>
+      request(
+        "POST",
+        `/v1/organizations/${pathId(organizationId)}/process-versions/${pathId(versionId)}/instances`,
+        ProcessInstanceStateResponse,
+        ProcessStartRequest.parse(input),
+        { ...mutation, authenticated: true },
+      ),
+
+    readProcessInstance: (organizationId: string, instanceId: string, signal?: AbortSignal) =>
+      request(
+        "GET",
+        `/v1/organizations/${pathId(organizationId)}/process-instances/${pathId(instanceId)}`,
+        ProcessInstanceStateResponse,
+        undefined,
+        { authenticated: true, signal },
+      ),
+
+    decideProcessInstance: (
+      organizationId: string,
+      instanceId: string,
+      input: unknown,
+      mutation: MutationOptions,
+    ) =>
+      request(
+        "POST",
+        `/v1/organizations/${pathId(organizationId)}/process-instances/${pathId(instanceId)}/decisions`,
+        ProcessInstanceStateResponse,
+        ProcessDecisionRequest.parse(input),
         { ...mutation, authenticated: true },
       ),
 
