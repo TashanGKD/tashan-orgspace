@@ -18,7 +18,9 @@
 
 Phase 0 已实现账号注册与登录、手机号验证、设备会话与单设备撤销、组织创建与成员隔离、追加式审计、可恢复 Outbox Worker、共享 SDK，以及登录/组织/设备 Web 工作台。
 
-Phase 1 已实现个人与组织文件空间、50 GB 默认个人额度与最高 500 GB 组织授权额度、500 GB 组织额度、公开/受限文件夹、manager/editor/viewer、管理员元数据查看与 manager 恢复、断点续传、版本、下载校验、30 天回收站和 MinIO/Worker 恢复。Phase 2 已实现任务、会议、指派、版本化审批与 OKR 的 API、Web、CLI 和 Skill。当前注册表共有 69 个能力。
+Phase 1 已实现个人与组织文件空间、50 GB 默认个人额度与最高 500 GB 组织授权额度、500 GB 组织额度、公开/受限文件夹、manager/editor/viewer、管理员元数据查看与 manager 恢复、断点续传、版本、下载校验、30 天回收站和 MinIO/Worker 恢复。Phase 2 已实现任务、会议、指派、版本化审批与 OKR 的 API、Web、CLI 和 Skill。
+
+Phase 2D 已实现合作方联系人、私有负责人范围、管理员 oversight、加密联系方式、待接管、不可变跟进、工作/文件关联与敏感导出。当前注册表共有 86 个能力。
 
 OKR/任务、审批、通知短信和聊天仍待实现。运行与构建、用户网站、服务、数据库、daemon 和用户域名作为延期方向保留在导航并标记“即将上线”，不属于当前实现或 v1 验收。账号验证码已接入阿里云短信；公开 AUP 环境当前仍是 Phase 0 版本，Phase 1 尚未部署。
 
@@ -84,6 +86,7 @@ docs/       架构、运行手册、产品设计与实施计划
 | [`docs/architecture/phase0-security-foundation.md`](docs/architecture/phase0-security-foundation.md)                                               | 已实现的安全与分发边界 |
 | [`docs/verification/spaces-files-quotas.md`](docs/verification/spaces-files-quotas.md)                                                             | Phase 1 文件验收证据   |
 | [`docs/verification/phase2-work-okr.md`](docs/verification/phase2-work-okr.md)                                                                     | Phase 2 协作验收证据   |
+| [`docs/verification/phase2d-partners.md`](docs/verification/phase2d-partners.md)                                                                   | Phase 2D 合作方验收    |
 | [`docs/runbooks/local-development.md`](docs/runbooks/local-development.md)                                                                         | 本地基础设施运行手册   |
 | [`docs/superpowers/specs/2026-08-18-tashan-orgspace-design.md`](docs/superpowers/specs/2026-08-18-tashan-orgspace-design.md)                       | 产品与技术总设计       |
 | [`docs/superpowers/specs/2026-08-18-skill-cli-distribution-design.md`](docs/superpowers/specs/2026-08-18-skill-cli-distribution-design.md)         | Skill/CLI 分发设计     |
