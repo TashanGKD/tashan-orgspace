@@ -10,7 +10,7 @@ transport_log="$temporary_root/transport.log"
 mkdir -p "$fake_bin" "$source_dir"
 trap 'rm -rf "$temporary_root"' EXIT INT TERM
 
-version="0.1.0-alpha.3"
+version="$(node -p "JSON.parse(require('node:fs').readFileSync('$repository_root/release/cli-release.json')).version")"
 assets=(
   "tashan-orgspace-skill-v$version.tar.gz"
   "torg-v$version-darwin-arm64.tar.gz"
@@ -43,7 +43,7 @@ set -eu
 case "$*" in
   *"diff --quiet"*) test "${FAKE_GIT_DIRTY:-0}" != "1" ;;
   *"diff --cached --quiet"*) test "${FAKE_GIT_STAGED_DIRTY:-0}" != "1" ;;
-  *"describe --exact-match --tags HEAD"*) printf '%s\n' "${FAKE_TAG:-v0.1.0-alpha.3}" ;;
+  *"describe --exact-match --tags HEAD"*) printf 'v%s\n' "${FAKE_TAG_VERSION:-${ORGSPACE_TEST_VERSION:-1.0.0}}" ;;
   *"rev-parse --show-toplevel"*) printf '%s\n' "${ORGSPACE_TEST_REPOSITORY_ROOT:?}" ;;
   *) exit 0 ;;
 esac
@@ -69,6 +69,7 @@ chmod +x "$fake_bin/git" "$fake_bin/ssh" "$fake_bin/rsync"
 run_publisher() {
   PATH="$fake_bin:$PATH" \
     ORGSPACE_PUBLISH_TESTING=1 \
+    ORGSPACE_TEST_VERSION="$version" \
     ORGSPACE_TEST_REPOSITORY_ROOT="$repository_root" \
     ORGSPACE_TEST_TRANSPORT_LOG="$transport_log" \
     "$publisher" "$@"
@@ -131,9 +132,9 @@ expect_failure "tracked worktree must be clean" env FAKE_GIT_DIRTY=1 \
 test ! -s "$transport_log"
 
 : >"$transport_log"
-expect_failure "exact tag must be v$version" env FAKE_TAG=v0.1.0-wrong \
+expect_failure "exact tag must be v$version" env FAKE_TAG_VERSION=0.0.0 \
   PATH="$fake_bin:$PATH" ORGSPACE_PUBLISH_TESTING=1 \
-  ORGSPACE_TEST_REPOSITORY_ROOT="$repository_root" ORGSPACE_TEST_TRANSPORT_LOG="$transport_log" \
+  ORGSPACE_TEST_VERSION="$version" ORGSPACE_TEST_REPOSITORY_ROOT="$repository_root" ORGSPACE_TEST_TRANSPORT_LOG="$transport_log" \
   "$publisher" --preflight --source-dir "$source_dir"
 test ! -s "$transport_log"
 
