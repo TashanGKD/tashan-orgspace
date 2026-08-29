@@ -44,8 +44,8 @@
 
 ### Task 5: Phase 3 acceptance
 **Files:** Create `tests/e2e/notifications.test.ts` and `docs/verification/phase3-notifications.md`.
-- [ ] Add simulated journeys for approval, urgent, optional task, DDL, meeting, daily summary and Partner follow-up.
-- [ ] Run E2E; verify idempotency and restart recovery.
+- [x] Add simulated journeys for approval, urgent, optional task, DDL, meeting, daily summary and Partner follow-up.
+- [x] Run E2E; verify idempotency and restart recovery.
 - [ ] Run one separately approved real SMS smoke and query final carrier result.
-- [ ] Run full verifier and record accepted vs delivered evidence separately.
+- [x] Run full verifier and record accepted vs delivered evidence separately.
 - [ ] Commit: `git commit -m "docs(verification): record Phase 3 acceptance"`.
