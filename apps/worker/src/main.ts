@@ -5,6 +5,8 @@ import { createInternalS3Client, S3FileMaintenanceStore } from "@tashan/object-s
 import { loadWorkerConfig } from "./config.js";
 import { FileMaintenanceLoop } from "./files/file-maintenance-loop.js";
 import { OutboxLoop, type OutboxHandler } from "./outbox-loop.js";
+import { NotificationProjector } from "./notifications/notification-projector.js";
+import { ReminderScheduler } from "./notifications/reminder-scheduler.js";
 
 const config = loadWorkerConfig();
 const sql = postgres(config.databaseUrl, {
@@ -13,7 +15,18 @@ const sql = postgres(config.databaseUrl, {
   idle_timeout: 20,
   prepare: false,
 });
-const handlers = new Map<string, OutboxHandler>([["capability.succeeded", async () => {}]]);
+const notificationProjector = new NotificationProjector(sql);
+const handlers = new Map<string, OutboxHandler>([
+  ["capability.succeeded", async () => {}],
+  [
+    "domain.event",
+    async (event) => {
+      const domainEventId = event.payload.domainEventId;
+      if (typeof domainEventId !== "string") throw new Error("domain event ID is missing");
+      await notificationProjector.project(domainEventId);
+    },
+  ],
+]);
 const loop = new OutboxLoop({
   sql,
   workerId: config.workerId,
@@ -36,11 +49,17 @@ const fileLoop =
         batchSize: config.batchSize,
       })
     : undefined;
+const reminderScheduler = new ReminderScheduler({
+  sql,
+  workerId: `${config.workerId}:reminders`,
+  pollMilliseconds: config.pollMilliseconds,
+});
 
 let shutdownStarted = false;
 async function shutdown(): Promise<void> {
   if (shutdownStarted) return;
   shutdownStarted = true;
+  reminderScheduler.stop();
   await Promise.all([loop.stop(), fileLoop?.stop()]);
 }
 
@@ -48,7 +67,7 @@ process.once("SIGINT", () => void shutdown());
 process.once("SIGTERM", () => void shutdown());
 
 try {
-  await Promise.all([loop.run(), fileLoop?.run()]);
+  await Promise.all([loop.run(), fileLoop?.run(), reminderScheduler.run()]);
 } finally {
   await sql.end();
 }

@@ -114,6 +114,7 @@ function WorkCreateDialog({
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [startsAt, setStartsAt] = useState("");
+  const [sendSms, setSendSms] = useState(false);
   const create = useMutation({
     mutationFn: () =>
       (type === "task"
@@ -127,6 +128,7 @@ function WorkCreateDialog({
           description,
           priority: "normal",
           assigneeAccountIds: [],
+          sendSms,
           ...(type === "meeting" ? { meetingStartsAt: new Date(startsAt).toISOString() } : {}),
         },
         { idempotencyKey: `web-work-${crypto.randomUUID()}` },
@@ -167,6 +169,16 @@ function WorkCreateDialog({
                   value={startsAt}
                   onChange={(e) => setStartsAt(e.target.value)}
                 />
+              </label>
+            ) : null}
+            {type === "task" ? (
+              <label>
+                <input
+                  checked={sendSms}
+                  type="checkbox"
+                  onChange={(event) => setSendSms(event.target.checked)}
+                />
+                创建后发送短信通知
               </label>
             ) : null}
           </div>

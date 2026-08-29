@@ -59,6 +59,7 @@ export function registerWorkCommands(program: Command, context: CommandContext):
     .option("--due-at <iso>")
     .option("--starts-at <iso>")
     .option("--assignee <account-id...>")
+    .option("--send-sms")
     .option("--yes")
     .option("--idempotency-key <key>");
   create.action(async (o: Record<string, unknown>) => createItem(create, o, context));
@@ -118,6 +119,7 @@ export function registerWorkCommands(program: Command, context: CommandContext):
       .option("--due-at <iso>")
       .option("--starts-at <iso>")
       .option("--assignee <account-id...>")
+      .option("--send-sms")
       .option("--yes")
       .option("--idempotency-key <key>");
     aliasCreate.action(async (o: Record<string, unknown>) =>
@@ -137,6 +139,7 @@ async function createItem(command: Command, o: Record<string, unknown>, context:
     description: o.description,
     priority: o.priority,
     assigneeAccountIds: o.assignee ?? [],
+    sendSms: o.sendSms === true,
     ...(o.dueAt === undefined ? {} : { dueAt: o.dueAt }),
     ...(o.startsAt === undefined ? {} : { meetingStartsAt: o.startsAt }),
   };

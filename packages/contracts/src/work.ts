@@ -16,6 +16,7 @@ export const WorkItemCreateRequest = z
     dueAt: IsoDateTime.optional(),
     meetingStartsAt: IsoDateTime.optional(),
     assigneeAccountIds: z.array(AccountId).max(100).default([]),
+    sendSms: z.boolean().default(false),
   })
   .strict()
   .superRefine((value, context) => {

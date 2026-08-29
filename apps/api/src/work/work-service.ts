@@ -176,6 +176,7 @@ export class WorkService {
         type: input.type,
         priority: input.priority,
         assigneeAccountIds: input.assigneeAccountIds,
+        sendSms: input.sendSms,
       },
     });
     return this.state(transaction, workItemId);

@@ -20,11 +20,11 @@
 
 ### Task 2: Event projector and deterministic reminders
 **Files:** Create `apps/worker/src/notifications/notification-projector.ts`, `apps/worker/src/notifications/reminder-scheduler.ts`, `apps/worker/src/notifications/reminder-scheduler.integration.test.ts`.
-- [ ] Write RED tests for duplicate event, DDL/meeting one-hour windows, partner follow-up and restart recovery.
-- [ ] Run Worker tests; expect handlers missing.
-- [ ] Implement deterministic keys and persisted reminder instances; do not scan entire business tables each minute.
-- [ ] Run time-zone/DST/restart tests.
-- [ ] Commit: `git commit -m "feat(worker): schedule organization reminders"`.
+- [x] Write RED tests for duplicate event, DDL/meeting one-hour windows, partner follow-up and restart recovery.
+- [x] Run Worker tests; expect handlers missing.
+- [x] Implement deterministic keys and persisted reminder instances; do not scan entire business tables each minute.
+- [x] Run time-zone/DST/restart tests.
+- [x] Commit: `git commit -m "feat(worker): schedule organization reminders"`.
 
 ### Task 3: Alibaba SMS delivery reconciliation
 **Files:** Create `apps/worker/src/notifications/aliyun-delivery.ts`, `apps/worker/src/notifications/aliyun-delivery.test.ts`; modify `apps/worker/src/config.ts` and `apps/worker/src/main.ts`.

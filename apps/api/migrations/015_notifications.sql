@@ -27,8 +27,12 @@ create table scheduled_reminders (
   recipient_account_id uuid not null references accounts(id), event_type text not null,
   resource_type text not null, resource_id uuid not null, scheduled_for timestamptz not null,
   status text not null default 'pending' constraint scheduled_reminders_status_check check(status in('pending','processing','done','cancelled')),
+  attempts integer not null default 0,
+  lease_owner text,
+  lease_expires_at timestamptz,
   deterministic_key text not null unique, payload jsonb not null constraint scheduled_reminders_payload_check check(jsonb_typeof(payload)='object'),
-  created_at timestamptz not null default now(), updated_at timestamptz not null default now()
+  created_at timestamptz not null default now(), updated_at timestamptz not null default now(),
+  constraint scheduled_reminders_lease_check check ((lease_owner is null and lease_expires_at is null) or (lease_owner is not null and lease_expires_at is not null))
 );
 create index scheduled_reminders_due on scheduled_reminders(status,scheduled_for,id);
 create table notification_delivery_attempts (
