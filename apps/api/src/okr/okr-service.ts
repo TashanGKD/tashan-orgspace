@@ -241,14 +241,19 @@ export class OkrService {
     const admins = await tx<
       { account_id: string }[]
     >`select account_id from memberships where organization_id = ${objective.organization_id} and status = 'active' and role in ('org_owner','org_admin') order by created_at`;
+    const id = randomUUID();
     const workItem = await this.work.create(tx, accountId, objective.organization_id, {
       type: "change_request",
       title: `修改 OKR：${objective.title}`,
-      description: JSON.stringify(input.patch),
+      description: JSON.stringify({
+        changeRequestId: id,
+        objectiveId,
+        expectedObjectiveVersion: objective.version,
+        patch: input.patch,
+      }),
       priority: "normal",
       assigneeAccountIds: admins.map((row) => row.account_id),
     });
-    const id = randomUUID();
     await tx`insert into okr_change_requests (id, objective_id, work_item_id, requested_by_account_id, patch) values (${id}, ${objectiveId}, ${workItem.item.id}, ${accountId}, ${tx.json(input.patch)})`;
     await this.collaboration.createLink(tx, {
       accountId,

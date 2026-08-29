@@ -84,5 +84,65 @@
       { "capabilityId": "folder.grant.revoke", "confirmation": "required" },
       { "capabilityId": "folder.manager.recover", "confirmation": "required" }
     ]
+  },
+  {
+    "resourceType": "organization-task",
+    "context": "organization",
+    "listRoute": "/org/:organizationId/tasks",
+    "detailRoute": "/org/:organizationId/tasks/:workItemId",
+    "listCapability": "work.item.list",
+    "readCapability": "work.item.read",
+    "actions": [
+      { "capabilityId": "task.create", "confirmation": "required" },
+      { "capabilityId": "work.item.assign", "confirmation": "required" },
+      { "capabilityId": "work.assignment.dispute", "confirmation": "required" },
+      { "capabilityId": "work.assignment.transfer.request", "confirmation": "required" },
+      { "capabilityId": "work.assignment.transfer.approve", "confirmation": "required" },
+      { "capabilityId": "work.item.complete", "confirmation": "required" },
+      { "capabilityId": "work.item.reopen", "confirmation": "required" },
+      { "capabilityId": "work.item.cancel", "confirmation": "required" }
+    ]
+  },
+  {
+    "resourceType": "organization-meeting",
+    "context": "organization",
+    "listRoute": "/org/:organizationId/meetings",
+    "detailRoute": "/org/:organizationId/meetings/:workItemId",
+    "listCapability": "work.item.list",
+    "readCapability": "work.item.read",
+    "actions": [
+      { "capabilityId": "meeting.create", "confirmation": "required" },
+      { "capabilityId": "work.item.complete", "confirmation": "required" },
+      { "capabilityId": "work.item.cancel", "confirmation": "required" }
+    ]
+  },
+  {
+    "resourceType": "organization-approval",
+    "context": "organization",
+    "listRoute": "/org/:organizationId/approvals",
+    "detailRoute": "/org/:organizationId/approvals/:workItemId",
+    "listCapability": "work.item.list",
+    "readCapability": "work.item.read",
+    "actions": [
+      { "capabilityId": "approval.create", "confirmation": "required" },
+      { "capabilityId": "okr.change.approve", "confirmation": "required" },
+      { "capabilityId": "work.item.complete", "confirmation": "required" },
+      { "capabilityId": "work.item.cancel", "confirmation": "required" }
+    ]
+  },
+  {
+    "resourceType": "organization-objective",
+    "context": "organization",
+    "listRoute": "/org/:organizationId/okr",
+    "detailRoute": "/org/:organizationId/okr/:objectiveId",
+    "listCapability": "okr.objective.list",
+    "readCapability": "okr.objective.read",
+    "actions": [
+      { "capabilityId": "okr.objective.create", "confirmation": "required" },
+      { "capabilityId": "okr.progress.update", "confirmation": "required" },
+      { "capabilityId": "okr.change.request", "confirmation": "required" },
+      { "capabilityId": "okr.change.approve", "confirmation": "required" },
+      { "capabilityId": "okr.objective.edit.admin", "confirmation": "required" }
+    ]
   }
 ]

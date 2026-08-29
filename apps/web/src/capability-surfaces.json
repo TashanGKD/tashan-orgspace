@@ -238,5 +238,119 @@
     "route": "/org/:organizationId/files/:entryId",
     "action": "folder-manager-recover",
     "test": "apps/web/src/features/files/files-page.test.tsx"
+  },
+  {
+    "capabilityId": "work.item.list",
+    "route": "/org/:organizationId/tasks",
+    "action": "work-list",
+    "test": "apps/web/src/features/work/work-page.test.tsx"
+  },
+  {
+    "capabilityId": "work.item.read",
+    "route": "/org/:organizationId/tasks/:workItemId",
+    "action": "work-read",
+    "test": "apps/web/src/features/work/work-page.test.tsx"
+  },
+  {
+    "capabilityId": "task.create",
+    "route": "/org/:organizationId/tasks",
+    "action": "task-create",
+    "test": "apps/web/src/features/work/work-page.test.tsx"
+  },
+  {
+    "capabilityId": "meeting.create",
+    "route": "/org/:organizationId/meetings",
+    "action": "meeting-create",
+    "test": "apps/web/src/features/work/work-page.test.tsx"
+  },
+  {
+    "capabilityId": "approval.create",
+    "route": "/org/:organizationId/approvals",
+    "action": "approval-create",
+    "test": "apps/web/src/features/work/work-page.test.tsx"
+  },
+  {
+    "capabilityId": "work.item.assign",
+    "route": "/org/:organizationId/tasks/:workItemId",
+    "action": "work-assign",
+    "test": "apps/web/src/features/work/work-page.test.tsx"
+  },
+  {
+    "capabilityId": "work.assignment.dispute",
+    "route": "/org/:organizationId/tasks/:workItemId",
+    "action": "assignment-dispute",
+    "test": "apps/web/src/features/work/work-page.test.tsx"
+  },
+  {
+    "capabilityId": "work.assignment.transfer.request",
+    "route": "/org/:organizationId/tasks/:workItemId",
+    "action": "assignment-transfer-request",
+    "test": "apps/web/src/features/work/work-page.test.tsx"
+  },
+  {
+    "capabilityId": "work.assignment.transfer.approve",
+    "route": "/org/:organizationId/tasks/:workItemId",
+    "action": "assignment-transfer-approve",
+    "test": "apps/web/src/features/work/work-page.test.tsx"
+  },
+  {
+    "capabilityId": "work.item.complete",
+    "route": "/org/:organizationId/tasks/:workItemId",
+    "action": "work-complete",
+    "test": "apps/web/src/features/work/work-page.test.tsx"
+  },
+  {
+    "capabilityId": "work.item.reopen",
+    "route": "/org/:organizationId/tasks/:workItemId",
+    "action": "work-reopen",
+    "test": "apps/web/src/features/work/work-page.test.tsx"
+  },
+  {
+    "capabilityId": "work.item.cancel",
+    "route": "/org/:organizationId/tasks/:workItemId",
+    "action": "work-cancel",
+    "test": "apps/web/src/features/work/work-page.test.tsx"
+  },
+  {
+    "capabilityId": "okr.objective.list",
+    "route": "/org/:organizationId/okr",
+    "action": "okr-list",
+    "test": "apps/web/src/features/okr/okr-page.test.tsx"
+  },
+  {
+    "capabilityId": "okr.objective.read",
+    "route": "/org/:organizationId/okr/:objectiveId",
+    "action": "okr-read",
+    "test": "apps/web/src/features/okr/okr-page.test.tsx"
+  },
+  {
+    "capabilityId": "okr.objective.create",
+    "route": "/org/:organizationId/okr",
+    "action": "okr-create",
+    "test": "apps/web/src/features/okr/okr-page.test.tsx"
+  },
+  {
+    "capabilityId": "okr.progress.update",
+    "route": "/org/:organizationId/okr/:objectiveId",
+    "action": "okr-progress-update",
+    "test": "apps/web/src/features/okr/okr-page.test.tsx"
+  },
+  {
+    "capabilityId": "okr.change.request",
+    "route": "/org/:organizationId/okr/:objectiveId",
+    "action": "okr-change-request",
+    "test": "apps/web/src/features/okr/okr-page.test.tsx"
+  },
+  {
+    "capabilityId": "okr.change.approve",
+    "route": "/org/:organizationId/approvals/:workItemId",
+    "action": "okr-change-approve",
+    "test": "apps/web/src/features/work/work-page.test.tsx"
+  },
+  {
+    "capabilityId": "okr.objective.edit.admin",
+    "route": "/org/:organizationId/okr/:objectiveId",
+    "action": "okr-admin-edit",
+    "test": "apps/web/src/features/okr/okr-page.test.tsx"
   }
 ]

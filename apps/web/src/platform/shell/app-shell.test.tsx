@@ -22,7 +22,7 @@ describe("application shell", () => {
     expect(screen.getByRole("link", { name: "消息" })).toBeVisible();
     const collaboration = screen.getByRole("region", { name: "组织协作" });
     expect(within(collaboration).queryByText("即将上线")).not.toBeInTheDocument();
-    expect(screen.queryByRole("link", { name: "OKR" })).not.toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "OKR" })).toBeVisible();
     expect(screen.queryByRole("link", { name: "成员与角色" })).not.toBeInTheDocument();
     expect(screen.queryByRole("link", { name: "操作记录" })).not.toBeInTheDocument();
   });

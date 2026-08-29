@@ -568,7 +568,7 @@
     "idempotent": true,
     "confirmation": "none",
     "cli": "work list",
-    "web": "deferred",
+    "web": "required",
     "auditAction": "work.item.list"
   },
   {
@@ -581,7 +581,7 @@
     "idempotent": true,
     "confirmation": "none",
     "cli": "work get",
-    "web": "deferred",
+    "web": "required",
     "auditAction": "work.item.read"
   },
   {
@@ -607,7 +607,7 @@
     "idempotent": true,
     "confirmation": "required",
     "cli": "task create",
-    "web": "deferred",
+    "web": "required",
     "auditAction": "task.create"
   },
   {
@@ -620,7 +620,7 @@
     "idempotent": true,
     "confirmation": "required",
     "cli": "meeting create",
-    "web": "deferred",
+    "web": "required",
     "auditAction": "meeting.create"
   },
   {
@@ -633,7 +633,7 @@
     "idempotent": true,
     "confirmation": "required",
     "cli": "approval create",
-    "web": "deferred",
+    "web": "required",
     "auditAction": "approval.create"
   },
   {
@@ -646,7 +646,7 @@
     "idempotent": true,
     "confirmation": "required",
     "cli": "work assign",
-    "web": "deferred",
+    "web": "required",
     "auditAction": "work.item.assign"
   },
   {
@@ -659,7 +659,7 @@
     "idempotent": true,
     "confirmation": "required",
     "cli": "work dispute",
-    "web": "deferred",
+    "web": "required",
     "auditAction": "work.assignment.dispute"
   },
   {
@@ -672,7 +672,7 @@
     "idempotent": true,
     "confirmation": "required",
     "cli": "work transfer-request",
-    "web": "deferred",
+    "web": "required",
     "auditAction": "work.assignment.transfer.request"
   },
   {
@@ -685,7 +685,7 @@
     "idempotent": true,
     "confirmation": "required",
     "cli": "work transfer-approve",
-    "web": "deferred",
+    "web": "required",
     "auditAction": "work.assignment.transfer.approve"
   },
   {
@@ -698,7 +698,7 @@
     "idempotent": true,
     "confirmation": "required",
     "cli": "work complete",
-    "web": "deferred",
+    "web": "required",
     "auditAction": "work.item.complete"
   },
   {
@@ -711,7 +711,7 @@
     "idempotent": true,
     "confirmation": "required",
     "cli": "work reopen",
-    "web": "deferred",
+    "web": "required",
     "auditAction": "work.item.reopen"
   },
   {
@@ -724,7 +724,7 @@
     "idempotent": true,
     "confirmation": "required",
     "cli": "work cancel",
-    "web": "deferred",
+    "web": "required",
     "auditAction": "work.item.cancel"
   },
   {
@@ -815,7 +815,7 @@
     "idempotent": true,
     "confirmation": "none",
     "cli": "okr list",
-    "web": "deferred",
+    "web": "required",
     "auditAction": "okr.objective.list"
   },
   {
@@ -828,7 +828,7 @@
     "idempotent": true,
     "confirmation": "none",
     "cli": "okr get",
-    "web": "deferred",
+    "web": "required",
     "auditAction": "okr.objective.read"
   },
   {
@@ -841,7 +841,7 @@
     "idempotent": true,
     "confirmation": "required",
     "cli": "okr create",
-    "web": "deferred",
+    "web": "required",
     "auditAction": "okr.objective.create"
   },
   {
@@ -854,7 +854,7 @@
     "idempotent": true,
     "confirmation": "required",
     "cli": "okr progress",
-    "web": "deferred",
+    "web": "required",
     "auditAction": "okr.progress.update"
   },
   {
@@ -867,7 +867,7 @@
     "idempotent": true,
     "confirmation": "required",
     "cli": "okr change-request",
-    "web": "deferred",
+    "web": "required",
     "auditAction": "okr.change.request"
   },
   {
@@ -880,7 +880,7 @@
     "idempotent": true,
     "confirmation": "required",
     "cli": "okr approve",
-    "web": "deferred",
+    "web": "required",
     "auditAction": "okr.change.approve"
   },
   {
@@ -893,7 +893,7 @@
     "idempotent": true,
     "confirmation": "required",
     "cli": "okr admin-edit",
-    "web": "deferred",
+    "web": "required",
     "auditAction": "okr.objective.edit.admin"
   }
 ]

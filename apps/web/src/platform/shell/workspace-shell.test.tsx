@@ -132,7 +132,7 @@ describe("responsive workspace shell", () => {
     expect(
       within(within(desktop).getByRole("region", { name: "组织协作" })).queryByText("即将上线"),
     ).not.toBeInTheDocument();
-    expect(within(desktop).queryByRole("link", { name: "OKR" })).not.toBeInTheDocument();
+    expect(within(desktop).getByRole("link", { name: "OKR" })).toBeVisible();
     expect(within(desktop).queryByRole("link", { name: "成员与角色" })).not.toBeInTheDocument();
 
     const mobile = screen.getByRole("navigation", { name: "移动导航" });

@@ -11,6 +11,8 @@ import { AuditPage } from "./features/audit/audit-page.js";
 import { FilesPage, SpaceUsagePage } from "./features/files/file-list-page.js";
 import { OrganizationHomePage } from "./features/organization/home-page.js";
 import { MembersPage } from "./features/organization/members-page.js";
+import { WorkPage } from "./features/work/work-page.js";
+import { OkrPage } from "./features/okr/okr-page.js";
 import { ComingSoonPage } from "./features/roadmap/coming-soon-page.js";
 import { Button } from "./design-system/primitives/index.js";
 import {
@@ -37,6 +39,10 @@ const memberSurface = resourceSurface("organization-member");
 const auditSurface = resourceSurface("audit-event");
 const personalFileSurface = resourceSurface("personal-file");
 const organizationFileSurface = resourceSurface("organization-file");
+const taskSurface = resourceSurface("organization-task");
+const meetingSurface = resourceSurface("organization-meeting");
+const approvalSurface = resourceSurface("organization-approval");
+const objectiveSurface = resourceSurface("organization-objective");
 
 function organizationRelativeRoute(route: string): string {
   const prefix = "/org/:organizationId/";
@@ -146,6 +152,42 @@ function OrganizationFilesRoute({
       scope={{ type: "organization", organizationId }}
       sdk={sdk}
       selectedEntryId={entryId}
+    />
+  );
+}
+
+function WorkRoute({
+  organizationId,
+  sdk,
+  type,
+}: {
+  organizationId: string;
+  sdk: OrgSpaceClient;
+  type: "task" | "meeting" | "approval";
+}) {
+  const { workItemId } = useParams<{ workItemId?: string }>();
+  return (
+    <WorkPage
+      organizationId={organizationId}
+      sdk={sdk}
+      type={type}
+      selectedWorkItemId={workItemId}
+    />
+  );
+}
+
+function OkrRoute({ organizationId, sdk }: { organizationId: string; sdk: OrgSpaceClient }) {
+  const { objectiveId } = useParams<{ objectiveId?: string }>();
+  const organization = useOrganization();
+  return (
+    <OkrPage
+      canManage={
+        organization.status === "ready" &&
+        (organization.role === "org_owner" || organization.role === "org_admin")
+      }
+      organizationId={organizationId}
+      sdk={sdk}
+      selectedObjectiveId={objectiveId}
     />
   );
 }
@@ -466,6 +508,34 @@ function OrganizationRoutes({ sdk, displayName }: { sdk: OrgSpaceClient; display
         <Route
           path={organizationRelativeRoute(organizationFileSurface.detailRoute)}
           element={<OrganizationFilesRoute organizationId={organizationId} sdk={sdk} />}
+        />
+        {(
+          [
+            [taskSurface, "task"],
+            [meetingSurface, "meeting"],
+            [approvalSurface, "approval"],
+          ] as const
+        ).flatMap(([surface, type]) => {
+          return [
+            <Route
+              key={`${surface.resourceType}-list`}
+              path={organizationRelativeRoute(surface.listRoute)}
+              element={<WorkRoute organizationId={organizationId} sdk={sdk} type={type} />}
+            />,
+            <Route
+              key={`${surface.resourceType}-detail`}
+              path={organizationRelativeRoute(surface.detailRoute)}
+              element={<WorkRoute organizationId={organizationId} sdk={sdk} type={type} />}
+            />,
+          ];
+        })}
+        <Route
+          path={organizationRelativeRoute(objectiveSurface.listRoute)}
+          element={<OkrRoute organizationId={organizationId} sdk={sdk} />}
+        />
+        <Route
+          path={organizationRelativeRoute(objectiveSurface.detailRoute)}
+          element={<OkrRoute organizationId={organizationId} sdk={sdk} />}
         />
         {comingSoon.map((module) => {
           const suffix = module.route.split("/:organizationId/")[1];

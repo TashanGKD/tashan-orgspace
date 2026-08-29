@@ -19,7 +19,14 @@ import { CliSessionCredentials } from "../../../apps/cli/src/credentials/session
 import { runCli, type CliDependencies } from "../../../apps/cli/src/program.js";
 
 interface ScenarioInput {
-  type: "lifecycle" | "cross-org" | "audit" | "files" | "files-authorization" | "files-recovery";
+  type:
+    | "lifecycle"
+    | "cross-org"
+    | "audit"
+    | "files"
+    | "files-authorization"
+    | "files-recovery"
+    | "work-okr";
   apiUrl: string;
   databaseUrl: string;
   alice: { accountId: string; phone: string; password: string };
@@ -180,6 +187,292 @@ if (input.type === "lifecycle") {
         ["org", "member", "list", "--org", bobOrg.organization.id],
         aliceA,
       ),
+    }),
+  );
+} else if (input.type === "work-okr") {
+  if (input.bob === undefined) throw new Error("work-okr requires Bob");
+  const bobStore = new MemoryCredentialStore();
+  const bob = dependencies(bobStore, crypto.randomUUID(), input.bob.password, "Bob Work E2E");
+  await login(bob, input.bob.phone);
+  const organization = await command<{ organization: { id: string } }>(
+    ["org", "create", "--name", "Work OKR Org", "--yes", "--idempotency-key", "work-okr-org"],
+    aliceA,
+  );
+  await command(
+    [
+      "org",
+      "member",
+      "add",
+      "--org",
+      organization.organization.id,
+      "--account",
+      input.bob.accountId,
+      "--role",
+      "member",
+      "--yes",
+      "--idempotency-key",
+      "work-okr-member",
+    ],
+    aliceA,
+  );
+  const task = await command<{
+    item: { id: string; version: number };
+    assignments: Array<{ id: string }>;
+  }>(
+    [
+      "task",
+      "create",
+      "--org",
+      organization.organization.id,
+      "--title",
+      "准备议程",
+      "--assignee",
+      input.bob.accountId,
+      "--yes",
+      "--idempotency-key",
+      "work-task-create",
+    ],
+    aliceA,
+  );
+  const assignmentId = task.assignments[0]?.id;
+  if (assignmentId === undefined) throw new Error("task assignment missing");
+  const disputed = await command<{ item: { version: number } }>(
+    [
+      "work",
+      "dispute",
+      "--org",
+      organization.organization.id,
+      "--work",
+      task.item.id,
+      "--assignment",
+      assignmentId,
+      "--reason",
+      "时间冲突",
+      "--expected-version",
+      String(task.item.version),
+      "--yes",
+      "--idempotency-key",
+      "work-dispute",
+    ],
+    bob,
+  );
+  const transfer = await command<{ item: { version: number } }>(
+    [
+      "work",
+      "transfer-request",
+      "--org",
+      organization.organization.id,
+      "--work",
+      task.item.id,
+      "--assignment",
+      assignmentId,
+      "--target",
+      input.alice.accountId,
+      "--reason",
+      "由发起人处理",
+      "--expected-version",
+      String(disputed.item.version),
+      "--yes",
+      "--idempotency-key",
+      "work-transfer-request",
+    ],
+    bob,
+  );
+  const approvedTransfer = await command<{ assignments: Array<{ assigneeAccountId: string }> }>(
+    [
+      "work",
+      "transfer-approve",
+      "--org",
+      organization.organization.id,
+      "--work",
+      task.item.id,
+      "--assignment",
+      assignmentId,
+      "--expected-version",
+      String(transfer.item.version),
+      "--yes",
+      "--idempotency-key",
+      "work-transfer-approve",
+    ],
+    aliceA,
+  );
+  const meeting = await command<{ item: { id: string } }>(
+    [
+      "meeting",
+      "create",
+      "--org",
+      organization.organization.id,
+      "--title",
+      "周会",
+      "--starts-at",
+      "2026-09-01T09:00:00.000Z",
+      "--yes",
+      "--idempotency-key",
+      "work-meeting",
+    ],
+    aliceA,
+  );
+
+  const definition = await command<{ version: { id: string } }>(
+    [
+      "process",
+      "definition-create",
+      "--org",
+      organization.organization.id,
+      "--name",
+      "单人审批",
+      "--mode",
+      "single",
+      "--approver",
+      input.bob.accountId,
+      "--yes",
+      "--idempotency-key",
+      "process-definition",
+    ],
+    aliceA,
+  );
+  await command(
+    [
+      "process",
+      "version-publish",
+      "--org",
+      organization.organization.id,
+      "--version-id",
+      definition.version.id,
+      "--yes",
+      "--idempotency-key",
+      "process-publish",
+    ],
+    aliceA,
+  );
+  const instance = await command<{ instance: { id: string; version: number } }>(
+    [
+      "process",
+      "start",
+      "--org",
+      organization.organization.id,
+      "--version-id",
+      definition.version.id,
+      "--subject",
+      JSON.stringify({ title: "发布申请" }),
+      "--yes",
+      "--idempotency-key",
+      "process-start",
+    ],
+    aliceA,
+  );
+  const decided = await command<{ instance: { status: string } }>(
+    [
+      "process",
+      "decide",
+      "--org",
+      organization.organization.id,
+      "--instance",
+      instance.instance.id,
+      "--action",
+      "approve",
+      "--expected-version",
+      String(instance.instance.version),
+      "--yes",
+      "--idempotency-key",
+      "process-decide",
+    ],
+    bob,
+  );
+
+  const objective = await command<{
+    objective: { id: string; version: number };
+    keyResults: Array<{ id: string; version: number }>;
+  }>(
+    [
+      "okr",
+      "create",
+      "--org",
+      organization.organization.id,
+      "--title",
+      "发布课程",
+      "--cycle",
+      "2026-Q3",
+      "--key-results",
+      JSON.stringify([{ title: "完成发布", weight: 100, formula: { type: "manual" } }]),
+      "--yes",
+      "--idempotency-key",
+      "okr-create",
+    ],
+    bob,
+  );
+  const keyResult = objective.keyResults[0];
+  if (keyResult === undefined) throw new Error("KR missing");
+  const progress = await command<{ keyResult: { progress: number } }>(
+    [
+      "okr",
+      "progress",
+      "--org",
+      organization.organization.id,
+      "--key-result",
+      keyResult.id,
+      "--value",
+      "60",
+      "--expected-version",
+      String(keyResult.version),
+      "--yes",
+      "--idempotency-key",
+      "okr-progress",
+    ],
+    bob,
+  );
+  const change = await command<{ changeRequest: { id: string } }>(
+    [
+      "okr",
+      "change-request",
+      "--org",
+      organization.organization.id,
+      "--objective",
+      objective.objective.id,
+      "--patch",
+      JSON.stringify({ title: "发布课程与资料" }),
+      "--expected-version",
+      String(objective.objective.version),
+      "--yes",
+      "--idempotency-key",
+      "okr-change",
+    ],
+    bob,
+  );
+  const changed = await command<{ objective: { title: string } }>(
+    [
+      "okr",
+      "approve",
+      "--org",
+      organization.organization.id,
+      "--change-request",
+      change.changeRequest.id,
+      "--expected-version",
+      String(objective.objective.version),
+      "--yes",
+      "--idempotency-key",
+      "okr-approve",
+    ],
+    aliceA,
+  );
+  const aliceTasks = await command<{ items: unknown[] }>(
+    ["work", "list", "--org", organization.organization.id, "--type", "task"],
+    aliceA,
+  );
+  const aliceOkr = await command<{ items: unknown[] }>(
+    ["okr", "list", "--org", organization.organization.id],
+    aliceA,
+  );
+  process.stdout.write(
+    JSON.stringify({
+      transferredToAlice:
+        approvedTransfer.assignments[0]?.assigneeAccountId === input.alice.accountId,
+      meetingId: meeting.item.id,
+      processStatus: decided.instance.status,
+      progress: progress.keyResult.progress,
+      changedTitle: changed.objective.title,
+      aliceTaskCount: aliceTasks.items.length,
+      aliceOkrCount: aliceOkr.items.length,
     }),
   );
 } else if (input.type === "files-authorization") {

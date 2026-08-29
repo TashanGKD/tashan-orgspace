@@ -89,40 +89,73 @@
     "label": "任务",
     "description": "查看、创建和分配组织任务",
     "context": "organization",
-    "status": "coming_soon",
+    "status": "available",
     "route": "/org/:organizationId/tasks",
     "roles": ["org_owner", "org_admin", "member"],
-    "capabilities": []
+    "capabilities": [
+      "work.item.list",
+      "work.item.read",
+      "task.create",
+      "work.item.assign",
+      "work.assignment.dispute",
+      "work.assignment.transfer.request",
+      "work.assignment.transfer.approve",
+      "work.item.complete",
+      "work.item.reopen",
+      "work.item.cancel"
+    ]
   },
   {
     "id": "organization.okr",
     "label": "OKR",
     "description": "查看组织目标和进度",
     "context": "organization",
-    "status": "coming_soon",
+    "status": "available",
     "route": "/org/:organizationId/okr",
     "roles": ["org_owner", "org_admin", "member"],
-    "capabilities": []
+    "capabilities": [
+      "okr.objective.list",
+      "okr.objective.read",
+      "okr.objective.create",
+      "okr.progress.update",
+      "okr.change.request",
+      "okr.change.approve",
+      "okr.objective.edit.admin"
+    ]
   },
   {
     "id": "organization.approvals",
     "label": "审批",
     "description": "提交和处理审批",
     "context": "organization",
-    "status": "coming_soon",
+    "status": "available",
     "route": "/org/:organizationId/approvals",
     "roles": ["org_owner", "org_admin", "member"],
-    "capabilities": []
+    "capabilities": [
+      "work.item.list",
+      "work.item.read",
+      "approval.create",
+      "work.item.complete",
+      "work.item.cancel",
+      "okr.change.approve"
+    ]
   },
   {
     "id": "organization.meetings",
     "label": "会议",
     "description": "查看会议和提醒",
     "context": "organization",
-    "status": "coming_soon",
+    "status": "available",
     "route": "/org/:organizationId/meetings",
     "roles": ["org_owner", "org_admin", "member"],
-    "capabilities": []
+    "capabilities": [
+      "work.item.list",
+      "work.item.read",
+      "meeting.create",
+      "work.item.assign",
+      "work.item.complete",
+      "work.item.cancel"
+    ]
   },
   {
     "id": "organization.files",
