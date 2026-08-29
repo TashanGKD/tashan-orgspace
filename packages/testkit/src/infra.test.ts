@@ -35,9 +35,58 @@ describe("Compose safety invariant", () => {
         ports: ["127.0.0.1:55432:5432"],
       },
       redis: { ports: ["127.0.0.1:56379:6379"] },
+      minio: { ports: ["127.0.0.1:59000:9000"] },
     },
-    volumes: { "postgres-data": {}, "redis-data": {} },
+    volumes: { "postgres-data": {}, "redis-data": {}, "minio-data": {} },
   };
+
+  test("accepts loopback bindings with safe configurable defaults", () => {
+    const model = {
+      ...safeModel,
+      services: {
+        ...safeModel.services,
+        postgres: {
+          ...safeModel.services.postgres,
+          ports: ["127.0.0.1:${ORGSPACE_LOCAL_POSTGRES_PORT:-55432}:5432"],
+        },
+        redis: { ports: ["127.0.0.1:${ORGSPACE_LOCAL_REDIS_PORT:-56379}:6379"] },
+        minio: { ports: ["127.0.0.1:${ORGSPACE_LOCAL_S3_PORT:-59000}:9000"] },
+      },
+    };
+
+    expect(() => assertSafeLocalComposeModel(model)).not.toThrow();
+  });
+
+  test("requires the private MinIO loopback binding", () => {
+    const services: Record<string, unknown> = { ...safeModel.services };
+    delete services.minio;
+    expect(() => assertSafeLocalComposeModel({ ...safeModel, services })).toThrow(
+      /local Compose safety/,
+    );
+  });
+
+  test.each([
+    [
+      "a configurable port without a safe default",
+      "postgres",
+      "127.0.0.1:${ORGSPACE_LOCAL_POSTGRES_PORT}:5432",
+    ],
+    [
+      "a changed configurable default",
+      "redis",
+      "127.0.0.1:${ORGSPACE_LOCAL_REDIS_PORT:-6379}:6379",
+    ],
+    ["the MinIO console port", "minio", "127.0.0.1:59001:9001"],
+  ])("rejects %s", (_name, serviceName, binding) => {
+    const model = {
+      ...safeModel,
+      services: {
+        ...safeModel.services,
+        [serviceName]: { ports: [binding] },
+      },
+    };
+    expect(() => assertSafeLocalComposeModel(model)).toThrow(/local Compose safety/);
+  });
 
   test.each([
     [

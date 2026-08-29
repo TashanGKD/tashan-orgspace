@@ -46,7 +46,6 @@ apps/cli/src/commands/file.ts
 apps/cli/src/commands/folder.ts
 apps/web/src/features/files/
 skill/tashan-orgspace/references/files.md
-deploy/minio/cors.json
 deploy/minio/app-policy.json
 scripts/check-file-storage-contract.mjs
 scripts/check-file-storage-contract.self-test.mjs
@@ -600,7 +599,6 @@ git commit -m "feat(cli): add resumable file commands"
 > **Execution order:** This task runs immediately after Task 7 and before Task 8, even though the task number is retained to preserve existing references.
 
 **Files:**
-- Create: `deploy/minio/cors.json`
 - Create: `deploy/minio/app-policy.json`
 - Modify: `deploy/compose.local.yml`
 - Modify: `deploy/compose.production.yml`
@@ -611,11 +609,11 @@ git commit -m "feat(cli): add resumable file commands"
 - Modify: `tests/e2e/run.ts`
 - Modify: `tests/e2e/support/api-process.ts`
 
-- [ ] **Step 1: Add RED production-boundary assertions**
+- [x] **Step 1: Add RED production-boundary assertions**
 
 The production test must fail if MinIO S3 or Console ports are published, bucket policy is public, CORS permits `*`, API/Worker lack S3 credentials, or `files.orgspace.tashan.chat` does not preserve Host through the gateway.
 
-- [ ] **Step 2: Add pinned MinIO services**
+- [x] **Step 2: Add pinned MinIO services**
 
 Use:
 
@@ -624,22 +622,22 @@ image: quay.io/minio/minio:RELEASE.2025-04-22T22-12-26Z
 command: ["server", "/data", "--console-address", ":9001"]
 ```
 
-Use `quay.io/minio/mc:RELEASE.2025-04-16T18-13-26Z` for one-shot bootstrap. Local S3 publishes only `127.0.0.1:59000:9000`; production publishes neither 9000 nor 9001. Bootstrap creates `orgspace-files`, sets anonymous access to none, installs `deploy/minio/cors.json`, creates the app service user and attaches `app-policy.json` scoped to that bucket.
+Use `quay.io/minio/mc:RELEASE.2025-04-16T18-13-26Z` for one-shot bootstrap. Local S3 publishes only `127.0.0.1:59000:9000`; production publishes neither 9000 nor 9001. Bootstrap creates `orgspace-files`, sets anonymous access to none, creates the app service user and attaches `app-policy.json` scoped to that bucket. Configure the pinned MinIO server through `MINIO_API_CORS_ALLOW_ORIGIN`; that release rejects bucket-level `PutBucketCors`, so the production-shaped preflight test—not a bootstrap command—is the executable CORS gate.
 
-- [ ] **Step 3: Route the platform file hostname**
+- [x] **Step 3: Route the platform file hostname**
 
 Add an AUP gateway server block for `files.orgspace.tashan.chat` that proxies S3 traffic to `minio:9000`, disables request buffering, permits large bodies, preserves Host and uses long streaming timeouts. Add an ECS TLS server block for the same hostname pointing to the existing OrgSpace platform tunnel; do not create per-file or per-user tunnels.
 
-- [ ] **Step 4: Make tests isolated and recoverable**
+- [x] **Step 4: Make tests isolated and recoverable**
 
-Production-stack and E2E use unique bucket prefixes and test credentials. Cleanup removes only the exact Compose project and, when `ORGSPACE_TEST_CLEANUP_VOLUMES=1`, its named volumes. Add a restart test: stop/start MinIO during an unfinished upload, then resume and complete it.
+Production-stack and E2E use unique Compose projects, isolated named volumes and test credentials. Cleanup removes only that exact Compose project and its named volumes. Restart MinIO and repeat the private-bucket, CORS and gateway assertions here. The byte-level unfinished-upload resume test requires the Task 8 HTTP surface and therefore runs in Task 12 after that surface is mounted.
 
-- [ ] **Step 5: Verify and commit**
+- [x] **Step 5: Verify and commit**
 
 Run:
 
 ```bash
-ORGSPACE_TEST_CLEANUP_VOLUMES=1 pnpm test:production-stack
+pnpm test:production-stack
 pnpm test:e2e
 ```
 

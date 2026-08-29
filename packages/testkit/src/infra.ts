@@ -1,8 +1,9 @@
 type UnknownRecord = Record<string, unknown>;
 
 const REQUIRED_BINDINGS = {
-  postgres: "127.0.0.1:55432:5432",
-  redis: "127.0.0.1:56379:6379",
+  postgres: ["127.0.0.1:55432:5432", "127.0.0.1:${ORGSPACE_LOCAL_POSTGRES_PORT:-55432}:5432"],
+  redis: ["127.0.0.1:56379:6379", "127.0.0.1:${ORGSPACE_LOCAL_REDIS_PORT:-56379}:6379"],
+  minio: ["127.0.0.1:59000:9000", "127.0.0.1:${ORGSPACE_LOCAL_S3_PORT:-59000}:9000"],
 } as const;
 
 function isRecord(value: unknown): value is UnknownRecord {
@@ -44,13 +45,18 @@ export function assertSafeLocalComposeModel(model: unknown): void {
     }
   }
 
-  for (const [serviceName, expectedBinding] of Object.entries(REQUIRED_BINDINGS)) {
+  for (const [serviceName, allowedBindings] of Object.entries(REQUIRED_BINDINGS)) {
     const service = model.services[serviceName];
     if (!isRecord(service) || !Array.isArray(service.ports)) {
       fail(`service ${serviceName} is missing its required port binding`);
     }
-    if (service.ports.length !== 1 || service.ports[0] !== expectedBinding) {
-      fail(`service ${serviceName} must publish exactly ${expectedBinding}`);
+    const publishedPorts = service.ports;
+    if (
+      publishedPorts.length !== 1 ||
+      typeof publishedPorts[0] !== "string" ||
+      !allowedBindings.some((binding) => binding === publishedPorts[0])
+    ) {
+      fail(`service ${serviceName} must publish exactly one of ${allowedBindings.join(", ")}`);
     }
   }
 
@@ -69,7 +75,7 @@ export function assertSafeLocalComposeModel(model: unknown): void {
   if (!isRecord(model.volumes)) {
     fail("named volumes must be declared");
   }
-  for (const volume of ["postgres-data", "redis-data"]) {
+  for (const volume of ["postgres-data", "redis-data", "minio-data"]) {
     if (!(volume in model.volumes)) {
       fail(`named volume ${volume} is required`);
     }

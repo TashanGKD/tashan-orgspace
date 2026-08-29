@@ -1,9 +1,40 @@
+import { request } from "node:http";
+
 import { describe, expect, test } from "vitest";
 
 const stackUrl = process.env.PRODUCTION_STACK_URL;
 const expectedVersion = process.env.PRODUCTION_STACK_VERSION;
 if (stackUrl === undefined || expectedVersion === undefined) {
   throw new Error("PRODUCTION_STACK_URL and PRODUCTION_STACK_VERSION are required");
+}
+
+async function requestVirtualHost(
+  path: string,
+  options: { method?: string; headers?: Record<string, string> } = {},
+): Promise<{
+  status: number;
+  headers: Record<string, string | string[] | undefined>;
+  body: string;
+}> {
+  return await new Promise((resolve, reject) => {
+    const outgoing = request(
+      new URL(path, stackUrl),
+      { method: options.method, headers: options.headers },
+      (incoming) => {
+        const chunks: Buffer[] = [];
+        incoming.on("data", (chunk: Buffer) => chunks.push(chunk));
+        incoming.on("end", () => {
+          resolve({
+            status: incoming.statusCode ?? 0,
+            headers: incoming.headers,
+            body: Buffer.concat(chunks).toString("utf8"),
+          });
+        });
+      },
+    );
+    outgoing.once("error", reject);
+    outgoing.end();
+  });
 }
 
 describe("production-shaped control plane", () => {
@@ -52,5 +83,29 @@ describe("production-shaped control plane", () => {
       method: "POST",
     });
     expect([403, 405]).toContain(write.status);
+  });
+
+  test("routes the private file host without anonymous bucket access", async () => {
+    const health = await requestVirtualHost("/minio/health/live", {
+      headers: { host: "files.orgspace.tashan.chat" },
+    });
+    expect(health.status).toBe(200);
+
+    const anonymous = await requestVirtualHost("/orgspace-files/private-object", {
+      headers: { host: "files.orgspace.tashan.chat" },
+    });
+    expect([401, 403, 404]).toContain(anonymous.status);
+    expect(anonymous.headers["access-control-allow-origin"]).not.toBe("*");
+    expect(anonymous.body).not.toContain('<div id="root"></div>');
+
+    const preflight = await requestVirtualHost("/orgspace-files/test-object", {
+      method: "OPTIONS",
+      headers: {
+        host: "files.orgspace.tashan.chat",
+        origin: "https://orgspace.tashan.chat",
+        "access-control-request-method": "PUT",
+      },
+    });
+    expect(preflight.headers["access-control-allow-origin"]).toBe("https://orgspace.tashan.chat");
   });
 });

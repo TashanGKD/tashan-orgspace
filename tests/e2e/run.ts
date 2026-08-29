@@ -3,14 +3,29 @@ import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { randomUUID } from "node:crypto";
+import { createServer } from "node:net";
 
 import { migrateDatabase, resetTestDatabase } from "../../apps/api/src/db/migrate.js";
 
 const composePassword = "phase0-container-smoke-only";
-const databaseUrl =
-  "postgresql://orgspace:phase0-container-smoke-only@127.0.0.1:55432/orgspace_e2e_test";
-const redisUrl = "redis://127.0.0.1:56379";
 const composeFile = "deploy/compose.local.yml";
+
+async function reserveLoopbackPort(): Promise<number> {
+  const server = createServer();
+  await new Promise<void>((resolve, reject) => {
+    server.once("error", reject);
+    server.listen(0, "127.0.0.1", resolve);
+  });
+  const address = server.address();
+  if (address === null || typeof address === "string") {
+    server.close();
+    throw new Error("E2E failed to reserve a loopback port");
+  }
+  await new Promise<void>((resolve, reject) => {
+    server.close((error) => (error === undefined ? resolve() : reject(error)));
+  });
+  return address.port;
+}
 
 function assertLoopback(raw: string, label: string): void {
   const host = new URL(raw).hostname.toLowerCase();
@@ -96,17 +111,60 @@ async function waitForHealth(apiUrl: string): Promise<void> {
   throw new Error("E2E API health deadline exceeded", { cause: lastError });
 }
 
-assertLoopback(databaseUrl, "database");
-assertLoopback(redisUrl, "Redis");
 const temporaryDirectory = await mkdtemp(join(tmpdir(), "torg-e2e-"));
 const codeFile = join(temporaryDirectory, "verification-codes.json");
 const runId = randomUUID();
-const composeEnvironment = { ...process.env, ORGSPACE_LOCAL_POSTGRES_PASSWORD: composePassword };
+const postgresPort = await reserveLoopbackPort();
+const redisPort = await reserveLoopbackPort();
+const s3Port = await reserveLoopbackPort();
+const databaseUrl = `postgresql://orgspace:${composePassword}@127.0.0.1:${postgresPort}/orgspace_e2e_test`;
+const redisUrl = `redis://127.0.0.1:${redisPort}`;
+const s3Url = `http://127.0.0.1:${s3Port}`;
+const composeProject = `tashan-orgspace-e2e-${process.pid}`;
+const minioRootUser = `e2eroot${process.pid}`;
+const minioRootPassword = `e2e-minio-root-password-${runId}`;
+const s3AccessKeyId = `e2eapp${process.pid}`;
+const s3SecretAccessKey = `e2e-s3-app-secret-${runId}`;
+const composeEnvironment = {
+  ...process.env,
+  ORGSPACE_LOCAL_POSTGRES_PASSWORD: composePassword,
+  ORGSPACE_LOCAL_POSTGRES_PORT: String(postgresPort),
+  ORGSPACE_LOCAL_REDIS_PORT: String(redisPort),
+  ORGSPACE_LOCAL_S3_PORT: String(s3Port),
+  MINIO_ROOT_USER: minioRootUser,
+  MINIO_ROOT_PASSWORD: minioRootPassword,
+  S3_ACCESS_KEY_ID: s3AccessKeyId,
+  S3_SECRET_ACCESS_KEY: s3SecretAccessKey,
+};
+assertLoopback(databaseUrl, "database");
+assertLoopback(redisUrl, "Redis");
+assertLoopback(s3Url, "S3");
 let api: ChildProcess | undefined;
 let worker: ChildProcess | undefined;
 
 try {
-  await run("docker", ["compose", "-f", composeFile, "up", "-d", "--wait"], composeEnvironment);
+  await run(
+    "docker",
+    [
+      "compose",
+      "-f",
+      composeFile,
+      "-p",
+      composeProject,
+      "up",
+      "-d",
+      "--wait",
+      "postgres",
+      "redis",
+      "minio",
+    ],
+    composeEnvironment,
+  );
+  await run(
+    "docker",
+    ["compose", "-f", composeFile, "-p", composeProject, "run", "--rm", "minio-bootstrap"],
+    composeEnvironment,
+  );
   await resetTestDatabase(databaseUrl);
   await migrateDatabase(databaseUrl);
   const serviceEnvironment = {
@@ -124,8 +182,16 @@ try {
     env: {
       ...process.env,
       DATABASE_URL: databaseUrl,
+      FILE_STORAGE_ENABLED: "true",
       WORKER_ID: `e2e-${runId}`,
       OUTBOX_POLL_MILLISECONDS: "50",
+      S3_ENDPOINT: s3Url,
+      S3_PUBLIC_ORIGIN: s3Url,
+      S3_REGION: "us-east-1",
+      S3_BUCKET: "orgspace-files",
+      S3_ACCESS_KEY_ID: s3AccessKeyId,
+      S3_SECRET_ACCESS_KEY: s3SecretAccessKey,
+      S3_FORCE_PATH_STYLE: "true",
     },
     shell: false,
     stdio: ["ignore", "inherit", "inherit"],
@@ -137,10 +203,12 @@ try {
 } finally {
   await stopChild(worker);
   await stopChild(api);
-  await run("docker", ["compose", "-f", composeFile, "down"], composeEnvironment).catch(
-    (error: unknown) => {
-      process.stderr.write(`E2E compose cleanup failed: ${String(error)}\n`);
-    },
-  );
+  await run(
+    "docker",
+    ["compose", "-f", composeFile, "-p", composeProject, "down", "--volumes"],
+    composeEnvironment,
+  ).catch((error: unknown) => {
+    process.stderr.write(`E2E compose cleanup failed: ${String(error)}\n`);
+  });
   await rm(temporaryDirectory, { recursive: true });
 }

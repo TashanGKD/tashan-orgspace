@@ -13,10 +13,7 @@ mkdir -p "$repository_root/.local-data"
 public_downloads="$(mktemp -d "$repository_root/.local-data/orgspace-public-downloads.XXXXXX")"
 
 cleanup() {
-  cleanup_arguments=(down --remove-orphans)
-  if [ "${ORGSPACE_TEST_CLEANUP_VOLUMES:-0}" = "1" ]; then
-    cleanup_arguments+=(--volumes)
-  fi
+  cleanup_arguments=(down --remove-orphans --volumes)
   docker compose -f "$compose_file" -p "$project" "${cleanup_arguments[@]}" >/dev/null 2>&1 || true
   rm -rf "$temporary_root"
   rm -rf "$public_downloads"
@@ -38,6 +35,10 @@ node --input-type=module -e '
 ' "$private_key_file" "$public_key_file"
 
 export ORGSPACE_POSTGRES_PASSWORD="production-stack-postgres-$$"
+export MINIO_ROOT_USER="productionstackroot$$"
+export MINIO_ROOT_PASSWORD="production-stack-minio-root-password-$$"
+export S3_ACCESS_KEY_ID="productionstackapp$$"
+export S3_SECRET_ACCESS_KEY="production-stack-s3-app-secret-$$"
 export SERVICE_VERSION="$(node -p "JSON.parse(require('node:fs').readFileSync('release/cli-release.json')).version")"
 export JWT_ACTIVE_KEY_ID="production-stack-key-1"
 export JWT_PRIVATE_KEY="$(cat "$private_key_file")"
@@ -86,7 +87,7 @@ if [ "$gateway_ready" != "1" ]; then
   exit 1
 fi
 
-for private_service in postgres redis api; do
+for private_service in postgres redis minio api; do
   published="$(docker compose -f "$compose_file" -p "$project" port "$private_service" 2>/dev/null || true)"
   if [ -n "$published" ]; then
     echo "production-stack: $private_service unexpectedly published $published" >&2
@@ -98,7 +99,26 @@ PRODUCTION_STACK_URL="http://127.0.0.1:44110" \
   PRODUCTION_STACK_VERSION="$SERVICE_VERSION" \
   pnpm exec vitest run tests/production-stack/stack.test.ts
 
-echo "production-stack: PASS ($project)"
-if [ "${ORGSPACE_TEST_CLEANUP_VOLUMES:-0}" != "1" ]; then
-  echo "production-stack: named volumes preserved; set ORGSPACE_TEST_CLEANUP_VOLUMES=1 for isolated test-volume cleanup"
+docker compose -f "$compose_file" -p "$project" restart minio
+minio_ready=0
+for readiness_attempt in $(seq 1 200); do
+  if curl --fail --silent --show-error --max-time 1 \
+    -H 'Host: files.orgspace.tashan.chat' \
+    http://127.0.0.1:44110/minio/health/live >/dev/null 2>&1; then
+    minio_ready=1
+    break
+  fi
+  sleep 0.1
+done
+if [ "$minio_ready" != "1" ]; then
+  docker compose -f "$compose_file" -p "$project" ps >&2
+  docker compose -f "$compose_file" -p "$project" logs --no-color minio gateway >&2
+  echo "production-stack: MinIO did not recover through the file gateway" >&2
+  exit 1
 fi
+
+PRODUCTION_STACK_URL="http://127.0.0.1:44110" \
+  PRODUCTION_STACK_VERSION="$SERVICE_VERSION" \
+  pnpm exec vitest run tests/production-stack/stack.test.ts
+
+echo "production-stack: PASS ($project)"
