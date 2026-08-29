@@ -4,7 +4,7 @@
 
 他山组织空间（Tashan OrgSpace）是一个独立的组织协作与文件平台。
 
-当前仓库已经进入按阶段执行的实现期；Phase 0 首先建立认证、权限、审计与 CLI/Web 一致性基础。
+当前仓库已经完成 Phase 0 安全基础和 Phase 1 空间/文件能力的本地验收，正在按统一计划继续实现组织协作能力。
 
 - 产品与技术总设计：[`docs/superpowers/specs/2026-08-18-tashan-orgspace-design.md`](docs/superpowers/specs/2026-08-18-tashan-orgspace-design.md)
 - Phase 0 实施计划：[`docs/superpowers/plans/2026-08-18-phase0-security-foundation.md`](docs/superpowers/plans/2026-08-18-phase0-security-foundation.md)
@@ -16,9 +16,11 @@
 
 ## 当前能力
 
-Phase 0 已实现账号注册与登录、手机号验证、设备会话与单设备撤销、组织创建与成员隔离、追加式审计、可恢复 Outbox Worker、共享 SDK、覆盖全部 17 个能力的 `torg` CLI，以及登录/组织/设备 Web 工作台。
+Phase 0 已实现账号注册与登录、手机号验证、设备会话与单设备撤销、组织创建与成员隔离、追加式审计、可恢复 Outbox Worker、共享 SDK，以及登录/组织/设备 Web 工作台。
 
-文件空间、OKR/任务、审批、通知短信和聊天仍待实现。运行与构建、用户网站、服务、数据库、daemon 和用户域名作为延期方向保留在导航并标记“即将上线”，不属于当前实现或 v1 验收。账号验证码已接入阿里云短信，独立 Phase 0 后端已部署到 AUP。
+Phase 1 已实现个人与组织文件空间、50 GB 默认个人额度与最高 500 GB 组织授权额度、500 GB 组织额度、公开/受限文件夹、manager/editor/viewer、管理员元数据查看与 manager 恢复、断点续传、版本、下载校验、30 天回收站和 MinIO/Worker 恢复。26 个文件能力在 API、Web、CLI 和 Skill 中保持一致；连同 Phase 0，当前注册表共有 43 个能力。
+
+OKR/任务、审批、通知短信和聊天仍待实现。运行与构建、用户网站、服务、数据库、daemon 和用户域名作为延期方向保留在导航并标记“即将上线”，不属于当前实现或 v1 验收。账号验证码已接入阿里云短信；公开 AUP 环境当前仍是 Phase 0 版本，Phase 1 尚未部署。
 
 ## 为 Codex 安装 Skill
 
@@ -43,7 +45,7 @@ pnpm install --frozen-lockfile
 bash scripts/verify-phase0.sh
 ```
 
-验证器会在 loopback 启动临时 E2E 服务，并在结束时停止容器；不会删除 PostgreSQL/Redis 命名卷。开发环境的启动、停止及破坏性清理边界见本地运行手册。
+验证器会在 loopback 启动隔离的临时 E2E/生产形态服务，结束时只删除本次测试项目的容器、网络和命名卷，不会触碰开发环境的数据卷。开发环境的启动、停止及破坏性清理边界见本地运行手册。
 
 CLI 默认连接 `http://127.0.0.1:4110`，无参数运行只显示帮助且不读取凭据、不访问网络：
 
@@ -80,6 +82,7 @@ docs/       架构、运行手册、产品设计与实施计划
 | 文档                                                                                                                                               | 用途                   |
 | -------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------- |
 | [`docs/architecture/phase0-security-foundation.md`](docs/architecture/phase0-security-foundation.md)                                               | 已实现的安全与分发边界 |
+| [`docs/verification/spaces-files-quotas.md`](docs/verification/spaces-files-quotas.md)                                                             | Phase 1 文件验收证据   |
 | [`docs/runbooks/local-development.md`](docs/runbooks/local-development.md)                                                                         | 本地基础设施运行手册   |
 | [`docs/superpowers/specs/2026-08-18-tashan-orgspace-design.md`](docs/superpowers/specs/2026-08-18-tashan-orgspace-design.md)                       | 产品与技术总设计       |
 | [`docs/superpowers/specs/2026-08-18-skill-cli-distribution-design.md`](docs/superpowers/specs/2026-08-18-skill-cli-distribution-design.md)         | Skill/CLI 分发设计     |
@@ -93,4 +96,4 @@ docs/       架构、运行手册、产品设计与实施计划
 
 ## 部署状态
 
-当前公开 prerelease 为 `v0.1.0-alpha.3`，独立 Phase 0 后端已部署到 `https://orgspace.tashan.chat`，官方 Skill/CLI 镜像和 GitHub 备用 Release 均已发布。文件、协作、聊天和安全计算等 Phase 1+ 能力仍未发布。现有 `org.tashan.chat` 属于其他项目，不在本仓库的部署范围内。
+当前公开 prerelease 为 `v0.1.0-alpha.3`，独立 Phase 0 后端已部署到 `https://orgspace.tashan.chat`，官方 Skill/CLI 镜像和 GitHub 备用 Release 均已发布。Phase 1 文件能力已在提交 `9d31ae527325ff10fc9f35fead2317a77c338dc4` 完成本地与生产形态验收，但尚未部署或发布新版本；协作与聊天仍在后续 Phase。现有 `org.tashan.chat` 属于其他项目，不在本仓库的部署范围内。

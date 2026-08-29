@@ -1,6 +1,6 @@
 # Phase 0 安全基础架构
 
-本文档记录 Phase 0 已实现且由测试验证的边界。服务端能力注册表、Zod 契约和 SQL migration 仍是机器可执行的真源；本文不替代它们。
+本文档记录 Phase 0 安全基础，以及建立在其上的 Phase 1 空间/文件边界。服务端能力注册表、Zod 契约和 SQL migration 仍是机器可执行的真源；本文不替代它们。
 
 ## 系统边界
 
@@ -47,7 +47,15 @@ Web 只把 access token 留在内存。refresh token 由 API 写入 `__Host-torg
 | POST   | `/v1/organizations/:organizationId/members` | `organization.member.add`  |
 | GET    | `/v1/audit-events`                          | `audit.list`               |
 
-所有 17 个能力必须存在 CLI 叶子命令和 Skill 引用；标记为 `web: required` 的能力还必须存在 Web surface。CI 的 capability gate 对三侧做集合一致性检查。
+Phase 0 的 17 个能力和 Phase 1 的 26 个文件能力都必须存在 CLI 叶子命令和 Skill 引用；标记为 `web: required` 的能力还必须存在 Web surface。CI 的 capability gate 与文件存储专用 gate 对 API、Web、CLI、Skill 做集合和命令一致性检查。
+
+## Phase 1 文件数据面
+
+PostgreSQL 保存空间、目录项、权限、版本、上传会话、额度预留和回收站等控制面真相；私有 MinIO 只保存 `temporary/<uuid>` 与 `versions/<uuid>` 对象。客户端通过最长 15 分钟的分段上传 URL 和最长 5 分钟的下载 URL传输字节，不获得 S3 凭据，CLI/Skill 也不直接调用 MinIO。
+
+个人空间仅本人可见。组织公开目录对有效成员可写；受限目录使用 manager/editor/viewer 三种角色。组织管理员在没有目录授权时只能查看元数据，不能读取或下载字节；manager 恢复必须由组织 owner/admin 显式执行。所有判断都重新读取当前 Membership 和目录授权，因此跨组织 ID、已移除成员和旧设备 token 不能绕过边界。
+
+上传先在事务内预留额度，再创建 multipart；Worker 校验完整 SHA-256 和字节数后才发布版本。失败、取消与到期会释放预留。Worker 使用可恢复 lease 处理校验、上传到期、回收站清理和版本对账；启动后的对象扫描只删除没有有效上传会话引用且键名严格符合 `temporary/<uuid>` 的孤儿对象。永久删除保留上传历史，但将已删除文件/版本引用置空。
 
 ## PostgreSQL 表
 
@@ -63,6 +71,11 @@ Web 只把 access token 留在内存。refresh token 由 API 写入 `__Host-torg
 - `outbox_events`：事务性事件、lease、重试和 dead-letter 状态。
 - `audit_events`：追加式、哈希链接的账号级或组织级审计证据。
 - `schema_migrations`：已应用 migration 清单，由迁移器管理。
+- `spaces`、`personal_quota_entitlements`：个人/组织空间、额度、已用/预留字节和只读状态。
+- `file_entries`、`file_versions`：目录树、当前版本与不可伪造的对象键。
+- `folder_access_policies`、`folder_grants`：公开/受限策略与 manager/editor/viewer 授权。
+- `upload_sessions`、`upload_parts`、`storage_reservations`：可恢复 multipart 状态和并发额度预留。
+- `trash_entries`、`file_maintenance_jobs`：30 天回收站和可租约恢复的维护任务。
 
 Mutation Coordinator 在同一 PostgreSQL 事务中完成领域写入、成功审计、Outbox 和幂等结果。Worker 使用 `FOR UPDATE SKIP LOCKED` 领取事件；过期 lease 可恢复，未知事件进入 dead letter。
 
@@ -76,10 +89,10 @@ Mutation Coordinator 在同一 PostgreSQL 事务中完成领域写入、成功�
 
 ## 验证层
 
-`bash scripts/verify-phase0.sh` 依次执行工具链、格式、lint、严格类型、单元测试、分发测试、能力一致性、门禁清单、负向自测试和完整 E2E。分发测试使用临时 HOME、校验和篡改样本、原生自包含 Node 运行时和本机 HTTPS fixture，验证首次安装、重复安装、无系统 Node 启动以及 capability JSON。E2E 使用 loopback Compose、隔离测试数据库、随机 API 端口、真实 HTTP、真实 CLI 子进程和 Worker；每次运行都在 `finally` 中停止子进程与容器，但不删除命名卷。
+`bash scripts/verify-phase0.sh` 依次执行工具链、格式、lint、严格类型、单元测试、分发测试、能力一致性、18 个门禁及其负向自测、生产形态 Compose 和完整 E2E。分发测试使用临时 HOME、校验和篡改样本、原生自包含 Node 运行时和本机 HTTPS fixture。E2E 使用 loopback Compose、隔离测试数据库、随机端口、真实 HTTP、真实 CLI 子进程、MinIO 和可重启 Worker；每次运行只清理本次隔离项目。
 
 `skill/tashan-orgspace` 是可单独安装的 Codex Skill，内含用户级 fail-closed 安装器。无参数仅显示帮助；安装器只接受发布清单列出的 macOS arm64/x64 与 Linux x64 资产，下载后核对唯一 SHA-256、拒绝链接或额外归档项、候选版本 smoke 通过后再切换 `current`。CLI 发布物自带锁定版本的 Node.js，不使用 `sudo`，不修改 shell 配置。`v*` tag 的发布流水线在三个原生 runner 上分别构建并汇总校验和；预发布版可在生产 API 未上线时发布，稳定版必须先通过 `https://orgspace.tashan.chat/v1/health`。
 
-## 明确不在 Phase 0
+## 当前未实现范围
 
-文件上传下载、个人/组织文件系统、OKR、任务、审批、短信生产发送、聊天和 AI 员工均属于后续阶段。本阶段只提供它们所依赖的身份、授权、审计、能力、客户端与 Skill 分发基础。代码执行、Docker 构建、常驻服务、数据库产品、用户网站与动态 `tashan.chat` 用户域名是导航可见的延期方向，不属于当前实现或 v1 验收；AUP 生产部署属于平台自身能力，已与这些用户功能分离。
+OKR、任务、审批、短信生产通知、聊天和 AI 员工属于后续阶段。代码执行、Docker 构建、常驻服务、数据库产品、用户网站与动态 `tashan.chat` 用户域名是导航可见的延期方向，不属于当前实现或 v1 验收；AUP 生产部署属于平台自身能力，已与这些用户功能分离。

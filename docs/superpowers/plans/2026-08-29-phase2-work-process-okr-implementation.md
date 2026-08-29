@@ -12,7 +12,7 @@
 
 ### Task 1: Shared event, relation and activity kernel
 
-**Files:** Create `apps/api/migrations/008_collaboration_kernel.sql`, `packages/contracts/src/collaboration.ts`, `apps/api/src/collaboration/`, `apps/api/test/collaboration/kernel.integration.test.ts`; modify contract exports.
+**Files:** Create `apps/api/migrations/009_collaboration_kernel.sql`, `packages/contracts/src/collaboration.ts`, `apps/api/src/collaboration/`, `apps/api/test/collaboration/kernel.integration.test.ts`; modify contract exports.
 
 - [ ] Write RED tests for cross-organization links, duplicate links, immutable DomainEvent, comment authorization and same-transaction Outbox.
 - [ ] Run `pnpm --filter @tashan/api test:integration`; expect missing tables/types.
@@ -22,7 +22,7 @@
 
 ### Task 2: WorkItem and Assignment state machines
 
-**Files:** Create `apps/api/migrations/009_work_items.sql`, `packages/contracts/src/work.ts`, `apps/api/src/work/work-service.ts`, `apps/api/src/work/work-state.ts`, `apps/api/test/work/work-service.integration.test.ts`.
+**Files:** Create `apps/api/migrations/010_work_items.sql`, `packages/contracts/src/work.ts`, `apps/api/src/work/work-service.ts`, `apps/api/src/work/work-state.ts`, `apps/api/test/work/work-service.integration.test.ts`.
 
 - [ ] Write RED transition tables covering create/assign/dispute/transfer/complete/reopen/cancel, stale expectedVersion and removed Membership.
 - [ ] Run the targeted integration test; expect WorkService missing.
@@ -32,7 +32,7 @@
 
 ### Task 3: Versioned process engine and approvals
 
-**Files:** Create `apps/api/migrations/010_processes.sql`, `packages/contracts/src/process.ts`, `apps/api/src/process/`, `apps/api/test/process/process-service.integration.test.ts`.
+**Files:** Create `apps/api/migrations/011_processes.sql`, `packages/contracts/src/process.ts`, `apps/api/src/process/`, `apps/api/test/process/process-service.integration.test.ts`.
 
 - [ ] Write RED tests for immutable published versions, single/sequence/any/all approval, return, withdraw, transfer and concurrent decisions.
 - [ ] Run targeted tests; expect ProcessDefinition/Instance missing.
@@ -52,7 +52,7 @@
 
 ### Task 5: OKR formulas and change approval
 
-**Files:** Create `apps/api/migrations/011_okr.sql`, `packages/contracts/src/okr.ts`, `apps/api/src/okr/`, `apps/api/src/routes/okr-routes.ts`, tests under `apps/api/test/okr/`.
+**Files:** Create `apps/api/migrations/012_okr.sql`, `packages/contracts/src/okr.ts`, `apps/api/src/okr/`, `apps/api/src/routes/okr-routes.ts`, tests under `apps/api/test/okr/`.
 
 - [ ] Write RED tests for numeric/linked_tasks/manual, invalid weights, cross-org task link, historical snapshots, immediate progress and forbidden direct substantive edit.
 - [ ] Run targeted tests; expect OKR service missing.

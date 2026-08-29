@@ -16,6 +16,8 @@ const valid = {
   skillMain: "Read references/files.md before file work.",
   fileReference: `${server.map(({ cli }) => `torg ${cli}`).join("\n")}\ntorg file version-restore --space <space-id> --file <file-id> --version-id <version-id>\nNever call MinIO or S3 directly. Never print or reuse presigned URLs.`,
   cliFileSource: '.requiredOption("--version-id <id>")',
+  plannedMigrations: ["009_collaboration_kernel.sql", "010_work_items.sql"],
+  actualMigrations: ["007_spaces_files.sql", "008_file_purge_upload_history.sql"],
   resources: [
     {
       resourceType: "personal-file",
@@ -115,6 +117,13 @@ conflictingVersionOption.cliFileSource = '.requiredOption("--version <id>")';
 assert.throws(
   () => checkFileStorageContract(conflictingVersionOption),
   /non-conflicting --version-id option/,
+);
+
+const collidingMigration = clone(valid);
+collidingMigration.actualMigrations.push("009_collaboration_kernel.sql");
+assert.throws(
+  () => checkFileStorageContract(collidingMigration),
+  /planned migration collides with existing migration/,
 );
 
 assert.doesNotThrow(() => checkFileStorageContract(valid));

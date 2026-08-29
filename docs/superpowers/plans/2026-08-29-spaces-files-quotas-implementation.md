@@ -748,19 +748,19 @@ git commit -m "ci(files): enforce storage surface parity"
 - Modify: `docs/architecture/phase0-security-foundation.md`
 - Modify: `docs/superpowers/plans/2026-08-26-full-product-delivery.md`
 
-- [ ] **Step 1: Add the complete synthetic journey**
+- [x] **Step 1: Add the complete synthetic journey**
 
 Use two accounts, two organizations and two devices. Prove personal isolation, public folder collaboration, restricted manager/editor/viewer behavior, administrator metadata-only access, manager recovery, cross-organization denial and removed-member denial.
 
-- [ ] **Step 2: Exercise bytes and lifecycle**
+- [x] **Step 2: Exercise bytes and lifecycle**
 
 Upload a multi-part fixture, interrupt after at least two parts, resume from another authorized device, complete SHA-256 verification, download and compare bytes. Exercise same-name conflict, explicit new version, historical restore, trash restore, forced expiry and permanent purge.
 
-- [ ] **Step 3: Exercise quota and recovery**
+- [x] **Step 3: Exercise quota and recovery**
 
 Run concurrent final-byte reservations, quota entitlement increase/decrease, read-only transition, MinIO restart mid-upload, Worker restart during verification, orphan temporary object cleanup and missing-version-object detection. Assert every failed path leaves counters and objects reconcilable.
 
-- [ ] **Step 4: Run the complete verifier**
+- [x] **Step 4: Run the complete verifier**
 
 Run:
 
@@ -775,7 +775,7 @@ ORGSPACE_TEST_CLEANUP_VOLUMES=1 bash scripts/verify-phase0.sh
 
 Expected: all commands pass; gate discovery reports 18 gates; production stack and all E2E journeys pass.
 
-- [ ] **Step 5: Record evidence and commit**
+- [x] **Step 5: Record evidence and commit**
 
 `docs/verification/spaces-files-quotas.md` records the exact commit, MinIO image tags, capability count, test counts, browser widths, two-user journeys, restart/restore results and remaining debt. Update README from “files pending” to the verified capability boundary; do not claim compute/hosting.
 

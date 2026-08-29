@@ -1,4 +1,4 @@
-import { readFileSync } from "node:fs";
+import { readFileSync, readdirSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { parse } from "yaml";
@@ -104,6 +104,14 @@ export function checkFileStorageContract(input) {
   ) {
     throw new Error("file version restore must use the non-conflicting --version-id option");
   }
+  if (new Set(input.plannedMigrations).size !== input.plannedMigrations.length) {
+    throw new Error("future plans contain duplicate migration filenames");
+  }
+  for (const filename of input.plannedMigrations) {
+    if (input.actualMigrations.includes(filename)) {
+      throw new Error(`planned migration collides with existing migration: ${filename}`);
+    }
+  }
 
   const resources = new Map(input.resources.map((resource) => [resource.resourceType, resource]));
   const expectedResources = {
@@ -203,6 +211,12 @@ function capabilityIds(source) {
 
 export function checkRepositoryFileStorageContract(repositoryRoot) {
   const read = (path) => readFileSync(resolve(repositoryRoot, path), "utf8");
+  const futurePlanSources = [
+    "docs/superpowers/plans/2026-08-29-phase2-work-process-okr-implementation.md",
+    "docs/superpowers/plans/2026-08-29-phase2d-organization-partners-implementation.md",
+    "docs/superpowers/plans/2026-08-29-phase3-notifications-sms-reminders-implementation.md",
+    "docs/superpowers/plans/2026-08-29-phase4-chat-search-global-work-implementation.md",
+  ].map(read);
   const localComposeSource = read("deploy/compose.local.yml");
   const productionComposeSource = read("deploy/compose.production.yml");
   const skillDocument = JSON.parse(read("skill/tashan-orgspace/capability-references.json"));
@@ -215,6 +229,14 @@ export function checkRepositoryFileStorageContract(repositoryRoot) {
     skillMain: read("skill/tashan-orgspace/SKILL.md"),
     fileReference: read("skill/tashan-orgspace/references/files.md"),
     cliFileSource: read("apps/cli/src/commands/file.ts"),
+    plannedMigrations: futurePlanSources.flatMap((source) =>
+      [...source.matchAll(/apps\/api\/migrations\/([0-9]{3}_[a-z0-9_]+\.sql)/g)].map(
+        (match) => match[1],
+      ),
+    ),
+    actualMigrations: readdirSync(resolve(repositoryRoot, "apps/api/migrations")).filter(
+      (filename) => /^[0-9]{3}_[a-z0-9_]+\.sql$/.test(filename),
+    ),
     resources: JSON.parse(read("apps/web/src/resource-surfaces.json")),
     modules: JSON.parse(read("apps/web/src/product-modules.json")),
     localCompose: parse(localComposeSource),

@@ -102,30 +102,32 @@ Run `bash scripts/verify-phase0.sh`, Web keyboard/accessibility tests and produc
 - Modify: `packages/capabilities/src/phase0-capabilities.json`
 - Modify: `apps/web/src/product-modules.json`
 
-- [ ] **Step 1: Approve the space/file threat model**
+- [x] **Step 1: Approve the space/file threat model**
 
 Lock personal 50 GB default, personal 500 GB maximum entitlement, organization 500 GB quota, trash accounting, version behavior and storage reservation cleanup.
 
-- [ ] **Step 2: Write RED adversarial tests**
+- [x] **Step 2: Write RED adversarial tests**
 
 Cover `../`, absolute/encoded/Unicode traversal, symlink and prefix collision, cross-space object IDs, concurrent quota oversell, interrupted multipart upload, checksum mismatch, duplicate finalize and failed cleanup.
 
-- [ ] **Step 3: Implement backend and object-storage lifecycle**
+- [x] **Step 3: Implement backend and object-storage lifecycle**
 
 Deliver `Space`, `FileEntry`, `FileVersion`, `UploadSession`, `StorageReservation` and `TrashEntry`, with server-generated object keys and transactions around reservation/finalization.
 
-- [ ] **Step 4: Implement Web list/detail and CLI/Skill parity**
+- [x] **Step 4: Implement Web list/detail and CLI/Skill parity**
 
 Web delivers tree/list, file detail, preview, versions, upload, download and trash. CLI delivers `space list/get/usage` and `file list/get/upload/download/versions/trash/restore/delete` with JSON output and explicit destructive confirmation.
 
-- [ ] **Step 5: Run full simulated-user acceptance**
+- [x] **Step 5: Run full simulated-user acceptance**
 
 Create two users and two organizations; prove personal privacy, organization access, quota read-only transition, upload recovery, file version recovery and cross-organization rejection.
 
 ### Task 3: WorkItem, Assignment and process kernel
 
 **Files:**
-- Create: `apps/api/migrations/008_work_process.sql`
+- Create: `apps/api/migrations/009_collaboration_kernel.sql`
+- Create: `apps/api/migrations/010_work_items.sql`
+- Create: `apps/api/migrations/011_processes.sql`
 - Create: `packages/contracts/src/work.ts`
 - Create: `apps/api/src/work/`
 - Create: `apps/api/src/routes/work-routes.ts`
@@ -156,7 +158,7 @@ Simulate creator, assignee, administrator and uninvolved member across create, a
 ### Task 4: OKR on the work kernel
 
 **Files:**
-- Create: `apps/api/migrations/009_okr.sql`
+- Create: `apps/api/migrations/012_okr.sql`
 - Create: `packages/contracts/src/okr.ts`
 - Create: `apps/api/src/okr/`
 - Create: `apps/api/src/routes/okr-routes.ts`
@@ -187,7 +189,7 @@ Simulate three members and one administrator; prove everyone can read, only self
 ### Task 5: Notification, reminders and Alibaba Cloud SMS
 
 **Files:**
-- Create: `apps/api/migrations/010_notifications.sql`
+- Create: `apps/api/migrations/014_notifications.sql`
 - Create: `packages/contracts/src/notifications.ts`
 - Create: `apps/api/src/notifications/`
 - Create: `apps/worker/src/handlers/notification-handler.ts`
@@ -222,7 +224,7 @@ The navigation retains four inert `coming_soon` modules. This plan does not crea
 ### Task 6: Organization chat and resource references
 
 **Files:**
-- Create: `apps/api/migrations/013_chat.sql`
+- Create: `apps/api/migrations/015_chat.sql`
 - Create: `packages/contracts/src/chat.ts`
 - Create: `apps/api/src/chat/`
 - Create: `apps/api/src/routes/chat-routes.ts`

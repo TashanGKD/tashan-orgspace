@@ -22,7 +22,7 @@
 
 ### Task 2: Partner schema and service
 
-**Files:** Create `apps/api/migrations/012_partners.sql`, `packages/contracts/src/partners.ts`, `apps/api/src/partners/partner-service.ts`, `apps/api/test/partners/partner-service.integration.test.ts`.
+**Files:** Create `apps/api/migrations/013_partners.sql`, `packages/contracts/src/partners.ts`, `apps/api/src/partners/partner-service.ts`, `apps/api/test/partners/partner-service.integration.test.ts`.
 
 - [ ] Write RED tests for required name, stages/states, owner scope, admin all, other-member 404, awaiting_owner and cross-org transfer.
 - [ ] Run integration tests; expect tables/service missing.
