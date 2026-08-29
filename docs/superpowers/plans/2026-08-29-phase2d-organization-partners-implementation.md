@@ -24,11 +24,11 @@
 
 **Files:** Create `apps/api/migrations/013_partners.sql`, `packages/contracts/src/partners.ts`, `apps/api/src/partners/partner-service.ts`, `apps/api/test/partners/partner-service.integration.test.ts`.
 
-- [ ] Write RED tests for required name, stages/states, owner scope, admin all, other-member 404, awaiting_owner and cross-org transfer.
-- [ ] Run integration tests; expect tables/service missing.
-- [ ] Implement encrypted fields, masked summaries, optimistic updates, archive/restore and owner transfer.
-- [ ] Run tests and inspect DB fixtures to prove no contact plaintext.
-- [ ] Commit: `git commit -m "feat(partners): add organization contacts"`.
+- [x] Write RED tests for required name, stages/states, owner scope, admin all, other-member 404, awaiting_owner and cross-org transfer.
+- [x] Run integration tests; expect tables/service missing.
+- [x] Implement encrypted fields, masked summaries, optimistic updates, archive/restore and owner transfer.
+- [x] Run tests and inspect DB fixtures to prove no contact plaintext.
+- [x] Commit: `git commit -m "feat(partners): add organization contacts"`.
 
 ### Task 3: Follow-up history and work links
 
