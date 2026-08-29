@@ -113,6 +113,13 @@ describe("phone auth HTTP lifecycle", () => {
     expect(response.headers["set-cookie"]).toContain("HttpOnly");
     expect(response.headers["set-cookie"]).toContain("Secure");
     expect(response.headers["set-cookie"]).toContain("SameSite=Strict");
+    const accountId = response.json<{ account: { id: string } }>().account.id;
+    const [space] = await sql<{ type: string; quota_bytes: string; root_kind: string }[]>`
+      select s.type, s.quota_bytes, root.kind as root_kind
+      from spaces s join file_entries root on root.id = s.root_folder_id
+      where s.account_id = ${accountId}
+    `;
+    expect(space).toEqual({ type: "personal", quota_bytes: "53687091200", root_kind: "folder" });
   });
 
   test("password reset clears the Web cookie and rejects every old session", async () => {

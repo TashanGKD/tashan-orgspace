@@ -72,5 +72,15 @@ describe("organization-scoped authorization", () => {
     await organizations.addMember(owner, organization.id, member, "member");
 
     await expect(organizations.listMembers(member, organization.id)).resolves.toHaveLength(2);
+    const [space] = await sql<{ type: string; quota_bytes: string; root_kind: string }[]>`
+      select s.type, s.quota_bytes, root.kind as root_kind
+      from spaces s join file_entries root on root.id = s.root_folder_id
+      where s.organization_id = ${organization.id}
+    `;
+    expect(space).toEqual({
+      type: "organization",
+      quota_bytes: "536870912000",
+      root_kind: "folder",
+    });
   });
 });

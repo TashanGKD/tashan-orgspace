@@ -2,6 +2,7 @@ import { AuthError } from "../auth/auth-errors.js";
 import type { DatabaseClient } from "../db/client.js";
 import type { TransactionClient } from "../db/transaction.js";
 import { requireOrganizationMembership, type MembershipRole } from "./authorization.js";
+import { createOrganizationSpace } from "../spaces/space-bootstrap.js";
 
 export class OrganizationService {
   public constructor(private readonly sql: DatabaseClient) {}
@@ -27,6 +28,7 @@ export class OrganizationService {
         returning id
       `;
       if (membership === undefined) throw new Error("owner membership insert returned no row");
+      await createOrganizationSpace(transaction, organization.id, accountId);
       return { ...organization, membershipId: membership.id };
     };
     return existingTransaction === undefined

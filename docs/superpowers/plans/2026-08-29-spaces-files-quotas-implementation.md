@@ -256,7 +256,7 @@ git commit -m "feat(files): define file capability contracts"
 - Modify: `apps/api/test/auth/auth-service.test.ts`
 - Modify: `apps/api/test/organizations/organization-service.integration.test.ts`
 
-- [ ] **Step 1: Write RED migration pathology tests**
+- [x] **Step 1: Write RED migration pathology tests**
 
 Tests must prove:
 
@@ -270,7 +270,7 @@ Tests must prove:
 - versions reference files, not folders;
 - migration backfills spaces for existing accounts and organizations.
 
-- [ ] **Step 2: Implement migration 007**
+- [x] **Step 2: Implement migration 007**
 
 Create tables:
 
@@ -284,7 +284,7 @@ trash_entries, file_maintenance_jobs
 
 Use `bigint` for bytes, UUID primary keys, explicit check constraints, foreign keys, partial unique indexes for active sibling names, and indexes for space/parent listing, search, upload expiry, trash expiry and maintenance leases. Store `object_key`, never user paths, in `file_versions` and `upload_sessions`.
 
-- [ ] **Step 3: Create spaces in existing identity transactions**
+- [x] **Step 3: Create spaces in existing identity transactions**
 
 In account registration, insert a personal space and its root folder before committing the account transaction. In organization creation, insert the organization space and public root folder in the same transaction as the owner Membership. Do not use an asynchronous post-create event for these invariants.
 
@@ -296,7 +296,7 @@ export const MAX_PERSONAL_QUOTA_BYTES = 500n * 1024n ** 3n;
 export const ORGANIZATION_QUOTA_BYTES = 500n * 1024n ** 3n;
 ```
 
-- [ ] **Step 4: Verify migration and identity regressions**
+- [x] **Step 4: Verify migration and identity regressions**
 
 Run:
 
@@ -307,7 +307,7 @@ pnpm --filter @tashan/api test
 
 Expected: backfill, uniqueness and automatic creation tests pass; Phase 0 registration/organization tests remain green.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add apps/api/migrations/007_spaces_files.sql apps/api/src/auth apps/api/src/organizations apps/api/test

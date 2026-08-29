@@ -12,6 +12,7 @@ import { AuthError, invalidCredentials } from "./auth-errors.js";
 import { type AccessTokenInput, AccessTokenService } from "./access-token.js";
 import { hashPassword, verifyPassword } from "./password.js";
 import { generateRefreshToken, hashRefreshToken } from "./refresh-token.js";
+import { createPersonalSpace } from "../spaces/space-bootstrap.js";
 
 export interface LoginRateLimiter {
   consume(key: string): Promise<boolean>;
@@ -155,6 +156,7 @@ export class AuthService {
           returning id
         `;
         if (principal === undefined) throw new Error("Principal registration returned no row");
+        await createPersonalSpace(transaction, account.id);
         await transaction`
           update phone_verifications set account_id = ${account.id} where id = ${input.challengeId}
         `;
