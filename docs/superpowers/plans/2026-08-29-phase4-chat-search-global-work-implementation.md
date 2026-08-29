@@ -56,4 +56,4 @@
 - [x] Run tests; expect coming-soon routes.
 - [x] Implement list/detail composer, attachments, conversion, search and Skill mappings.
 - [x] Run multi-user E2E and production-shaped realtime restart smoke.
-- [ ] Commit: `git commit -m "docs(verification): record Phase 4 acceptance"`.
+- [x] Commit: `git commit -m "docs(verification): record Phase 4 acceptance"`.
