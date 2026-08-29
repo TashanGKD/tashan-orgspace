@@ -168,6 +168,30 @@
     "capabilities": ["file.list", "file.read", "file.search", "file.upload.create"]
   },
   {
+    "id": "organization.partners",
+    "label": "合作方",
+    "description": "查看和跟进组织合作联系人",
+    "context": "organization",
+    "status": "available",
+    "route": "/org/:organizationId/partners",
+    "roles": ["org_owner", "org_admin", "member"],
+    "capabilities": [
+      "partner.list",
+      "partner.read",
+      "partner.create",
+      "partner.archive",
+      "partner.restore",
+      "partner.transfer",
+      "partner.duplicate.list",
+      "partner.awaiting.owner.list",
+      "partner.contact.read",
+      "partner.interaction.list",
+      "partner.interaction.add",
+      "partner.link.create",
+      "partner.export"
+    ]
+  },
+  {
     "id": "organization.messages",
     "label": "消息",
     "description": "查看群聊和成员消息",

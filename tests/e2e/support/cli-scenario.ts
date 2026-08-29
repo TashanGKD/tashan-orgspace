@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
 import { spawn } from "node:child_process";
-import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { mkdtemp, readFile, rm, stat, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
@@ -26,11 +26,14 @@ interface ScenarioInput {
     | "files"
     | "files-authorization"
     | "files-recovery"
-    | "work-okr";
+    | "work-okr"
+    | "partners";
   apiUrl: string;
   databaseUrl: string;
   alice: { accountId: string; phone: string; password: string };
   bob?: { accountId: string; phone: string; password: string };
+  charlie?: { accountId: string; phone: string; password: string };
+  diana?: { accountId: string; phone: string; password: string };
 }
 
 let serializedInput = "";
@@ -187,6 +190,179 @@ if (input.type === "lifecycle") {
         ["org", "member", "list", "--org", bobOrg.organization.id],
         aliceA,
       ),
+    }),
+  );
+} else if (input.type === "partners") {
+  if (!input.bob || !input.charlie || !input.diana)
+    throw new Error("partners requires three members");
+  const makeMember = async (person: { phone: string; password: string }, name: string) => {
+    const store = new MemoryCredentialStore();
+    const effect = dependencies(store, crypto.randomUUID(), person.password, name);
+    await login(effect, person.phone);
+    return effect;
+  };
+  const bob = await makeMember(input.bob, "Bob Partner E2E");
+  const charlie = await makeMember(input.charlie, "Charlie Partner E2E");
+  const diana = await makeMember(input.diana, "Diana Partner E2E");
+  const org = await command<{ organization: { id: string } }>(
+    ["org", "create", "--name", "Partner E2E Org", "--yes", "--idempotency-key", "partner-org"],
+    aliceA,
+  );
+  for (const [index, person] of [input.bob, input.charlie, input.diana].entries()) {
+    await command(
+      [
+        "org",
+        "member",
+        "add",
+        "--org",
+        org.organization.id,
+        "--account",
+        person.accountId,
+        "--role",
+        "member",
+        "--yes",
+        "--idempotency-key",
+        `partner-member-${index}`,
+      ],
+      aliceA,
+    );
+  }
+  const create = (effect: CliDependencies, name: string, phone: string, key: string) =>
+    command<{ partner: { id: string; version: number } }>(
+      [
+        "partner",
+        "create",
+        "--org",
+        org.organization.id,
+        "--data",
+        JSON.stringify({ name, phone, cooperationStage: "lead", tags: [] }),
+        "--yes",
+        "--idempotency-key",
+        key,
+      ],
+      effect,
+    );
+  const bobPartner = await create(bob, "Bob 联系人", "13812345678", "partner-bob");
+  const charliePartner = await create(charlie, "Charlie 联系人", "13812345678", "partner-charlie");
+  await create(diana, "Diana 联系人", "13900000001", "partner-diana");
+  const bobList = await command<{ items: unknown[] }>(
+    ["partner", "list", "--org", org.organization.id],
+    bob,
+  );
+  const inferred = await rejected(
+    ["partner", "get", "--org", org.organization.id, "--partner", bobPartner.partner.id],
+    charlie,
+  );
+  const all = await command<{ items: unknown[] }>(
+    ["partner", "list", "--org", org.organization.id, "--owner", "all", "--admin-scope"],
+    aliceA,
+  );
+  const duplicate = await command<{ groups: unknown[] }>(
+    ["partner", "duplicates", "--org", org.organization.id],
+    aliceA,
+  );
+  const interaction = await command<{ interaction: { followUpWorkItemId: string | null } }>(
+    [
+      "partner",
+      "interaction",
+      "add",
+      "--org",
+      org.organization.id,
+      "--partner",
+      charliePartner.partner.id,
+      "--data",
+      JSON.stringify({
+        contactedAt: "2026-08-29T08:00:00.000Z",
+        channel: "wechat",
+        summary: "发送资料",
+        requiresFollowUp: true,
+        followUp: { type: "task", title: "发送合作资料" },
+        links: [],
+      }),
+      "--yes",
+      "--idempotency-key",
+      "partner-interaction",
+    ],
+    charlie,
+  );
+  const { createDatabaseClient } = await import("../../../apps/api/src/db/client.js");
+  const db = createDatabaseClient(input.databaseUrl);
+  let plaintextRows: number | undefined;
+  try {
+    await db`update memberships set status='removed',removed_at=now() where organization_id=${org.organization.id} and account_id=${input.bob.accountId}`;
+    const { PartnerService } = await import("../../../apps/api/src/partners/partner-service.js");
+    const { SensitiveFieldCipher } =
+      await import("../../../apps/api/src/security/sensitive-field-cipher.js");
+    const { BlindIndex } = await import("../../../apps/api/src/security/blind-index.js");
+    const service = new PartnerService({
+      cipher: new SensitiveFieldCipher({
+        activeVersion: 1,
+        keys: new Map([[1, Buffer.alloc(32, 1)]]),
+      }),
+      blindIndex: new BlindIndex(Buffer.alloc(32, 2)),
+    });
+    await db.begin((tx) => service.reconcileRemovedOwners(tx, org.organization.id));
+    const [scan] = await db<
+      { count: number }[]
+    >`select count(*)::int count from partners where phone_cipher::text like '%13812345678%'`;
+    plaintextRows = scan?.count ?? -1;
+  } finally {
+    await db.end();
+  }
+  const awaiting = await command<{ items: Array<{ id: string; version: number }> }>(
+    ["partner", "awaiting-owner", "--org", org.organization.id],
+    aliceA,
+  );
+  const waiting = awaiting.items.find((item) => item.id === bobPartner.partner.id);
+  if (!waiting) throw new Error("awaiting partner missing");
+  await command(
+    [
+      "partner",
+      "bulk-transfer",
+      "--org",
+      org.organization.id,
+      "--account",
+      input.diana.accountId,
+      "--items",
+      JSON.stringify([{ partnerId: waiting.id, expectedVersion: waiting.version }]),
+      "--yes",
+      "--idempotency-key",
+      "partner-bulk-transfer",
+    ],
+    aliceA,
+  );
+  const stale = await rejected(["partner", "list", "--org", org.organization.id], bob);
+  const directory = await mkdtemp(join(tmpdir(), "partner-e2e-export-"));
+  const output = join(directory, "partners.csv");
+  await command(
+    [
+      "partner",
+      "export",
+      "--org",
+      org.organization.id,
+      "--owner",
+      "all",
+      "--output",
+      output,
+      "--yes",
+      "--idempotency-key",
+      "partner-export",
+    ],
+    aliceA,
+  );
+  const exportMode = (await stat(output)).mode & 0o777;
+  await rm(directory, { recursive: true });
+  process.stdout.write(
+    JSON.stringify({
+      bobOwnCount: bobList.items.length,
+      adminAllCount: all.items.length,
+      inferenceDenied: inferred.stderr.includes("PARTNER_NOT_FOUND"),
+      duplicateGroups: duplicate.groups.length,
+      followUpCreated: interaction.interaction.followUpWorkItemId !== null,
+      awaitingCount: awaiting.items.length,
+      staleDenied: stale.stderr.includes("PARTNER_NOT_FOUND"),
+      plaintextRows: plaintextRows ?? -1,
+      exportMode,
     }),
   );
 } else if (input.type === "work-okr") {

@@ -906,7 +906,7 @@
     "idempotent": true,
     "confirmation": "none",
     "cli": "partner list",
-    "web": "deferred",
+    "web": "required",
     "auditAction": "partner.list"
   },
   {
@@ -919,7 +919,7 @@
     "idempotent": true,
     "confirmation": "none",
     "cli": "partner get",
-    "web": "deferred",
+    "web": "required",
     "auditAction": "partner.read"
   },
   {
@@ -932,7 +932,7 @@
     "idempotent": true,
     "confirmation": "required",
     "cli": "partner create",
-    "web": "deferred",
+    "web": "required",
     "auditAction": "partner.create"
   },
   {
@@ -958,7 +958,7 @@
     "idempotent": true,
     "confirmation": "required",
     "cli": "partner archive",
-    "web": "deferred",
+    "web": "required",
     "auditAction": "partner.archive"
   },
   {
@@ -971,7 +971,7 @@
     "idempotent": true,
     "confirmation": "required",
     "cli": "partner restore",
-    "web": "deferred",
+    "web": "required",
     "auditAction": "partner.restore"
   },
   {
@@ -984,7 +984,7 @@
     "idempotent": true,
     "confirmation": "required",
     "cli": "partner transfer",
-    "web": "deferred",
+    "web": "required",
     "auditAction": "partner.transfer"
   },
   {
@@ -1010,7 +1010,7 @@
     "idempotent": true,
     "confirmation": "none",
     "cli": "partner duplicates",
-    "web": "deferred",
+    "web": "required",
     "auditAction": "partner.duplicate.list"
   },
   {
@@ -1023,7 +1023,7 @@
     "idempotent": true,
     "confirmation": "none",
     "cli": "partner awaiting-owner",
-    "web": "deferred",
+    "web": "required",
     "auditAction": "partner.awaiting.owner.list"
   },
   {
@@ -1036,7 +1036,7 @@
     "idempotent": true,
     "confirmation": "none",
     "cli": "partner contact",
-    "web": "deferred",
+    "web": "required",
     "auditAction": "partner.contact.read"
   },
   {
@@ -1049,7 +1049,7 @@
     "idempotent": true,
     "confirmation": "none",
     "cli": "partner interaction list",
-    "web": "deferred",
+    "web": "required",
     "auditAction": "partner.interaction.list"
   },
   {
@@ -1062,7 +1062,7 @@
     "idempotent": true,
     "confirmation": "required",
     "cli": "partner interaction add",
-    "web": "deferred",
+    "web": "required",
     "auditAction": "partner.interaction.add"
   },
   {
@@ -1088,7 +1088,7 @@
     "idempotent": true,
     "confirmation": "required",
     "cli": "partner link",
-    "web": "deferred",
+    "web": "required",
     "auditAction": "partner.link.create"
   },
   {
@@ -1114,7 +1114,7 @@
     "idempotent": true,
     "confirmation": "required",
     "cli": "partner export",
-    "web": "deferred",
+    "web": "required",
     "auditAction": "partner.export"
   }
 ]

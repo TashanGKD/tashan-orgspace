@@ -144,5 +144,22 @@
       { "capabilityId": "okr.change.approve", "confirmation": "required" },
       { "capabilityId": "okr.objective.edit.admin", "confirmation": "required" }
     ]
+  },
+  {
+    "resourceType": "organization-partner",
+    "context": "organization",
+    "listRoute": "/org/:organizationId/partners",
+    "detailRoute": "/org/:organizationId/partners/:partnerId",
+    "listCapability": "partner.list",
+    "readCapability": "partner.read",
+    "actions": [
+      { "capabilityId": "partner.create", "confirmation": "required" },
+      { "capabilityId": "partner.archive", "confirmation": "required" },
+      { "capabilityId": "partner.restore", "confirmation": "required" },
+      { "capabilityId": "partner.transfer", "confirmation": "required" },
+      { "capabilityId": "partner.interaction.add", "confirmation": "required" },
+      { "capabilityId": "partner.link.create", "confirmation": "required" },
+      { "capabilityId": "partner.export", "confirmation": "required" }
+    ]
   }
 ]

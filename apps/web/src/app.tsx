@@ -13,6 +13,7 @@ import { OrganizationHomePage } from "./features/organization/home-page.js";
 import { MembersPage } from "./features/organization/members-page.js";
 import { WorkPage } from "./features/work/work-page.js";
 import { OkrPage } from "./features/okr/okr-page.js";
+import { PartnersPage } from "./features/partners/partners-page.js";
 import { ComingSoonPage } from "./features/roadmap/coming-soon-page.js";
 import { Button } from "./design-system/primitives/index.js";
 import {
@@ -43,6 +44,7 @@ const taskSurface = resourceSurface("organization-task");
 const meetingSurface = resourceSurface("organization-meeting");
 const approvalSurface = resourceSurface("organization-approval");
 const objectiveSurface = resourceSurface("organization-objective");
+const partnerSurface = resourceSurface("organization-partner");
 
 function organizationRelativeRoute(route: string): string {
   const prefix = "/org/:organizationId/";
@@ -188,6 +190,22 @@ function OkrRoute({ organizationId, sdk }: { organizationId: string; sdk: OrgSpa
       organizationId={organizationId}
       sdk={sdk}
       selectedObjectiveId={objectiveId}
+    />
+  );
+}
+
+function PartnersRoute({ organizationId, sdk }: { organizationId: string; sdk: OrgSpaceClient }) {
+  const { partnerId } = useParams<{ partnerId?: string }>();
+  const organization = useOrganization();
+  return (
+    <PartnersPage
+      canManage={
+        organization.status === "ready" &&
+        (organization.role === "org_owner" || organization.role === "org_admin")
+      }
+      organizationId={organizationId}
+      sdk={sdk}
+      selectedPartnerId={partnerId}
     />
   );
 }
@@ -536,6 +554,14 @@ function OrganizationRoutes({ sdk, displayName }: { sdk: OrgSpaceClient; display
         <Route
           path={organizationRelativeRoute(objectiveSurface.detailRoute)}
           element={<OkrRoute organizationId={organizationId} sdk={sdk} />}
+        />
+        <Route
+          path={organizationRelativeRoute(partnerSurface.listRoute)}
+          element={<PartnersRoute organizationId={organizationId} sdk={sdk} />}
+        />
+        <Route
+          path={organizationRelativeRoute(partnerSurface.detailRoute)}
+          element={<PartnersRoute organizationId={organizationId} sdk={sdk} />}
         />
         {comingSoon.map((module) => {
           const suffix = module.route.split("/:organizationId/")[1];

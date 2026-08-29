@@ -54,8 +54,8 @@
 
 **Files:** Create `apps/web/src/features/partners/`, update product/resource/capability surfaces, create `tests/e2e/partners.test.ts` and verification doc.
 
-- [ ] Write RED tests for member own list, admin all/owner/waiting filters, masked list, detail contacts, interactions and transfer.
-- [ ] Run Web/E2E tests; expect missing route.
-- [ ] Implement list/detail/dialogs with shared surfaces; flip Partner module to available only after parity.
-- [ ] Run three-member/admin E2E including inference and plaintext scans.
-- [ ] Commit: `git commit -m "docs(verification): record partner acceptance"`.
+- [x] Write RED tests for member own list, admin all/owner/waiting filters, masked list, detail contacts, interactions and transfer.
+- [x] Run Web/E2E tests; expect missing route.
+- [x] Implement list/detail/dialogs with shared surfaces; flip Partner module to available only after parity.
+- [x] Run three-member/admin E2E including inference and plaintext scans.
+- [x] Commit: `git commit -m "docs(verification): record partner acceptance"`.

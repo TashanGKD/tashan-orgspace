@@ -1,3 +1,4 @@
+import { Buffer } from "node:buffer";
 import { readFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { spawnSync } from "node:child_process";
@@ -44,6 +45,9 @@ const fixtureEnvironment = {
   MINIO_ROOT_PASSWORD: "fixture-minio-root-password",
   S3_ACCESS_KEY_ID: "fixture-s3-app",
   S3_SECRET_ACCESS_KEY: "fixture-s3-app-password",
+  PARTNER_FIELD_ACTIVE_KEY_VERSION: "1",
+  PARTNER_FIELD_KEYS: JSON.stringify({ 1: Buffer.alloc(32, 1).toString("base64url") }),
+  PARTNER_BLIND_INDEX_KEY: Buffer.alloc(32, 2).toString("base64url"),
   PHONE_CODE_PEPPER: "fixture-phone-code-pepper-value",
   SERVICE_VERSION: "0.1.0-alpha.2",
 };
@@ -328,6 +332,9 @@ const requiredEnvironmentKeys = [
   "MINIO_ROOT_PASSWORD",
   "S3_ACCESS_KEY_ID",
   "S3_SECRET_ACCESS_KEY",
+  "PARTNER_FIELD_ACTIVE_KEY_VERSION",
+  "PARTNER_FIELD_KEYS",
+  "PARTNER_BLIND_INDEX_KEY",
   "SERVICE_VERSION",
   "JWT_ACTIVE_KEY_ID",
   "JWT_PRIVATE_KEY",

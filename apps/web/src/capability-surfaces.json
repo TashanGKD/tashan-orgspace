@@ -352,5 +352,83 @@
     "route": "/org/:organizationId/okr/:objectiveId",
     "action": "okr-admin-edit",
     "test": "apps/web/src/features/okr/okr-page.test.tsx"
+  },
+  {
+    "capabilityId": "partner.list",
+    "route": "/org/:organizationId/partners",
+    "action": "partner-list",
+    "test": "apps/web/src/features/partners/partners-page.test.tsx"
+  },
+  {
+    "capabilityId": "partner.read",
+    "route": "/org/:organizationId/partners/:partnerId",
+    "action": "partner-read",
+    "test": "apps/web/src/features/partners/partners-page.test.tsx"
+  },
+  {
+    "capabilityId": "partner.create",
+    "route": "/org/:organizationId/partners",
+    "action": "partner-create",
+    "test": "apps/web/src/features/partners/partners-page.test.tsx"
+  },
+  {
+    "capabilityId": "partner.archive",
+    "route": "/org/:organizationId/partners/:partnerId",
+    "action": "partner-archive",
+    "test": "apps/web/src/features/partners/partners-page.test.tsx"
+  },
+  {
+    "capabilityId": "partner.restore",
+    "route": "/org/:organizationId/partners/:partnerId",
+    "action": "partner-restore",
+    "test": "apps/web/src/features/partners/partners-page.test.tsx"
+  },
+  {
+    "capabilityId": "partner.transfer",
+    "route": "/org/:organizationId/partners/:partnerId",
+    "action": "partner-transfer",
+    "test": "apps/web/src/features/partners/partners-page.test.tsx"
+  },
+  {
+    "capabilityId": "partner.duplicate.list",
+    "route": "/org/:organizationId/partners",
+    "action": "partner-duplicates",
+    "test": "apps/web/src/features/partners/partners-page.test.tsx"
+  },
+  {
+    "capabilityId": "partner.awaiting.owner.list",
+    "route": "/org/:organizationId/partners",
+    "action": "partner-awaiting-owner",
+    "test": "apps/web/src/features/partners/partners-page.test.tsx"
+  },
+  {
+    "capabilityId": "partner.contact.read",
+    "route": "/org/:organizationId/partners/:partnerId",
+    "action": "partner-contact-read",
+    "test": "apps/web/src/features/partners/partners-page.test.tsx"
+  },
+  {
+    "capabilityId": "partner.interaction.list",
+    "route": "/org/:organizationId/partners/:partnerId",
+    "action": "partner-interaction-list",
+    "test": "apps/web/src/features/partners/partners-page.test.tsx"
+  },
+  {
+    "capabilityId": "partner.interaction.add",
+    "route": "/org/:organizationId/partners/:partnerId",
+    "action": "partner-interaction-add",
+    "test": "apps/web/src/features/partners/partners-page.test.tsx"
+  },
+  {
+    "capabilityId": "partner.link.create",
+    "route": "/org/:organizationId/partners/:partnerId",
+    "action": "partner-link-create",
+    "test": "apps/web/src/features/partners/partners-page.test.tsx"
+  },
+  {
+    "capabilityId": "partner.export",
+    "route": "/org/:organizationId/partners",
+    "action": "partner-export",
+    "test": "apps/web/src/features/partners/partners-page.test.tsx"
   }
 ]

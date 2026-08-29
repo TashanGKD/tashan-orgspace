@@ -95,6 +95,11 @@ const app = await buildApp({
     presignClient: createPresignS3Client(objectStore),
     bucket: objectStore.bucket,
   }),
+  partnerSecurity: {
+    activeKeyVersion: 1,
+    fieldKeys: new Map([[1, Buffer.alloc(32, 1)]]),
+    blindIndexKey: Buffer.alloc(32, 2),
+  },
 });
 
 let stopping = false;
