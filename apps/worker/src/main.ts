@@ -1,6 +1,9 @@
 import postgres from "postgres";
 
+import { createInternalS3Client, S3FileMaintenanceStore } from "@tashan/object-store";
+
 import { loadWorkerConfig } from "./config.js";
+import { FileMaintenanceLoop } from "./files/file-maintenance-loop.js";
 import { OutboxLoop, type OutboxHandler } from "./outbox-loop.js";
 
 const config = loadWorkerConfig();
@@ -19,19 +22,33 @@ const loop = new OutboxLoop({
   pollMilliseconds: config.pollMilliseconds,
   batchSize: config.batchSize,
 });
+const fileLoop =
+  config.fileStorageEnabled && config.objectStore !== undefined
+    ? new FileMaintenanceLoop({
+        sql,
+        workerId: `${config.workerId}:files`,
+        objectStore: new S3FileMaintenanceStore(
+          createInternalS3Client(config.objectStore),
+          config.objectStore.bucket,
+        ),
+        leaseMilliseconds: config.leaseMilliseconds,
+        pollMilliseconds: config.pollMilliseconds,
+        batchSize: config.batchSize,
+      })
+    : undefined;
 
 let shutdownStarted = false;
 async function shutdown(): Promise<void> {
   if (shutdownStarted) return;
   shutdownStarted = true;
-  await loop.stop();
+  await Promise.all([loop.stop(), fileLoop?.stop()]);
 }
 
 process.once("SIGINT", () => void shutdown());
 process.once("SIGTERM", () => void shutdown());
 
 try {
-  await loop.run();
+  await Promise.all([loop.run(), fileLoop?.run()]);
 } finally {
   await sql.end();
 }

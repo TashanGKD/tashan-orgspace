@@ -496,23 +496,23 @@ git commit -m "feat(api): expose space and file operations"
 - Modify: `apps/worker/src/main.ts`
 - Modify: `apps/worker/package.json`
 
-- [ ] **Step 1: Write RED cleanup and lease tests**
+- [x] **Step 1: Write RED cleanup and lease tests**
 
 Cover worker death during SHA-256 streaming, two workers claiming one job, checksum mismatch, object missing, multipart abort failure, upload expiry, restored trash racing expiry, repeated permanent deletion and database failure after successful object deletion.
 
-- [ ] **Step 2: Implement a separate leased maintenance loop**
+- [x] **Step 2: Implement a separate leased maintenance loop**
 
 Do not overload `OutboxLoop`. Claim `file_maintenance_jobs` with `FOR UPDATE SKIP LOCKED`, owner ID, lease expiry and attempt count. Handlers are `verify_upload`, `expire_upload`, `purge_trash`, and `reconcile_version`.
 
-- [ ] **Step 3: Verify canonical SHA-256 before publication**
+- [x] **Step 3: Verify canonical SHA-256 before publication**
 
 Stream `GetObject` through `sha256Stream`, compare expected size and optional caller hash, copy/move the temporary object to `versions/<versionId>`, then atomically create/activate the version and commit the reservation. Until that transaction completes, download remains unavailable.
 
-- [ ] **Step 4: Implement cleanup ordering**
+- [x] **Step 4: Implement cleanup ordering**
 
 For purge: delete the S3 object first; treat `NoSuchKey` as already deleted; only then decrement `used_bytes` and finish DB cleanup. For expired uploads: abort multipart, delete any completed temporary object, then release the reservation. Failed cleanup stays retryable with backoff.
 
-- [ ] **Step 5: Verify and commit**
+- [x] **Step 5: Verify and commit**
 
 Run:
 

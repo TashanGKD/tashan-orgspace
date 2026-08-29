@@ -297,7 +297,8 @@ export class FileService {
         throw new AuthError("FILE_VERSION_CONFLICT", "trash entry changed");
       }
       const [trash] = await transaction<{ original_parent_id: string | null }[]>`
-        select original_parent_id from trash_entries where entry_id = ${entryId} for update
+        select original_parent_id from trash_entries
+        where entry_id = ${entryId} and purge_status = 'pending' for update
       `;
       if (trash === undefined) throw new AuthError("FILE_NOT_FOUND", "trash entry not found");
       const parentId = input.parentId ?? trash.original_parent_id;

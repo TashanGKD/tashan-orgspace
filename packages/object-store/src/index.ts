@@ -8,6 +8,7 @@ export {
 } from "./client.js";
 export { sha256Stream } from "./checksum.js";
 export { presignS3Command } from "./presign.js";
+export { S3FileMaintenanceStore } from "./maintenance.js";
 
 const ObjectId = z.uuid("object ID must be a UUID");
 
