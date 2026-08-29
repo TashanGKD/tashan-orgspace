@@ -12,11 +12,11 @@
 
 ### Task 1: Full-product contract gate
 **Files:** Create `scripts/check-v1-product-contract.mjs` and self-test; wire verifier.
-- [ ] Write RED fixture failures for API/SDK/CLI/Web/Skill/Audit/DomainEvent/module drift.
-- [ ] Run self-test; expect gate missing.
-- [ ] Implement read-only fail-closed gate and require same-named self-test.
-- [ ] Run gate discovery and verifier self-test.
-- [ ] Commit: `git commit -m "ci(v1): enforce full product contract"`.
+- [x] Write RED fixture failures for API/SDK/CLI/Web/Skill/Audit/DomainEvent/module drift.
+- [x] Run self-test; expect gate missing.
+- [x] Implement read-only fail-closed gate and require same-named self-test.
+- [x] Run gate discovery and verifier self-test.
+- [x] Commit: `git commit -m "ci(v1): enforce full product contract"`.
 
 ### Task 2: Backup and restore drills
 **Files:** Create runbooks/scripts/tests for PostgreSQL, MinIO and secrets manifests.

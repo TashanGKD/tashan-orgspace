@@ -1,0 +1,34 @@
+[
+  {
+    "eventType": "work.created",
+    "producerToken": "work.created",
+    "consumerToken": "work_item",
+    "producer": "apps/api/src/work/work-service.ts",
+    "consumer": "apps/worker/src/notifications/notification-projector.ts"
+  },
+  {
+    "eventType": "process.started",
+    "producer": "apps/api/src/process/process-service.ts",
+    "consumer": "apps/worker/src/notifications/notification-projector.ts"
+  },
+  {
+    "eventType": "partner.created",
+    "producer": "apps/api/src/partners/partner-service.ts",
+    "consumer": "apps/worker/src/notifications/notification-projector.ts"
+  },
+  {
+    "eventType": "partner.updated",
+    "producer": "apps/api/src/partners/partner-service.ts",
+    "consumer": "apps/worker/src/notifications/notification-projector.ts"
+  },
+  {
+    "eventType": "partner.interaction_added",
+    "producer": "apps/api/src/partners/interaction-service.ts",
+    "consumer": "apps/worker/src/notifications/notification-projector.ts"
+  },
+  {
+    "eventType": "partner.interaction_corrected",
+    "producer": "apps/api/src/partners/interaction-service.ts",
+    "consumer": "apps/worker/src/notifications/notification-projector.ts"
+  }
+]
