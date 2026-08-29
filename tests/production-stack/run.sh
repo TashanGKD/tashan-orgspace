@@ -13,7 +13,12 @@ mkdir -p "$repository_root/.local-data"
 public_downloads="$(mktemp -d "$repository_root/.local-data/orgspace-public-downloads.XXXXXX")"
 
 cleanup() {
-  cleanup_arguments=(down --remove-orphans --volumes)
+  status=$?
+  if [ "$status" -ne 0 ]; then
+    docker compose -f "$compose_file" -p "$project" ps >&2 || true
+    docker compose -f "$compose_file" -p "$project" logs --no-color postgres >&2 || true
+  fi
+  cleanup_arguments=(down --remove-orphans --volumes --rmi local)
   docker compose -f "$compose_file" -p "$project" "${cleanup_arguments[@]}" >/dev/null 2>&1 || true
   rm -rf "$temporary_root"
   rm -rf "$public_downloads"
