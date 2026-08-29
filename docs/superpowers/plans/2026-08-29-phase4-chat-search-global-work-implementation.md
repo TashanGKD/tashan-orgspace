@@ -12,11 +12,11 @@
 
 ### Task 1: Conversation/message schema and authorization
 **Files:** Create `apps/api/migrations/017_chat.sql`, `packages/contracts/src/chat.ts`, `apps/api/src/chat/chat-authorization.ts`, `apps/api/src/chat/chat-service.ts`, `apps/api/test/chat/chat-service.integration.test.ts`.
-- [ ] Write RED tests for common-org direct chat, group membership, duplicate client ID, server sequence and nonmember access.
-- [ ] Run integration tests; expect schema missing.
-- [ ] Implement Conversation, membership, Message and append-only edit/retract/reaction events.
-- [ ] Run concurrency/order tests.
-- [ ] Commit: `git commit -m "feat(chat): add organization conversations"`.
+- [x] Write RED tests for common-org direct chat, group membership, duplicate client ID, server sequence and nonmember access.
+- [x] Run integration tests; expect schema missing.
+- [x] Implement Conversation, membership, Message and append-only edit/retract/reaction events.
+- [x] Run concurrency/order tests.
+- [x] Commit: `git commit -m "feat(chat): add organization conversations"`.
 
 ### Task 2: HTTP history and realtime delivery
 **Files:** Create `apps/api/src/routes/chat-routes.ts`, `apps/realtime/package.json`, `apps/realtime/src/main.ts`, `apps/realtime/src/cursor.ts`, `apps/realtime/src/realtime.integration.test.ts`.

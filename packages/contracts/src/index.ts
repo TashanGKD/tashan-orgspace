@@ -2,6 +2,7 @@ export * from "./audit.js";
 export * from "./auth.js";
 export * from "./common.js";
 export * from "./collaboration.js";
+export * from "./chat.js";
 export * from "./error.js";
 export * from "./files.js";
 export * from "./organization.js";
