@@ -26,4 +26,22 @@ describe("worker configuration", () => {
       bucket: "orgspace-files",
     });
   });
+  test("requires a separate notification template when SMS delivery is enabled", () => {
+    expect(() => loadWorkerConfig({ ...valid, SMS_DELIVERY_ENABLED: "true" })).toThrow(
+      "ALIYUN_SMS_ACCESS_KEY_ID",
+    );
+    expect(
+      loadWorkerConfig({
+        ...valid,
+        SMS_DELIVERY_ENABLED: "true",
+        ALIYUN_SMS_ACCESS_KEY_ID: "key",
+        ALIYUN_SMS_ACCESS_KEY_SECRET: "secret",
+        ALIYUN_SMS_SIGN_NAME: "他山组织空间",
+        ALIYUN_SMS_NOTIFICATION_TEMPLATE_CODE: "SMS_NOTICE",
+        ALIYUN_SMS_NOTIFICATION_TEMPLATE_PARAM_KEY: "content",
+        ALIYUN_SMS_ENDPOINT: "dysmsapi.aliyuncs.com",
+        ALIYUN_SMS_REGION_ID: "cn-hangzhou",
+      }).sms,
+    ).toMatchObject({ templateCode: "SMS_NOTICE", templateParamKey: "content" });
+  });
 });

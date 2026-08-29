@@ -7,6 +7,10 @@ import { FileMaintenanceLoop } from "./files/file-maintenance-loop.js";
 import { OutboxLoop, type OutboxHandler } from "./outbox-loop.js";
 import { NotificationProjector } from "./notifications/notification-projector.js";
 import { ReminderScheduler } from "./notifications/reminder-scheduler.js";
+import { AliyunSmsDelivery } from "./notifications/aliyun-delivery.js";
+import { AliyunSmsProvider } from "./notifications/aliyun-sms-provider.js";
+import { PostgresSmsDeliveryStore } from "./notifications/postgres-sms-delivery-store.js";
+import { SmsDeliveryLoop } from "./notifications/sms-delivery-loop.js";
 
 const config = loadWorkerConfig();
 const sql = postgres(config.databaseUrl, {
@@ -54,20 +58,39 @@ const reminderScheduler = new ReminderScheduler({
   workerId: `${config.workerId}:reminders`,
   pollMilliseconds: config.pollMilliseconds,
 });
+const smsLoop =
+  config.smsDeliveryEnabled && config.sms !== undefined
+    ? (() => {
+        const store = new PostgresSmsDeliveryStore({
+          sql,
+          templateCode: config.sms.templateCode,
+          templateParamKey: config.sms.templateParamKey,
+        });
+        return new SmsDeliveryLoop({
+          sql,
+          workerId: `${config.workerId}:sms`,
+          pollMilliseconds: config.pollMilliseconds,
+          delivery: new AliyunSmsDelivery({
+            store,
+            provider: new AliyunSmsProvider(config.sms),
+          }),
+        });
+      })()
+    : undefined;
 
 let shutdownStarted = false;
 async function shutdown(): Promise<void> {
   if (shutdownStarted) return;
   shutdownStarted = true;
   reminderScheduler.stop();
-  await Promise.all([loop.stop(), fileLoop?.stop()]);
+  await Promise.all([loop.stop(), fileLoop?.stop(), smsLoop?.stop()]);
 }
 
 process.once("SIGINT", () => void shutdown());
 process.once("SIGTERM", () => void shutdown());
 
 try {
-  await Promise.all([loop.run(), fileLoop?.run(), reminderScheduler.run()]);
+  await Promise.all([loop.run(), fileLoop?.run(), reminderScheduler.run(), smsLoop?.run()]);
 } finally {
   await sql.end();
 }

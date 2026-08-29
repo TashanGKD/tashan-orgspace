@@ -10,6 +10,8 @@
     "typecheck": "tsc --noEmit -p tsconfig.json"
   },
   "dependencies": {
+    "@alicloud/dysmsapi20170525": "4.6.0",
+    "@alicloud/openapi-client": "0.4.15",
     "@tashan/object-store": "workspace:*",
     "postgres": "3.4.9",
     "zod": "4.4.3"

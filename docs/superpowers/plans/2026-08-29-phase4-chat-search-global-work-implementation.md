@@ -11,7 +11,7 @@
 ---
 
 ### Task 1: Conversation/message schema and authorization
-**Files:** Create `apps/api/migrations/016_chat.sql`, `packages/contracts/src/chat.ts`, `apps/api/src/chat/chat-authorization.ts`, `apps/api/src/chat/chat-service.ts`, `apps/api/test/chat/chat-service.integration.test.ts`.
+**Files:** Create `apps/api/migrations/017_chat.sql`, `packages/contracts/src/chat.ts`, `apps/api/src/chat/chat-authorization.ts`, `apps/api/src/chat/chat-service.ts`, `apps/api/test/chat/chat-service.integration.test.ts`.
 - [ ] Write RED tests for common-org direct chat, group membership, duplicate client ID, server sequence and nonmember access.
 - [ ] Run integration tests; expect schema missing.
 - [ ] Implement Conversation, membership, Message and append-only edit/retract/reaction events.
@@ -35,7 +35,7 @@
 - [ ] Commit: `git commit -m "security(chat): enforce resource and compliance bounds"`.
 
 ### Task 4: Authorized search providers
-**Files:** Create `apps/api/migrations/017_search.sql`, `packages/contracts/src/search.ts`, `apps/api/src/search/search-service.ts`, `apps/api/src/search/providers/`, `apps/api/test/search/search-inference.integration.test.ts`.
+**Files:** Create `apps/api/migrations/018_search.sql`, `packages/contracts/src/search.ts`, `apps/api/src/search/search-service.ts`, `apps/api/src/search/providers/`, `apps/api/test/search/search-inference.integration.test.ts`.
 - [ ] Write RED tests for file/work/OKR/Partner/member/message providers, restricted counts and stale Membership cache.
 - [ ] Run tests; expect search service missing.
 - [ ] Implement provider interface returning ResourceRefs after domain authorization; index projections consume DomainEvent.

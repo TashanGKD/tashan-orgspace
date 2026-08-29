@@ -28,11 +28,11 @@
 
 ### Task 3: Alibaba SMS delivery reconciliation
 **Files:** Create `apps/worker/src/notifications/aliyun-delivery.ts`, `apps/worker/src/notifications/aliyun-delivery.test.ts`; modify `apps/worker/src/config.ts` and `apps/worker/src/main.ts`.
-- [ ] Write RED tests for accepted-not-delivered, BizId query, timeout query-before-retry, provider duplicate and redaction.
-- [ ] Run tests; expect delivery handler missing.
-- [ ] Implement send/query state machine and encrypted phone lookup; never call shell Skill in production.
-- [ ] Run provider-fake tests and log secret scan.
-- [ ] Commit: `git commit -m "feat(sms): reconcile Alibaba delivery status"`.
+- [x] Write RED tests for accepted-not-delivered, BizId query, timeout query-before-retry, provider duplicate and redaction.
+- [x] Run tests; expect delivery handler missing.
+- [x] Implement send/query state machine and restricted phone lookup; never call shell Skill in production.
+- [x] Run provider-fake tests and log secret scan.
+- [x] Commit: `git commit -m "feat(sms): reconcile Alibaba delivery status"`.
 
 ### Task 4: API/CLI/Web/Skill surfaces
 **Files:** Create `apps/api/src/routes/notification-routes.ts`, `packages/sdk/src/notifications.ts`, `apps/cli/src/commands/notification.ts`, `apps/web/src/features/notifications/`, `skill/tashan-orgspace/references/notifications.md`; modify capability registries.

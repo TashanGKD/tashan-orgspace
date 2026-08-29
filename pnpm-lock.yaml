@@ -220,6 +220,12 @@ importers:
 
   apps/worker:
     dependencies:
+      "@alicloud/dysmsapi20170525":
+        specifier: 4.6.0
+        version: 4.6.0
+      "@alicloud/openapi-client":
+        specifier: 0.4.15
+        version: 0.4.15
       "@tashan/object-store":
         specifier: workspace:*
         version: link:../../packages/object-store
@@ -3979,7 +3985,9 @@ snapshots:
       "@alicloud/tea-util": 1.4.9
       "@alicloud/tea-xml": 0.0.3
     transitivePeerDependencies:
+      - bufferutil
       - supports-color
+      - utf-8-validate
 
   "@alicloud/openapi-core@1.0.8":
     dependencies:
@@ -3995,11 +4003,13 @@ snapshots:
   "@alicloud/openapi-util@0.3.3":
     dependencies:
       "@alicloud/tea-typescript": 1.8.0
-      "@alicloud/tea-util": 1.4.9
+      "@alicloud/tea-util": 1.4.11
       kitx: 2.2.0
       sm3: 1.0.3
     transitivePeerDependencies:
+      - bufferutil
       - supports-color
+      - utf-8-validate
 
   "@alicloud/tea-typescript@1.8.0":
     dependencies:

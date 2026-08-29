@@ -19,6 +19,10 @@ export function loadWorkerConfig(environment: NodeJS.ProcessEnv = process.env) {
     .enum(["true", "false"])
     .transform((value) => value === "true")
     .parse(environment.FILE_STORAGE_ENABLED ?? "false");
+  const smsDeliveryEnabled = z
+    .enum(["true", "false"])
+    .transform((value) => value === "true")
+    .parse(environment.SMS_DELIVERY_ENABLED ?? "false");
   return {
     runtime,
     databaseUrl: required(environment, "DATABASE_URL"),
@@ -39,6 +43,18 @@ export function loadWorkerConfig(environment: NodeJS.ProcessEnv = process.env) {
           },
           runtime,
         )
+      : undefined,
+    smsDeliveryEnabled,
+    sms: smsDeliveryEnabled
+      ? {
+          accessKeyId: required(environment, "ALIYUN_SMS_ACCESS_KEY_ID"),
+          accessKeySecret: required(environment, "ALIYUN_SMS_ACCESS_KEY_SECRET"),
+          signName: required(environment, "ALIYUN_SMS_SIGN_NAME"),
+          templateCode: required(environment, "ALIYUN_SMS_NOTIFICATION_TEMPLATE_CODE"),
+          templateParamKey: required(environment, "ALIYUN_SMS_NOTIFICATION_TEMPLATE_PARAM_KEY"),
+          endpoint: required(environment, "ALIYUN_SMS_ENDPOINT"),
+          regionId: required(environment, "ALIYUN_SMS_REGION_ID"),
+        }
       : undefined,
     workerId: environment.WORKER_ID?.trim() || `${hostname()}-${process.pid}-${randomUUID()}`,
     leaseMilliseconds: z.coerce

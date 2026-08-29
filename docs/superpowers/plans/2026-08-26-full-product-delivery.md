@@ -224,7 +224,7 @@ The navigation retains four inert `coming_soon` modules. This plan does not crea
 ### Task 6: Organization chat and resource references
 
 **Files:**
-- Create: `apps/api/migrations/016_chat.sql`
+- Create: `apps/api/migrations/017_chat.sql`
 - Create: `packages/contracts/src/chat.ts`
 - Create: `apps/api/src/chat/`
 - Create: `apps/api/src/routes/chat-routes.ts`
