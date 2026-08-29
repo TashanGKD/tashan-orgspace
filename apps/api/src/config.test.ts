@@ -38,6 +38,41 @@ function productionEnvironment(overrides: Record<string, string> = {}) {
 }
 
 describe("API configuration safety", () => {
+  test("requires separate versioned partner encryption and blind-index keys when enabled", () => {
+    expect(() => loadConfig({ ...validEnvironment, PARTNER_STORAGE_ENABLED: "true" })).toThrow(
+      "PARTNER_FIELD_ACTIVE_KEY_VERSION",
+    );
+    const fieldKey = Buffer.alloc(32, 1).toString("base64url");
+    const blindKey = Buffer.alloc(32, 2).toString("base64url");
+    expect(
+      loadConfig({
+        ...validEnvironment,
+        PARTNER_STORAGE_ENABLED: "true",
+        PARTNER_FIELD_ACTIVE_KEY_VERSION: "1",
+        PARTNER_FIELD_KEYS: JSON.stringify({ 1: fieldKey }),
+        PARTNER_BLIND_INDEX_KEY: blindKey,
+      }).partnerSecurity,
+    ).toMatchObject({ enabled: true, activeKeyVersion: 1 });
+    expect(() =>
+      loadConfig({
+        ...validEnvironment,
+        PARTNER_STORAGE_ENABLED: "true",
+        PARTNER_FIELD_ACTIVE_KEY_VERSION: "1",
+        PARTNER_FIELD_KEYS: JSON.stringify({ 1: fieldKey }),
+        PARTNER_BLIND_INDEX_KEY: fieldKey,
+      }),
+    ).toThrow("must be separate");
+    expect(() =>
+      loadConfig(
+        productionEnvironment({
+          PARTNER_STORAGE_ENABLED: "true",
+          PARTNER_FIELD_ACTIVE_KEY_VERSION: "1",
+          PARTNER_FIELD_KEYS: JSON.stringify({ 1: "change-me" }),
+          PARTNER_BLIND_INDEX_KEY: blindKey,
+        }),
+      ),
+    ).toThrow("PARTNER_FIELD_KEYS values");
+  });
   test("rejects missing signing material and wildcard CORS", () => {
     expect(() => loadConfig({ ...validEnvironment, JWT_PRIVATE_KEY: "" })).toThrow(
       "JWT_PRIVATE_KEY",

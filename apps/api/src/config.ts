@@ -15,6 +15,14 @@ function required(environment: NodeJS.ProcessEnv, key: string): string {
   return value;
 }
 
+function key32(environment: NodeJS.ProcessEnv, key: string): Buffer {
+  const raw = required(environment, key);
+  if (!/^[A-Za-z0-9_-]+$/.test(raw)) throw new Error(`${key} must be base64url`);
+  const decoded = Buffer.from(raw, "base64url");
+  if (decoded.byteLength !== 32) throw new Error(`${key} must decode to exactly 32 bytes`);
+  return decoded;
+}
+
 function commaList(raw: string | undefined): string[] {
   return raw === undefined
     ? []
@@ -102,6 +110,41 @@ export function loadConfig(environment: NodeJS.ProcessEnv = process.env) {
         runtime,
       )
     : undefined;
+  const partnerStorageEnabled = z
+    .enum(["true", "false"])
+    .transform((value) => value === "true")
+    .parse(environment.PARTNER_STORAGE_ENABLED ?? "false");
+  const partnerSecurity = partnerStorageEnabled
+    ? (() => {
+        const activeKeyVersion = z.coerce
+          .number()
+          .int()
+          .min(1)
+          .parse(required(environment, "PARTNER_FIELD_ACTIVE_KEY_VERSION"));
+        let parsed: unknown;
+        try {
+          parsed = JSON.parse(required(environment, "PARTNER_FIELD_KEYS"));
+        } catch {
+          throw new Error("PARTNER_FIELD_KEYS must be a JSON object");
+        }
+        const encodedKeys = z.record(z.string().regex(/^[1-9][0-9]*$/), z.string()).parse(parsed);
+        const fieldKeys = new Map<number, Buffer>();
+        for (const [version, raw] of Object.entries(encodedKeys)) {
+          const decoded = Buffer.from(raw, "base64url");
+          if (!/^[A-Za-z0-9_-]+$/.test(raw) || decoded.byteLength !== 32) {
+            throw new Error("PARTNER_FIELD_KEYS values must be 32-byte base64url keys");
+          }
+          fieldKeys.set(Number(version), decoded);
+        }
+        if (!fieldKeys.has(activeKeyVersion))
+          throw new Error("active partner field key is missing");
+        const blindIndexKey = key32(environment, "PARTNER_BLIND_INDEX_KEY");
+        if (fieldKeys.get(activeKeyVersion)?.equals(blindIndexKey)) {
+          throw new Error("partner field and blind-index keys must be separate");
+        }
+        return { enabled: true as const, activeKeyVersion, fieldKeys, blindIndexKey };
+      })()
+    : ({ enabled: false as const } as const);
   const phone =
     provider === "disabled"
       ? ({ provider } as const)
@@ -135,6 +178,7 @@ export function loadConfig(environment: NodeJS.ProcessEnv = process.env) {
     phone,
     objectStore,
     fileStorageEnabled,
+    partnerSecurity,
     jwt: {
       issuer: environment.JWT_ISSUER?.trim() || "https://api-org.tashan.chat",
       audience: environment.JWT_AUDIENCE?.trim() || "tashan-orgspace",

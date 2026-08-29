@@ -14,11 +14,11 @@
 
 **Files:** Create `apps/api/src/authorization/owned-record-policy.ts`, `apps/api/src/security/sensitive-field-cipher.ts`, `apps/api/src/security/blind-index.ts` and corresponding tests; modify API config.
 
-- [ ] Write RED tests for owner/admin/other-member, key versions, random nonces, tamper rejection, exact blind index and no plaintext serialization.
-- [ ] Run API unit tests; expect missing primitives.
-- [ ] Implement AES-256-GCM field envelopes and HMAC-SHA256 blind indexes using separate required secrets.
-- [ ] Run tests and production config negative tests for missing/placeholder keys.
-- [ ] Commit: `git commit -m "security(partners): add owned sensitive records"`.
+- [x] Write RED tests for owner/admin/other-member, key versions, random nonces, tamper rejection, exact blind index and no plaintext serialization.
+- [x] Run API unit tests; expect missing primitives.
+- [x] Implement AES-256-GCM field envelopes and HMAC-SHA256 blind indexes using separate required secrets.
+- [x] Run tests and production config negative tests for missing/placeholder keys.
+- [x] Commit: `git commit -m "security(partners): add owned sensitive records"`.
 
 ### Task 2: Partner schema and service
 
