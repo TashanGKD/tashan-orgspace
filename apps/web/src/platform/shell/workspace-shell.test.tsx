@@ -141,6 +141,6 @@ describe("responsive workspace shell", () => {
     await user.click(screen.getByRole("button", { name: "更多导航" }));
     const dialog = screen.getByRole("dialog", { name: "全部模块" });
     expect(dialog).toBeVisible();
-    expect(within(dialog).getByRole("link", { name: /组织文件.*即将上线/ })).toBeVisible();
+    expect(within(dialog).getByRole("link", { name: "组织文件" })).toBeVisible();
   });
 });

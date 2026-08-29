@@ -34,5 +34,55 @@
     "listCapability": "audit.list",
     "readCapability": "audit.list",
     "actions": []
+  },
+  {
+    "resourceType": "personal-file",
+    "context": "personal",
+    "listRoute": "/personal/files",
+    "detailRoute": "/personal/files/:entryId",
+    "listCapability": "file.list",
+    "readCapability": "file.read",
+    "actions": [
+      { "capabilityId": "file.folder.create", "confirmation": "none" },
+      { "capabilityId": "file.move", "confirmation": "none" },
+      { "capabilityId": "file.trash", "confirmation": "required" },
+      { "capabilityId": "file.restore", "confirmation": "none" },
+      { "capabilityId": "file.delete", "confirmation": "high-risk" },
+      { "capabilityId": "file.download.create", "confirmation": "none" },
+      { "capabilityId": "file.version.restore", "confirmation": "required" },
+      { "capabilityId": "file.upload.create", "confirmation": "none" },
+      { "capabilityId": "file.upload.parts.create", "confirmation": "none" },
+      { "capabilityId": "file.upload.complete", "confirmation": "none" },
+      { "capabilityId": "file.upload.cancel", "confirmation": "required" },
+      { "capabilityId": "folder.access.set", "confirmation": "required" },
+      { "capabilityId": "folder.grant.set", "confirmation": "required" },
+      { "capabilityId": "folder.grant.revoke", "confirmation": "required" }
+    ]
+  },
+  {
+    "resourceType": "organization-file",
+    "context": "organization",
+    "listRoute": "/org/:organizationId/files",
+    "detailRoute": "/org/:organizationId/files/:entryId",
+    "listCapability": "file.list",
+    "readCapability": "file.read",
+    "actions": [
+      { "capabilityId": "space.quota.set", "confirmation": "required" },
+      { "capabilityId": "file.folder.create", "confirmation": "none" },
+      { "capabilityId": "file.move", "confirmation": "none" },
+      { "capabilityId": "file.trash", "confirmation": "required" },
+      { "capabilityId": "file.restore", "confirmation": "none" },
+      { "capabilityId": "file.delete", "confirmation": "high-risk" },
+      { "capabilityId": "file.download.create", "confirmation": "none" },
+      { "capabilityId": "file.version.restore", "confirmation": "required" },
+      { "capabilityId": "file.upload.create", "confirmation": "none" },
+      { "capabilityId": "file.upload.parts.create", "confirmation": "none" },
+      { "capabilityId": "file.upload.complete", "confirmation": "none" },
+      { "capabilityId": "file.upload.cancel", "confirmation": "required" },
+      { "capabilityId": "folder.access.set", "confirmation": "required" },
+      { "capabilityId": "folder.grant.set", "confirmation": "required" },
+      { "capabilityId": "folder.grant.revoke", "confirmation": "required" },
+      { "capabilityId": "folder.manager.recover", "confirmation": "required" }
+    ]
   }
 ]

@@ -30,6 +30,20 @@ const clone = (value) => JSON.parse(JSON.stringify(value));
 
 assert.deepEqual(checkResourceSurfaceCoverage(input), { resources: 1, violations: 0 });
 
+const sharedCapability = clone(input);
+sharedCapability.resources.push({
+  resourceType: "personal-device",
+  context: "personal",
+  listRoute: "/personal/devices",
+  detailRoute: "/personal/devices/:deviceId",
+  listCapability: "device.list",
+  readCapability: "device.list",
+  actions: [{ capabilityId: "device.revoke", confirmation: "required" }],
+});
+sharedCapability.routeSource +=
+  '\nconst personalDeviceSurface = resourceSurface("personal-device");';
+assert.deepEqual(checkResourceSurfaceCoverage(sharedCapability), { resources: 2, violations: 0 });
+
 const missingCli = clone(input);
 delete missingCli.cli["device.list"];
 assert.throws(() => checkResourceSurfaceCoverage(missingCli), /missing CLI binding: device.list/);

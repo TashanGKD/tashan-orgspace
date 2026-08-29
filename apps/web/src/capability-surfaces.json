@@ -82,5 +82,161 @@
     "route": "/org/:organizationId/admin/audit",
     "action": "audit-list",
     "test": "apps/web/src/features/audit/audit-page.test.tsx"
+  },
+  {
+    "capabilityId": "space.list",
+    "route": "/personal/files",
+    "action": "space-list",
+    "test": "apps/web/src/features/files/files-page.test.tsx"
+  },
+  {
+    "capabilityId": "space.read",
+    "route": "/personal/files",
+    "action": "space-read",
+    "test": "apps/web/src/features/files/files-page.test.tsx"
+  },
+  {
+    "capabilityId": "space.usage.read",
+    "route": "/personal/usage",
+    "action": "space-usage",
+    "test": "apps/web/src/features/files/files-page.test.tsx"
+  },
+  {
+    "capabilityId": "space.quota.set",
+    "route": "/org/:organizationId/files",
+    "action": "personal-quota-set",
+    "test": "apps/web/src/features/files/files-page.test.tsx"
+  },
+  {
+    "capabilityId": "file.list",
+    "route": "/personal/files",
+    "action": "file-list",
+    "test": "apps/web/src/features/files/files-page.test.tsx"
+  },
+  {
+    "capabilityId": "file.read",
+    "route": "/personal/files/:entryId",
+    "action": "file-read",
+    "test": "apps/web/src/features/files/files-page.test.tsx"
+  },
+  {
+    "capabilityId": "file.search",
+    "route": "/personal/files",
+    "action": "file-search",
+    "test": "apps/web/src/features/files/files-page.test.tsx"
+  },
+  {
+    "capabilityId": "file.folder.create",
+    "route": "/personal/files",
+    "action": "file-folder-create",
+    "test": "apps/web/src/features/files/files-page.test.tsx"
+  },
+  {
+    "capabilityId": "file.move",
+    "route": "/personal/files/:entryId",
+    "action": "file-move",
+    "test": "apps/web/src/features/files/files-page.test.tsx"
+  },
+  {
+    "capabilityId": "file.trash",
+    "route": "/personal/files/:entryId",
+    "action": "file-trash",
+    "test": "apps/web/src/features/files/files-page.test.tsx"
+  },
+  {
+    "capabilityId": "file.restore",
+    "route": "/personal/files/:entryId",
+    "action": "file-restore",
+    "test": "apps/web/src/features/files/files-page.test.tsx"
+  },
+  {
+    "capabilityId": "file.delete",
+    "route": "/personal/files/:entryId",
+    "action": "file-delete",
+    "test": "apps/web/src/features/files/files-page.test.tsx"
+  },
+  {
+    "capabilityId": "file.download.create",
+    "route": "/personal/files/:entryId",
+    "action": "file-download",
+    "test": "apps/web/src/features/files/files-page.test.tsx"
+  },
+  {
+    "capabilityId": "file.version.list",
+    "route": "/personal/files/:entryId",
+    "action": "file-version-list",
+    "test": "apps/web/src/features/files/files-page.test.tsx"
+  },
+  {
+    "capabilityId": "file.version.restore",
+    "route": "/personal/files/:entryId",
+    "action": "file-version-restore",
+    "test": "apps/web/src/features/files/files-page.test.tsx"
+  },
+  {
+    "capabilityId": "file.upload.list",
+    "route": "/personal/files",
+    "action": "file-upload-list",
+    "test": "apps/web/src/features/files/files-page.test.tsx"
+  },
+  {
+    "capabilityId": "file.upload.read",
+    "route": "/personal/files",
+    "action": "file-upload-read",
+    "test": "apps/web/src/features/files/files-page.test.tsx"
+  },
+  {
+    "capabilityId": "file.upload.create",
+    "route": "/personal/files",
+    "action": "file-upload-create",
+    "test": "apps/web/src/features/files/files-page.test.tsx"
+  },
+  {
+    "capabilityId": "file.upload.parts.create",
+    "route": "/personal/files",
+    "action": "file-upload-part-urls",
+    "test": "apps/web/src/features/files/files-page.test.tsx"
+  },
+  {
+    "capabilityId": "file.upload.complete",
+    "route": "/personal/files",
+    "action": "file-upload-complete",
+    "test": "apps/web/src/features/files/files-page.test.tsx"
+  },
+  {
+    "capabilityId": "file.upload.cancel",
+    "route": "/personal/files",
+    "action": "file-upload-cancel",
+    "test": "apps/web/src/features/files/files-page.test.tsx"
+  },
+  {
+    "capabilityId": "folder.access.read",
+    "route": "/personal/files/:entryId",
+    "action": "folder-access-read",
+    "test": "apps/web/src/features/files/files-page.test.tsx"
+  },
+  {
+    "capabilityId": "folder.access.set",
+    "route": "/personal/files/:entryId",
+    "action": "folder-access-set",
+    "test": "apps/web/src/features/files/files-page.test.tsx"
+  },
+  {
+    "capabilityId": "folder.grant.set",
+    "route": "/personal/files/:entryId",
+    "action": "folder-grant-set",
+    "test": "apps/web/src/features/files/files-page.test.tsx"
+  },
+  {
+    "capabilityId": "folder.grant.revoke",
+    "route": "/personal/files/:entryId",
+    "action": "folder-grant-revoke",
+    "test": "apps/web/src/features/files/files-page.test.tsx"
+  },
+  {
+    "capabilityId": "folder.manager.recover",
+    "route": "/org/:organizationId/files/:entryId",
+    "action": "folder-manager-recover",
+    "test": "apps/web/src/features/files/files-page.test.tsx"
   }
 ]

@@ -8,6 +8,7 @@ import type { OrgSpaceClient } from "@tashan/sdk";
 import { AccessPanel } from "./auth/access-panel.js";
 import { AccountPage } from "./features/account/account-page.js";
 import { AuditPage } from "./features/audit/audit-page.js";
+import { FilesPage, SpaceUsagePage } from "./features/files/file-list-page.js";
 import { OrganizationHomePage } from "./features/organization/home-page.js";
 import { MembersPage } from "./features/organization/members-page.js";
 import { ComingSoonPage } from "./features/roadmap/coming-soon-page.js";
@@ -15,6 +16,7 @@ import { Button } from "./design-system/primitives/index.js";
 import {
   OrganizationProvider,
   RequireOrganizationRole,
+  useOrganization,
 } from "./platform/context/organization-context.js";
 import { createWebQueryClient } from "./platform/data/query-client.js";
 import {
@@ -33,6 +35,8 @@ const organizationSurface = resourceSurface("organization");
 const deviceSurface = resourceSurface("device");
 const memberSurface = resourceSurface("organization-member");
 const auditSurface = resourceSurface("audit-event");
+const personalFileSurface = resourceSurface("personal-file");
+const organizationFileSurface = resourceSurface("organization-file");
 
 function organizationRelativeRoute(route: string): string {
   const prefix = "/org/:organizationId/";
@@ -43,6 +47,12 @@ function organizationRelativeRoute(route: string): string {
 function accountRelativeRoute(route: string): string {
   const prefix = `${deviceSurface.listRoute}/`;
   if (!route.startsWith(prefix)) throw new Error(`not an account detail route: ${route}`);
+  return route.slice(prefix.length);
+}
+
+function personalRelativeRoute(route: string): string {
+  const prefix = "/personal/";
+  if (!route.startsWith(prefix)) throw new Error(`not a personal route: ${route}`);
   return route.slice(prefix.length);
 }
 
@@ -111,6 +121,33 @@ function AuditRoute({ organizationId, sdk }: { organizationId: string; sdk: OrgS
 function AccountRoute({ sdk }: { sdk: OrgSpaceClient }) {
   const { deviceId } = useParams<{ deviceId?: string }>();
   return <AccountPage sdk={sdk} selectedDeviceId={deviceId} />;
+}
+
+function PersonalFilesRoute({ sdk }: { sdk: OrgSpaceClient }) {
+  const { entryId } = useParams<{ entryId?: string }>();
+  return <FilesPage scope={{ type: "personal" }} sdk={sdk} selectedEntryId={entryId} />;
+}
+
+function OrganizationFilesRoute({
+  organizationId,
+  sdk,
+}: {
+  organizationId: string;
+  sdk: OrgSpaceClient;
+}) {
+  const { entryId } = useParams<{ entryId?: string }>();
+  const organization = useOrganization();
+  return (
+    <FilesPage
+      canRecoverManager={
+        organization.status === "ready" &&
+        (organization.role === "org_owner" || organization.role === "org_admin")
+      }
+      scope={{ type: "organization", organizationId }}
+      sdk={sdk}
+      selectedEntryId={entryId}
+    />
+  );
 }
 
 function AccountShellRoutes({ sdk }: { sdk: OrgSpaceClient }) {
@@ -262,18 +299,48 @@ function AccountArea({ sdk }: { sdk: OrgSpaceClient }) {
   );
 }
 
-function PersonalRoutes({
-  organizationId,
-  displayName,
-}: {
-  organizationId: string;
-  displayName: string;
-}) {
-  const session = useSession();
-  const feedback = useFeedback();
+function PersonalRouteContent({ backTo, sdk }: { backTo: string; sdk: OrgSpaceClient }) {
   const comingSoon = productModules.filter(
     (module) => module.context === "personal" && module.status === "coming_soon",
   );
+  return (
+    <Routes>
+      <Route
+        index
+        element={<Navigate replace to={personalRelativeRoute(personalFileSurface.listRoute)} />}
+      />
+      <Route
+        path={personalRelativeRoute(personalFileSurface.listRoute)}
+        element={<PersonalFilesRoute sdk={sdk} />}
+      />
+      <Route
+        path={personalRelativeRoute(personalFileSurface.detailRoute)}
+        element={<PersonalFilesRoute sdk={sdk} />}
+      />
+      <Route path="usage" element={<SpaceUsagePage scope={{ type: "personal" }} sdk={sdk} />} />
+      {comingSoon.map((module) => (
+        <Route
+          key={module.id}
+          path={module.route.replace("/personal/", "")}
+          element={<ComingSoonPage module={module} backTo={backTo} />}
+        />
+      ))}
+      <Route path="*" element={<Navigate replace to="files" />} />
+    </Routes>
+  );
+}
+
+function PersonalRoutes({
+  organizationId,
+  displayName,
+  sdk,
+}: {
+  organizationId: string;
+  displayName: string;
+  sdk: OrgSpaceClient;
+}) {
+  const session = useSession();
+  const feedback = useFeedback();
 
   async function logout(): Promise<void> {
     feedback.clear();
@@ -286,21 +353,7 @@ function PersonalRoutes({
 
   return (
     <AppShell displayName={displayName} onLogout={logout}>
-      <Routes>
-        {comingSoon.map((module) => (
-          <Route
-            key={module.id}
-            path={module.route.replace("/personal/", "")}
-            element={
-              <ComingSoonPage module={module} backTo={routes.organizationHome(organizationId)} />
-            }
-          />
-        ))}
-        <Route
-          path="*"
-          element={<Navigate replace to={routes.organizationHome(organizationId)} />}
-        />
-      </Routes>
+      <PersonalRouteContent backTo={routes.organizationHome(organizationId)} sdk={sdk} />
     </AppShell>
   );
 }
@@ -317,7 +370,11 @@ function PersonalArea({ sdk }: { sdk: OrgSpaceClient }) {
   }
   const firstOrganization = organizations.data?.items[0];
   if (firstOrganization === undefined) {
-    return <Navigate replace to={organizationSurface.listRoute} />;
+    return (
+      <AccountOnlyFrame>
+        <PersonalRouteContent backTo={organizationSurface.listRoute} sdk={sdk} />
+      </AccountOnlyFrame>
+    );
   }
   return (
     <OrganizationProvider
@@ -328,6 +385,7 @@ function PersonalArea({ sdk }: { sdk: OrgSpaceClient }) {
       <PersonalRoutes
         displayName={session.account.displayName}
         organizationId={firstOrganization.id}
+        sdk={sdk}
       />
     </OrganizationProvider>
   );
@@ -400,6 +458,14 @@ function OrganizationRoutes({ sdk, displayName }: { sdk: OrgSpaceClient; display
               <AuditRoute organizationId={organizationId} sdk={sdk} />
             </RequireOrganizationRole>
           }
+        />
+        <Route
+          path={organizationRelativeRoute(organizationFileSurface.listRoute)}
+          element={<OrganizationFilesRoute organizationId={organizationId} sdk={sdk} />}
+        />
+        <Route
+          path={organizationRelativeRoute(organizationFileSurface.detailRoute)}
+          element={<OrganizationFilesRoute organizationId={organizationId} sdk={sdk} />}
         />
         {comingSoon.map((module) => {
           const suffix = module.route.split("/:organizationId/")[1];

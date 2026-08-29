@@ -130,6 +130,11 @@ export function checkResourceSurfaceCoverage({ server, cli, web, skill, resource
   }
 
   const parsedResources = resources.map(validateResource);
+  const resourceCapabilities = (resource) => [
+    resource.listCapability,
+    resource.readCapability,
+    ...resource.actions.map(({ capabilityId }) => capabilityId),
+  ];
   requireUnique(
     "resource type",
     parsedResources.map(({ resourceType }) => resourceType),
@@ -148,11 +153,7 @@ export function checkResourceSurfaceCoverage({ server, cli, web, skill, resource
     if (!routeSource.includes(mountToken)) {
       throw new Error(`resource routes are not mounted from registry: ${resource.resourceType}`);
     }
-    const capabilityIds = [
-      resource.listCapability,
-      resource.readCapability,
-      ...resource.actions.map(({ capabilityId }) => capabilityId),
-    ];
+    const capabilityIds = resourceCapabilities(resource);
     for (const capabilityId of capabilityIds) {
       const capability = serverMap.get(capabilityId);
       if (capability === undefined) throw new Error(`unknown resource capability: ${capabilityId}`);
@@ -161,7 +162,10 @@ export function checkResourceSurfaceCoverage({ server, cli, web, skill, resource
       if (!skillSet.has(capabilityId)) throw new Error(`missing Skill capability: ${capabilityId}`);
       const webSurface = webByCapability.get(capabilityId);
       if (webSurface === undefined) throw new Error(`missing Web surface: ${capabilityId}`);
-      if (![resource.listRoute, resource.detailRoute].includes(webSurface.route)) {
+      const registeredRoutes = parsedResources
+        .filter((candidate) => resourceCapabilities(candidate).includes(capabilityId))
+        .flatMap((candidate) => [candidate.listRoute, candidate.detailRoute]);
+      if (!registeredRoutes.includes(webSurface.route)) {
         throw new Error(`Web route is outside resource list/detail routes: ${capabilityId}`);
       }
     }

@@ -662,23 +662,23 @@ git commit -m "feat(deploy): add private MinIO data plane"
 - Modify: `apps/web/src/capability-surfaces.json`
 - Modify: `apps/web/src/design-system/resource-surfaces.css`
 
-- [ ] **Step 1: Write RED list/detail/state tests**
+- [x] **Step 1: Write RED list/detail/state tests**
 
 Test personal and organization routes, breadcrumbs, loading/empty/error/forbidden/readonly/conflict states, folder role labels, quota/reserved display, metadata search, detail drawer deep links, upload interruption/resume, version restore, trash restore and manager-only permission controls.
 
-- [ ] **Step 2: Add resource surfaces**
+- [x] **Step 2: Add resource surfaces**
 
 Register separate `personal-file` and `organization-file` surfaces with list/detail routes from the design. Every action capability must appear in `capability-surfaces.json`; route tests must prove both surfaces are mounted from `resourceSurface(...)`.
 
-- [ ] **Step 3: Implement lists and details using shared primitives**
+- [x] **Step 3: Implement lists and details using shared primitives**
 
 Use TanStack Query keys containing `spaceId`; organization keys also contain `organizationId`. Do not store file truth in a global client store. Desktop uses list/detail split, mobile uses nested detail navigation. Preview active content only through the isolated/safe path from Task 6.
 
-- [ ] **Step 4: Implement resumable browser upload**
+- [x] **Step 4: Implement resumable browser upload**
 
 The dialog creates a session, computes per-part checksum, uploads directly to presigned URLs, refreshes only missing/expired part URLs, completes, and polls `verifying` until `available` or `failed`. Never store S3 URLs or file bytes in localStorage.
 
-- [ ] **Step 5: Flip modules only after the full surface is green**
+- [x] **Step 5: Flip modules only after the full surface is green**
 
 Change the 26 file capabilities from `web: "deferred"` to `web: "required"` only after all route/action tests pass, and add every required Web surface in the same change. Set `personal.overview`, `personal.files`, `personal.usage`, and `organization.files` to `available`. Keep runtime/services deferred. Run:
 

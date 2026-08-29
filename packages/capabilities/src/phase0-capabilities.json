@@ -230,7 +230,7 @@
     "idempotent": true,
     "confirmation": "none",
     "cli": "space list",
-    "web": "deferred",
+    "web": "required",
     "auditAction": "space.list"
   },
   {
@@ -243,7 +243,7 @@
     "idempotent": true,
     "confirmation": "none",
     "cli": "space get",
-    "web": "deferred",
+    "web": "required",
     "auditAction": "space.read"
   },
   {
@@ -256,7 +256,7 @@
     "idempotent": true,
     "confirmation": "none",
     "cli": "space usage",
-    "web": "deferred",
+    "web": "required",
     "auditAction": "space.usage.read"
   },
   {
@@ -269,7 +269,7 @@
     "idempotent": true,
     "confirmation": "required",
     "cli": "space quota-set",
-    "web": "deferred",
+    "web": "required",
     "auditAction": "space.quota.set"
   },
   {
@@ -282,7 +282,7 @@
     "idempotent": true,
     "confirmation": "none",
     "cli": "file list",
-    "web": "deferred",
+    "web": "required",
     "auditAction": "file.list"
   },
   {
@@ -295,7 +295,7 @@
     "idempotent": true,
     "confirmation": "none",
     "cli": "file get",
-    "web": "deferred",
+    "web": "required",
     "auditAction": "file.read"
   },
   {
@@ -308,7 +308,7 @@
     "idempotent": true,
     "confirmation": "none",
     "cli": "file search",
-    "web": "deferred",
+    "web": "required",
     "auditAction": "file.search"
   },
   {
@@ -321,7 +321,7 @@
     "idempotent": true,
     "confirmation": "none",
     "cli": "file mkdir",
-    "web": "deferred",
+    "web": "required",
     "auditAction": "file.folder.create"
   },
   {
@@ -334,7 +334,7 @@
     "idempotent": true,
     "confirmation": "none",
     "cli": "file move",
-    "web": "deferred",
+    "web": "required",
     "auditAction": "file.move"
   },
   {
@@ -347,7 +347,7 @@
     "idempotent": true,
     "confirmation": "required",
     "cli": "file trash",
-    "web": "deferred",
+    "web": "required",
     "auditAction": "file.trash"
   },
   {
@@ -360,7 +360,7 @@
     "idempotent": true,
     "confirmation": "none",
     "cli": "file restore",
-    "web": "deferred",
+    "web": "required",
     "auditAction": "file.restore"
   },
   {
@@ -373,7 +373,7 @@
     "idempotent": true,
     "confirmation": "required",
     "cli": "file delete",
-    "web": "deferred",
+    "web": "required",
     "auditAction": "file.delete"
   },
   {
@@ -386,7 +386,7 @@
     "idempotent": true,
     "confirmation": "none",
     "cli": "file download",
-    "web": "deferred",
+    "web": "required",
     "auditAction": "file.download.create"
   },
   {
@@ -399,7 +399,7 @@
     "idempotent": true,
     "confirmation": "none",
     "cli": "file versions",
-    "web": "deferred",
+    "web": "required",
     "auditAction": "file.version.list"
   },
   {
@@ -412,7 +412,7 @@
     "idempotent": true,
     "confirmation": "required",
     "cli": "file version-restore",
-    "web": "deferred",
+    "web": "required",
     "auditAction": "file.version.restore"
   },
   {
@@ -425,7 +425,7 @@
     "idempotent": true,
     "confirmation": "none",
     "cli": "upload list",
-    "web": "deferred",
+    "web": "required",
     "auditAction": "file.upload.list"
   },
   {
@@ -438,7 +438,7 @@
     "idempotent": true,
     "confirmation": "none",
     "cli": "upload resume",
-    "web": "deferred",
+    "web": "required",
     "auditAction": "file.upload.read"
   },
   {
@@ -451,7 +451,7 @@
     "idempotent": true,
     "confirmation": "none",
     "cli": "file upload",
-    "web": "deferred",
+    "web": "required",
     "auditAction": "file.upload.create"
   },
   {
@@ -464,7 +464,7 @@
     "idempotent": true,
     "confirmation": "none",
     "cli": "file upload",
-    "web": "deferred",
+    "web": "required",
     "auditAction": "file.upload.parts.create"
   },
   {
@@ -477,7 +477,7 @@
     "idempotent": true,
     "confirmation": "none",
     "cli": "file upload",
-    "web": "deferred",
+    "web": "required",
     "auditAction": "file.upload.complete"
   },
   {
@@ -490,7 +490,7 @@
     "idempotent": true,
     "confirmation": "required",
     "cli": "upload cancel",
-    "web": "deferred",
+    "web": "required",
     "auditAction": "file.upload.cancel"
   },
   {
@@ -503,7 +503,7 @@
     "idempotent": true,
     "confirmation": "none",
     "cli": "folder get-access",
-    "web": "deferred",
+    "web": "required",
     "auditAction": "folder.access.read"
   },
   {
@@ -516,7 +516,7 @@
     "idempotent": true,
     "confirmation": "required",
     "cli": "folder access",
-    "web": "deferred",
+    "web": "required",
     "auditAction": "folder.access.set"
   },
   {
@@ -529,7 +529,7 @@
     "idempotent": true,
     "confirmation": "required",
     "cli": "folder grant",
-    "web": "deferred",
+    "web": "required",
     "auditAction": "folder.grant.set"
   },
   {
@@ -542,7 +542,7 @@
     "idempotent": true,
     "confirmation": "required",
     "cli": "folder revoke",
-    "web": "deferred",
+    "web": "required",
     "auditAction": "folder.grant.revoke"
   },
   {
@@ -555,7 +555,7 @@
     "idempotent": true,
     "confirmation": "required",
     "cli": "folder manager-recover",
-    "web": "deferred",
+    "web": "required",
     "auditAction": "folder.manager.recover"
   }
 ]

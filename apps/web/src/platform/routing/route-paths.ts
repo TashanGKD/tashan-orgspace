@@ -1,4 +1,4 @@
-import { AccountId, AuditEventId, DeviceId, OrganizationId } from "@tashan/contracts";
+import { AccountId, AuditEventId, DeviceId, FileEntryId, OrganizationId } from "@tashan/contracts";
 
 function organizationRoute(organizationId: string, suffix: string): string {
   const parsed = OrganizationId.parse(organizationId);
@@ -23,6 +23,10 @@ export const routes = {
   account: "/account",
   device: (deviceId: string) => `/account/devices/${encodeURIComponent(DeviceId.parse(deviceId))}`,
   myWork: "/my-work",
+  personalFiles: "/personal/files",
+  personalFile: (entryId: string) =>
+    `/personal/files/${encodeURIComponent(FileEntryId.parse(entryId))}`,
+  personalUsage: "/personal/usage",
   organizationHome: (organizationId: string) => organizationRoute(organizationId, "home"),
   organizationMembers: (organizationId: string) =>
     organizationRoute(organizationId, "admin/members"),
@@ -31,4 +35,7 @@ export const routes = {
   organizationAudit: (organizationId: string) => organizationRoute(organizationId, "admin/audit"),
   organizationAuditEvent: (organizationId: string, eventId: string) =>
     organizationResourceRoute(organizationId, "admin/audit", eventId, AuditEventId.parse),
+  organizationFiles: (organizationId: string) => organizationRoute(organizationId, "files"),
+  organizationFile: (organizationId: string, entryId: string) =>
+    organizationResourceRoute(organizationId, "files", entryId, FileEntryId.parse),
 } as const;

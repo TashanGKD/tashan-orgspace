@@ -117,6 +117,77 @@ async function login(sdk: OrgSpaceClient): Promise<void> {
 }
 
 describe("routed Phase 0 Web", () => {
+  test.each([
+    ["个人文件", `/personal/files/${otherDeviceId}`],
+    ["组织文件", `/org/${organizationId}/files/${otherDeviceId}`],
+  ])("mounts the %s list and detail route", async (heading, path) => {
+    const fileEntry = {
+      id: otherDeviceId,
+      spaceId: currentDeviceId,
+      parentId: device.id,
+      kind: "file" as const,
+      name: "会议材料.pdf",
+      state: "active" as const,
+      lockVersion: 1,
+      createdByAccountId: accountId,
+      currentVersionId: otherDeviceId,
+      sizeBytes: 1024,
+      contentType: "application/pdf",
+      createdAt: "2026-08-29T00:00:00.000Z",
+      updatedAt: "2026-08-29T00:00:00.000Z",
+    };
+    const sdk = client({
+      listSpaces: vi.fn().mockResolvedValue({
+        items: [
+          {
+            id: currentDeviceId,
+            type: "personal",
+            accountId,
+            organizationId: null,
+            rootFolderId: device.id,
+            quotaBytes: 50 * 1024 ** 3,
+            usedBytes: 1024,
+            reservedBytes: 0,
+            writeState: "writable",
+            createdAt: "2026-08-29T00:00:00.000Z",
+            updatedAt: "2026-08-29T00:00:00.000Z",
+          },
+          {
+            id: otherDeviceId,
+            type: "organization",
+            accountId: null,
+            organizationId,
+            rootFolderId: device.id,
+            quotaBytes: 500 * 1024 ** 3,
+            usedBytes: 1024,
+            reservedBytes: 0,
+            writeState: "writable",
+            createdAt: "2026-08-29T00:00:00.000Z",
+            updatedAt: "2026-08-29T00:00:00.000Z",
+          },
+        ],
+      }),
+      listFiles: vi.fn().mockResolvedValue({ items: [fileEntry], nextCursor: null }),
+      readFile: vi.fn().mockResolvedValue({
+        entry: {
+          ...fileEntry,
+          inheritedFromFolderId: device.id,
+          effectiveRole: "manager",
+          checksumSha256: "a".repeat(64),
+        },
+      }),
+      listFileVersions: vi.fn().mockResolvedValue({ items: [] }),
+    });
+    renderApp(sdk, path);
+    const user = userEvent.setup();
+    await screen.findByRole("heading", { name: "登录" });
+    await user.type(screen.getByLabelText("手机号"), "13800138000");
+    await user.type(screen.getByLabelText("密码"), "CorrectHorseBattery9");
+    await user.click(screen.getByRole("button", { name: "登录" }));
+    expect(await screen.findByRole("heading", { name: heading, hidden: true })).toBeInTheDocument();
+    expect(await screen.findByRole("dialog", { name: "会议材料.pdf" })).toBeVisible();
+  });
+
   test("restores a cookie session into the organization home without login flicker", async () => {
     const sdk = client({ refresh: vi.fn().mockResolvedValue({}) });
     renderApp(sdk);
@@ -242,6 +313,39 @@ describe("routed Phase 0 Web", () => {
     await user.type(screen.getByLabelText("密码"), "CorrectHorseBattery9");
     await user.click(screen.getByRole("button", { name: "登录" }));
     expect(await screen.findByRole("heading", { name: "账号与设备" })).toBeVisible();
+    expect(screen.getByRole("img", { name: "他山组织空间" })).toBeVisible();
+    expect(screen.getByRole("button", { name: "退出登录" })).toBeVisible();
+  });
+
+  test("keeps personal files available before the user joins an organization", async () => {
+    const sdk = client({
+      listOrganizations: vi.fn().mockResolvedValue({ items: [] }),
+      listSpaces: vi.fn().mockResolvedValue({
+        items: [
+          {
+            id: currentDeviceId,
+            type: "personal",
+            accountId,
+            organizationId: null,
+            rootFolderId: otherDeviceId,
+            quotaBytes: 50 * 1024 ** 3,
+            usedBytes: 0,
+            reservedBytes: 0,
+            writeState: "writable",
+            createdAt: "2026-08-29T00:00:00.000Z",
+            updatedAt: "2026-08-29T00:00:00.000Z",
+          },
+        ],
+      }),
+      listFiles: vi.fn().mockResolvedValue({ items: [], nextCursor: null }),
+    });
+    renderApp(sdk, "/personal/files");
+    const user = userEvent.setup();
+    await screen.findByRole("heading", { name: "登录" });
+    await user.type(screen.getByLabelText("手机号"), "13800138000");
+    await user.type(screen.getByLabelText("密码"), "CorrectHorseBattery9");
+    await user.click(screen.getByRole("button", { name: "登录" }));
+    expect(await screen.findByRole("heading", { name: "个人文件" })).toBeVisible();
     expect(screen.getByRole("img", { name: "他山组织空间" })).toBeVisible();
     expect(screen.getByRole("button", { name: "退出登录" })).toBeVisible();
   });

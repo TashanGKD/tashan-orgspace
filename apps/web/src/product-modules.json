@@ -29,20 +29,20 @@
     "label": "个人空间",
     "description": "查看个人文件、存储用量和未来能力",
     "context": "personal",
-    "status": "coming_soon",
+    "status": "available",
     "route": "/personal",
     "roles": [],
-    "capabilities": []
+    "capabilities": ["space.list", "space.read", "space.usage.read"]
   },
   {
     "id": "personal.files",
     "label": "个人文件",
     "description": "查看和管理个人文件",
     "context": "personal",
-    "status": "coming_soon",
+    "status": "available",
     "route": "/personal/files",
     "roles": [],
-    "capabilities": []
+    "capabilities": ["file.list", "file.read", "file.search", "file.upload.create"]
   },
   {
     "id": "personal.runtime",
@@ -69,10 +69,10 @@
     "label": "个人用量",
     "description": "查看个人存储用量",
     "context": "personal",
-    "status": "coming_soon",
+    "status": "available",
     "route": "/personal/usage",
     "roles": [],
-    "capabilities": []
+    "capabilities": ["space.usage.read"]
   },
   {
     "id": "organization.home",
@@ -129,10 +129,10 @@
     "label": "组织文件",
     "description": "查看和管理组织文件",
     "context": "organization",
-    "status": "coming_soon",
+    "status": "available",
     "route": "/org/:organizationId/files",
     "roles": ["org_owner", "org_admin", "member"],
-    "capabilities": []
+    "capabilities": ["file.list", "file.read", "file.search", "file.upload.create"]
   },
   {
     "id": "organization.messages",

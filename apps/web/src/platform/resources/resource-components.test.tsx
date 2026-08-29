@@ -93,6 +93,7 @@ describe("generic resource surfaces", () => {
     expect(screen.getByText("成员列表仍在这里")).toBeInTheDocument();
     const dialog = screen.getByRole("dialog", { name: "张三" });
     expect(dialog).toBeVisible();
+    expect(within(dialog).getByRole("button", { name: "关闭" })).toBeVisible();
     expect(within(dialog).queryByRole("link", { name: "打开完整详情" })).not.toBeInTheDocument();
     const ordinary = within(dialog).getByText("手机号：189****7794");
     const technical = within(dialog).getByRole("region", { name: "技术信息" });
