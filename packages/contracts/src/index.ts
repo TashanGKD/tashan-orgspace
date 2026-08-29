@@ -7,3 +7,4 @@ export * from "./files.js";
 export * from "./organization.js";
 export * from "./spaces.js";
 export * from "./system.js";
+export * from "./work.js";

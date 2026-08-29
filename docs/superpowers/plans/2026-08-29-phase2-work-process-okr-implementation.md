@@ -24,11 +24,11 @@
 
 **Files:** Create `apps/api/migrations/010_work_items.sql`, `packages/contracts/src/work.ts`, `apps/api/src/work/work-service.ts`, `apps/api/src/work/work-state.ts`, `apps/api/test/work/work-service.integration.test.ts`.
 
-- [ ] Write RED transition tables covering create/assign/dispute/transfer/complete/reopen/cancel, stale expectedVersion and removed Membership.
-- [ ] Run the targeted integration test; expect WorkService missing.
-- [ ] Implement WorkItem/Assignment/Event tables and one `transitionWorkItem` function; immediate assignment retains responsibility during dispute.
-- [ ] Run targeted and full API tests; assert one DomainEvent/AuditEvent per accepted transition.
-- [ ] Commit: `git commit -m "feat(work): add assignments and transitions"`.
+- [x] Write RED transition tables covering create/assign/dispute/transfer/complete/reopen/cancel, stale expectedVersion and removed Membership.
+- [x] Run the targeted integration test; expect WorkService missing.
+- [x] Implement WorkItem/Assignment/Event tables and one `transitionWorkItem` function; immediate assignment retains responsibility during dispute.
+- [x] Run targeted and full API tests; assert one DomainEvent/Outbox event per accepted transition.
+- [x] Commit: `git commit -m "feat(work): add assignments and transitions"`.
 
 ### Task 3: Versioned process engine and approvals
 
