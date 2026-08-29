@@ -423,7 +423,7 @@ git commit -m "feat(files): add resumable upload sessions"
 **Files:**
 - Create: `apps/api/src/files/file-service.ts`
 
-- [ ] **Step 1: Write RED service contract tests**
+- [x] **Step 1: Write RED service contract tests**
 
 Exercise the service methods that Task 8 will mount on these exact routes:
 
@@ -458,19 +458,19 @@ POST   /v1/spaces/:spaceId/folders/:folderId/manager-recovery
 
 Tests must assert authorization, audit input, idempotency result and stable domain errors for every mutation. Route/capability assertions belong to Task 8 when the vertical API/CLI slice becomes executable.
 
-- [ ] **Step 2: Implement file semantics**
+- [x] **Step 2: Implement file semantics**
 
 `FileService` owns list/read/search/create-folder/move/trash/restore/delete/version-list/version-restore/access/grant methods. Search queries only metadata and applies the same resolver as reads. Move updates parent and normalized name under row locks. Restore rejects occupied names without silently renaming.
 
-- [ ] **Step 3: Implement safe download creation**
+- [x] **Step 3: Implement safe download creation**
 
 Only `available` versions receive GET URLs, valid at most 5 minutes. The signed response sets safe content disposition and does not inline active HTML/SVG/script content. URL creation is audited as `file.download.create`.
 
-- [ ] **Step 4: Keep services unmounted until the vertical capability slice**
+- [x] **Step 4: Keep services unmounted until the vertical capability slice**
 
 Keep file services unmounted until Task 8 can add API, SDK, CLI and Skill in one gate-consistent submission. Service tests must prove thrown errors contain stable public codes and never include object keys or S3 details.
 
-- [ ] **Step 5: Verify and commit**
+- [x] **Step 5: Verify and commit**
 
 Run:
 
