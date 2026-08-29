@@ -10,6 +10,7 @@
     "typecheck": "tsc --noEmit -p tsconfig.json"
   },
   "dependencies": {
+    "@tashan/object-store": "workspace:*",
     "postgres": "3.4.9",
     "zod": "4.4.3"
   },
