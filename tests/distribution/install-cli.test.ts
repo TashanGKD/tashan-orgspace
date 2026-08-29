@@ -20,6 +20,11 @@ import { afterEach, describe, expect, test } from "vitest";
 
 const repositoryRoot = resolve(import.meta.dirname, "../..");
 const installer = resolve(repositoryRoot, "skill/tashan-orgspace/scripts/install-cli.sh");
+const releaseVersion = (
+  JSON.parse(readFileSync(resolve(repositoryRoot, "release/cli-release.json"), "utf8")) as {
+    version: string;
+  }
+).version;
 const temporaryDirectories: string[] = [];
 
 function temporaryDirectory(label: string) {
@@ -51,7 +56,7 @@ type FixtureOptions = {
 };
 
 function createReleaseFixture(options: FixtureOptions = {}) {
-  const version = options.version ?? "0.1.0-alpha.3";
+  const version = options.version ?? releaseVersion;
   const platform = options.platform ?? "darwin-arm64";
   const root = temporaryDirectory("torg-installer-release-");
   const releaseDirectory = join(root, `v${version}`);
@@ -147,7 +152,7 @@ describe("Skill CLI installer", () => {
     const target = join(context.bin, "torg");
     expect(lstatSync(target).isSymbolicLink()).toBe(true);
     expect(readlinkSync(target)).toBe(join(context.home, "data/torg/current/bin/torg"));
-    expect(execFileSync(target, ["--version"], { encoding: "utf8" })).toBe("0.1.0-alpha.3\n");
+    expect(execFileSync(target, ["--version"], { encoding: "utf8" })).toBe(`${releaseVersion}\n`);
 
     const second = runInstaller(["--install"], context.environment);
     expect(second).toMatchObject({ status: 0, stderr: "" });
@@ -279,14 +284,14 @@ describe("Skill CLI installer", () => {
     expect(runInstaller(["--install"], context.environment).status).toBe(0);
     const target = join(context.bin, "torg");
 
-    const badUpgrade = createReleaseFixture({ version: "0.1.0-alpha.4", badChecksum: true });
+    const badUpgrade = createReleaseFixture({ version: "1.0.1", badChecksum: true });
     const upgradeEnvironment = {
       ...context.environment,
       TORG_PRIMARY_RELEASE_BASE_URL: `file://${badUpgrade.releaseDirectory}`,
     };
-    const result = runInstaller(["--install", "--version", "0.1.0-alpha.4"], upgradeEnvironment);
+    const result = runInstaller(["--install", "--version", "1.0.1"], upgradeEnvironment);
     expect(result.status).not.toBe(0);
-    expect(execFileSync(target, ["--version"], { encoding: "utf8" })).toBe("0.1.0-alpha.3\n");
+    expect(execFileSync(target, ["--version"], { encoding: "utf8" })).toBe(`${releaseVersion}\n`);
     expect(readdirSync(context.temp)).toEqual([]);
   });
 
@@ -296,12 +301,12 @@ describe("Skill CLI installer", () => {
     expect(runInstaller(["--install"], context.environment).status).toBe(0);
     const target = join(context.bin, "torg");
 
-    const upgrade = createReleaseFixture({ version: "0.1.0-alpha.4" });
-    const result = runInstaller(["--install", "--version", "0.1.0-alpha.4"], {
+    const upgrade = createReleaseFixture({ version: "1.0.1" });
+    const result = runInstaller(["--install", "--version", "1.0.1"], {
       ...context.environment,
       TORG_PRIMARY_RELEASE_BASE_URL: `file://${upgrade.releaseDirectory}`,
     });
     expect(result).toMatchObject({ status: 0, stderr: "" });
-    expect(execFileSync(target, ["--version"], { encoding: "utf8" })).toBe("0.1.0-alpha.4\n");
+    expect(execFileSync(target, ["--version"], { encoding: "utf8" })).toBe("1.0.1\n");
   });
 });

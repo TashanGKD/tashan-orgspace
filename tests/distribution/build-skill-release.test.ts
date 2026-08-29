@@ -8,6 +8,9 @@ import { afterEach, describe, expect, test } from "vitest";
 
 const repositoryRoot = resolve(import.meta.dirname, "../..");
 const builder = resolve(repositoryRoot, "scripts/build-skill-release.mjs");
+const release = JSON.parse(
+  readFileSync(resolve(repositoryRoot, "release/cli-release.json"), "utf8"),
+) as { skillAsset: string };
 const temporaryDirectories: string[] = [];
 
 function temporaryDirectory(label: string) {
@@ -30,7 +33,7 @@ describe("Skill release builder", () => {
       encoding: "utf8",
     });
     expect(result).toMatchObject({ status: 0, stderr: "" });
-    const asset = "tashan-orgspace-skill-v0.1.0-alpha.3.tar.gz";
+    const asset = release.skillAsset;
     const archive = join(output, asset);
     expect(existsSync(archive)).toBe(true);
     const entries = execFileSync("tar", ["-tzf", archive], { encoding: "utf8" })
@@ -46,7 +49,15 @@ describe("Skill release builder", () => {
         "tashan-orgspace/capability-references.json",
         "tashan-orgspace/references/",
         "tashan-orgspace/references/authentication.md",
+        "tashan-orgspace/references/chat.md",
+        "tashan-orgspace/references/files.md",
+        "tashan-orgspace/references/my-work.md",
+        "tashan-orgspace/references/notifications.md",
+        "tashan-orgspace/references/okr.md",
+        "tashan-orgspace/references/partners.md",
         "tashan-orgspace/references/safety.md",
+        "tashan-orgspace/references/search.md",
+        "tashan-orgspace/references/work.md",
         "tashan-orgspace/release.json",
         "tashan-orgspace/scripts/",
         "tashan-orgspace/scripts/install-cli.sh",

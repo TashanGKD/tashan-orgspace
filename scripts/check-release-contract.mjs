@@ -142,6 +142,12 @@ export function checkDistributionContract(release, workflow, installer) {
   }
 }
 
+export function checkSkillInstallerPin(release, installer) {
+  if (!installer.includes(`pinned_version="${release.version}"`)) {
+    throw new Error("Skill installer pinned version mismatch");
+  }
+}
+
 function readJson(path) {
   return JSON.parse(readFileSync(path, "utf8"));
 }
@@ -157,6 +163,10 @@ export function checkRepositoryReleaseContract(repositoryRoot) {
     release,
     readFileSync(resolve(repositoryRoot, ".github/workflows/release-cli.yml"), "utf8"),
     readFileSync(resolve(repositoryRoot, "skill/tashan-orgspace/scripts/install-cli.sh"), "utf8"),
+  );
+  checkSkillInstallerPin(
+    release,
+    readFileSync(resolve(repositoryRoot, "distribution/install-skill.sh"), "utf8"),
   );
   return result;
 }

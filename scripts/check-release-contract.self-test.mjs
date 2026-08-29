@@ -1,6 +1,10 @@
 import { strict as assert } from "node:assert";
 
-import { checkDistributionContract, checkReleaseContract } from "./check-release-contract.mjs";
+import {
+  checkDistributionContract,
+  checkReleaseContract,
+  checkSkillInstallerPin,
+} from "./check-release-contract.mjs";
 
 const version = "0.1.0-alpha.3";
 const release = {
@@ -62,6 +66,11 @@ assert.deepEqual(checkReleaseContract(release, cliPackage, skillRelease), {
   violations: 0,
 });
 assert.equal(checkDistributionContract(release, workflow, installer), undefined);
+assert.equal(checkSkillInstallerPin(release, `pinned_version="${version}"`), undefined);
+assert.throws(
+  () => checkSkillInstallerPin(release, 'pinned_version="0.0.0"'),
+  /Skill installer pinned version mismatch/,
+);
 assert.throws(
   () =>
     checkDistributionContract(

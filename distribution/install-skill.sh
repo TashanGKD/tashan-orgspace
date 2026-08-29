@@ -1,7 +1,7 @@
 #!/bin/sh
 set -eu
 
-pinned_version="0.1.0-alpha.3"
+pinned_version="1.0.0"
 official_distribution_base="https://orgspace.tashan.chat/downloads/orgspace"
 github_repository="TashanGKD/tashan-orgspace"
 asset="tashan-orgspace-skill-v$pinned_version.tar.gz"
@@ -132,7 +132,15 @@ tashan-orgspace/agents/openai.yaml
 tashan-orgspace/capability-references.json
 tashan-orgspace/references/
 tashan-orgspace/references/authentication.md
+tashan-orgspace/references/chat.md
+tashan-orgspace/references/files.md
+tashan-orgspace/references/my-work.md
+tashan-orgspace/references/notifications.md
+tashan-orgspace/references/okr.md
+tashan-orgspace/references/partners.md
 tashan-orgspace/references/safety.md
+tashan-orgspace/references/search.md
+tashan-orgspace/references/work.md
 tashan-orgspace/release.json
 tashan-orgspace/scripts/
 tashan-orgspace/scripts/install-cli.sh

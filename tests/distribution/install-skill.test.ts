@@ -17,7 +17,11 @@ import { afterEach, describe, expect, test } from "vitest";
 const repositoryRoot = resolve(import.meta.dirname, "../..");
 const builder = resolve(repositoryRoot, "scripts/build-skill-release.mjs");
 const installer = resolve(repositoryRoot, "distribution/install-skill.sh");
-const version = "0.1.0-alpha.3";
+const version = (
+  JSON.parse(readFileSync(resolve(repositoryRoot, "release/cli-release.json"), "utf8")) as {
+    version: string;
+  }
+).version;
 const asset = `tashan-orgspace-skill-v${version}.tar.gz`;
 const temporaryDirectories: string[] = [];
 
