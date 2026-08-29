@@ -28,11 +28,11 @@
 
 ### Task 3: Component restart and reconciliation matrix
 **Files:** Extend production-stack tests and recovery verification doc.
-- [ ] Write RED tests for API/Worker/Realtime/Postgres/Redis/MinIO/tunnel restart at active operations.
-- [ ] Run tests; observe unsupported recovery cases.
-- [ ] Add only required reconciliation/health behavior to prior phase owners.
-- [ ] Run matrix proving no lost/duplicate side effects.
-- [ ] Commit: `git commit -m "test(recovery): verify component restarts"`.
+- [ ] Write RED tests for API/Worker/Realtime/Postgres/Redis/MinIO/tunnel restart at active operations. (AUP tunnel restart requires deployment approval.)
+- [x] Run tests; observe unsupported recovery cases.
+- [x] Add only required reconciliation/health behavior to prior phase owners.
+- [x] Run matrix proving no lost/duplicate side effects.
+- [x] Commit: `git commit -m "test(recovery): verify component restarts"`.
 
 ### Task 4: Complete user, browser and CLI/Skill journeys
 **Files:** Create v1 E2E journeys, browser checklist and fresh-user distribution tests.

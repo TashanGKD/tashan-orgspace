@@ -104,9 +104,30 @@ PRODUCTION_STACK_URL="http://127.0.0.1:44110" \
   PRODUCTION_STACK_VERSION="$SERVICE_VERSION" \
   pnpm exec vitest run tests/production-stack/stack.test.ts
 
-docker compose -f "$compose_file" -p "$project" restart minio
-docker compose -f "$compose_file" -p "$project" restart realtime
-docker compose -f "$compose_file" -p "$project" up -d --wait realtime gateway
+outbox_id="$(docker compose -f "$compose_file" -p "$project" exec -T postgres \
+  psql -U orgspace -d orgspace -qAtc \
+  "insert into outbox_events(event_type,payload,status,lease_owner,lease_expires_at) values('capability.succeeded','{}','processing','dead-worker',now()-interval '1 minute') returning id")"
+if ! printf '%s' "$outbox_id" | grep -Eq '^[0-9a-f-]{36}$'; then
+  echo "production-stack: failed to create expired Worker lease fixture" >&2
+  exit 1
+fi
+
+for component in worker api realtime redis postgres gateway minio; do
+  docker compose -f "$compose_file" -p "$project" restart "$component"
+  docker compose -f "$compose_file" -p "$project" up -d --wait
+  PRODUCTION_STACK_URL="http://127.0.0.1:44110" \
+    PRODUCTION_STACK_VERSION="$SERVICE_VERSION" \
+    pnpm exec vitest run tests/production-stack/stack.test.ts
+done
+
+outbox_state="$(docker compose -f "$compose_file" -p "$project" exec -T postgres \
+  psql -U orgspace -d orgspace -qAtc \
+  "select status||':'||attempts from outbox_events where id='$outbox_id'")"
+if [ "$outbox_state" != "done:1" ]; then
+  echo "production-stack: expired Worker lease did not reconcile exactly once ($outbox_state)" >&2
+  exit 1
+fi
+
 minio_ready=0
 for readiness_attempt in $(seq 1 200); do
   if curl --fail --silent --show-error --max-time 1 \
@@ -123,9 +144,5 @@ if [ "$minio_ready" != "1" ]; then
   echo "production-stack: MinIO did not recover through the file gateway" >&2
   exit 1
 fi
-
-PRODUCTION_STACK_URL="http://127.0.0.1:44110" \
-  PRODUCTION_STACK_VERSION="$SERVICE_VERSION" \
-  pnpm exec vitest run tests/production-stack/stack.test.ts
 
 echo "production-stack: PASS ($project)"
