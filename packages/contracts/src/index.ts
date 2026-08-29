@@ -5,6 +5,7 @@ export * from "./collaboration.js";
 export * from "./error.js";
 export * from "./files.js";
 export * from "./organization.js";
+export * from "./notifications.js";
 export * from "./partners.js";
 export * from "./okr.js";
 export * from "./process.js";

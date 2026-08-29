@@ -12,11 +12,11 @@
 
 ### Task 1: Notification contracts and policy tables
 **Files:** Create `apps/api/migrations/015_notifications.sql`, `packages/contracts/src/notifications.ts`, `apps/api/src/notifications/notification-policy-service.ts`, `apps/api/test/notifications/notification-policy.integration.test.ts`.
-- [ ] Write RED tests for mandatory vs daily-summary-only opt-out, organization timezone and immutable policy versions.
-- [ ] Run API integration tests; expect missing schema.
-- [ ] Implement NotificationPolicy, Notification, ScheduledReminder and DeliveryAttempt tables/contracts.
-- [ ] Run tests and schema checks.
-- [ ] Commit: `git commit -m "feat(notifications): add policy and delivery model"`.
+- [x] Write RED tests for mandatory vs daily-summary-only opt-out, organization timezone and immutable policy versions.
+- [x] Run API integration tests; expect missing schema.
+- [x] Implement NotificationPolicy, Notification, ScheduledReminder and DeliveryAttempt tables/contracts.
+- [x] Run tests and schema checks.
+- [x] Commit: `git commit -m "feat(notifications): add policy and delivery model"`.
 
 ### Task 2: Event projector and deterministic reminders
 **Files:** Create `apps/worker/src/notifications/notification-projector.ts`, `apps/worker/src/notifications/reminder-scheduler.ts`, `apps/worker/src/notifications/reminder-scheduler.integration.test.ts`.
