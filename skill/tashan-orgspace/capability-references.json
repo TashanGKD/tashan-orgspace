@@ -90,6 +90,7 @@
     "chat.message.convert",
     "chat.compliance.create",
     "chat.compliance.read",
+    "search.query",
     "partner.list",
     "partner.read",
     "partner.create",

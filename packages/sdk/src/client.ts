@@ -112,6 +112,8 @@ import {
   RefreshResponse,
   RegisterRequest,
   RegisterResponse,
+  SearchQuery,
+  SearchResponse,
   SpaceListResponse,
   SpaceReadResponse,
   SpaceUsageResponse,
@@ -1231,6 +1233,18 @@ export function createOrgSpaceClient(options: OrgSpaceClientOptions) {
         undefined,
         { authenticated: true, signal },
       ),
+    searchOrganization: (organizationId: string, input: unknown, signal?: AbortSignal) => {
+      const query = SearchQuery.parse(input),
+        search = new URLSearchParams({ query: query.query, limit: String(query.limit) });
+      for (const type of query.types ?? []) search.append("types", type);
+      return request(
+        "GET",
+        `/v1/organizations/${pathId(organizationId)}/search?${search}`,
+        SearchResponse,
+        undefined,
+        { authenticated: true, signal },
+      );
+    },
 
     listPartners: (organizationId: string, input: unknown, signal?: AbortSignal) => {
       const query = PartnerListQuery.parse(input);

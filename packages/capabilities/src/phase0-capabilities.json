@@ -1157,6 +1157,19 @@
     "auditAction": "chat.compliance.read"
   },
   {
+    "id": "search.query",
+    "version": 1,
+    "inputSchema": "SearchQuery",
+    "outputSchema": "SearchResponse",
+    "permissions": ["organization.member"],
+    "sideEffect": "none",
+    "idempotent": true,
+    "confirmation": "none",
+    "cli": "search query",
+    "web": "deferred",
+    "auditAction": "search.query"
+  },
+  {
     "id": "partner.list",
     "version": 1,
     "inputSchema": "PartnerListQuery",

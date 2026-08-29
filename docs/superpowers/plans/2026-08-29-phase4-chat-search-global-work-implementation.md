@@ -36,11 +36,11 @@
 
 ### Task 4: Authorized search providers
 **Files:** Create `apps/api/migrations/020_search.sql`, `packages/contracts/src/search.ts`, `apps/api/src/search/search-service.ts`, `apps/api/src/search/providers/`, `apps/api/test/search/search-inference.integration.test.ts`.
-- [ ] Write RED tests for file/work/OKR/Partner/member/message providers, restricted counts and stale Membership cache.
-- [ ] Run tests; expect search service missing.
-- [ ] Implement provider interface returning ResourceRefs after domain authorization; index projections consume DomainEvent.
-- [ ] Run inference and membership-revocation tests.
-- [ ] Commit: `git commit -m "feat(search): aggregate authorized resources"`.
+- [x] Write RED tests for file/work/OKR/Partner/member/message providers, restricted counts and stale Membership cache.
+- [x] Run tests; expect search service missing.
+- [x] Implement provider interface returning ResourceRefs after current domain authorization; the catalog view does not copy business state.
+- [x] Run inference and membership-revocation tests.
+- [x] Commit: `git commit -m "feat(search): aggregate authorized resources"`.
 
 ### Task 5: My Work and administration projections
 **Files:** Create `apps/api/src/work/my-work-service.ts`, `apps/api/src/routes/my-work-routes.ts`, `apps/web/src/features/my-work/`, `apps/cli/src/commands/search.ts`; modify admin pages.

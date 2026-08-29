@@ -167,6 +167,7 @@ describe("typed SDK request boundary", () => {
       "chat.message.convert": "convertChatMessage",
       "chat.compliance.create": "createChatComplianceReview",
       "chat.compliance.read": "readChatComplianceReview",
+      "search.query": "searchOrganization",
       "partner.list": "listPartners",
       "partner.read": "readPartner",
       "partner.create": "createPartner",

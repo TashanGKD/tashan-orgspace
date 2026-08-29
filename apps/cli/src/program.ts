@@ -32,6 +32,7 @@ import {
   registerNotificationCommands,
 } from "./commands/notification.js";
 import { chatCapabilityIds, registerChatCommands } from "./commands/chat.js";
+import { registerSearchCommands, searchCapabilityIds } from "./commands/search.js";
 import { resolveCliConfig } from "./config.js";
 import { withMemoryFallback, type CredentialStore } from "./credentials/credential-store.js";
 import { EncryptedFileStore } from "./credentials/encrypted-file-store.js";
@@ -57,6 +58,7 @@ export const registeredCapabilityIds = new Set([
   ...partnerCapabilityIds,
   ...notificationCapabilityIds,
   ...chatCapabilityIds,
+  ...searchCapabilityIds,
 ]);
 
 export interface CliDependencies {
@@ -131,6 +133,7 @@ export function buildProgram(output: CliOutput, dependencies: CliDependencies = 
   registerPartnerCommands(program, commandContext);
   registerNotificationCommands(program, commandContext);
   registerChatCommands(program, commandContext);
+  registerSearchCommands(program, commandContext);
 
   program.action(() => {
     if (program.opts<{ json?: boolean }>().json === true) {
