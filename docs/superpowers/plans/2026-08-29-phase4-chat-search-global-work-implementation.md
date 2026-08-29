@@ -52,8 +52,8 @@
 
 ### Task 6: Chat Web/CLI/Skill and Phase 4 acceptance
 **Files:** Create `apps/web/src/features/chat/`, `apps/cli/src/commands/chat.ts`, `skill/tashan-orgspace/references/chat.md`, `tests/e2e/chat-search.test.ts`, `docs/verification/phase4-chat-search.md`.
-- [ ] Write RED conversation/message/mobile/reconnect/search tests and CLI streaming tests.
-- [ ] Run tests; expect coming-soon routes.
-- [ ] Implement list/detail composer, attachments, conversion, search and Skill mappings.
-- [ ] Run multi-user E2E and production-shaped realtime restart smoke.
+- [x] Write RED conversation/message/mobile/reconnect/search tests and CLI streaming tests.
+- [x] Run tests; expect coming-soon routes.
+- [x] Implement list/detail composer, attachments, conversion, search and Skill mappings.
+- [x] Run multi-user E2E and production-shaped realtime restart smoke.
 - [ ] Commit: `git commit -m "docs(verification): record Phase 4 acceptance"`.

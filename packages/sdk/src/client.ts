@@ -307,6 +307,17 @@ export function createOrgSpaceClient(options: OrgSpaceClientOptions) {
   }
 
   return {
+    getRealtimeAccessToken: async () => {
+      const token = await options.credentials.getAccessToken();
+      if (!token)
+        throw new OrgSpaceApiError(
+          "AUTH_REQUIRED",
+          401,
+          "access token is unavailable",
+          crypto.randomUUID(),
+        );
+      return token;
+    },
     health: (signal?: AbortSignal) =>
       request("GET", "/v1/health", HealthResponse, undefined, { signal }),
 

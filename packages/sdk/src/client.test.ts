@@ -164,6 +164,7 @@ describe("typed SDK request boundary", () => {
       "chat.message.retract": "retractChatMessage",
       "chat.message.reaction.set": "setChatReaction",
       "chat.event.list": "listChatEvents",
+      "chat.event.stream": "getRealtimeAccessToken",
       "chat.message.convert": "convertChatMessage",
       "chat.compliance.create": "createChatComplianceReview",
       "chat.compliance.read": "readChatComplianceReview",

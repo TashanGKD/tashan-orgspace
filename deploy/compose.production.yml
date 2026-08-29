@@ -190,6 +190,47 @@ services:
     cap_drop:
       - ALL
 
+  realtime:
+    build: *runtime-build
+    command: ["pnpm", "--filter", "@tashan/realtime", "start"]
+    restart: unless-stopped
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      redis:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: *database-url
+      REDIS_URL: redis://redis:6379
+      HOST: 0.0.0.0
+      PORT: "4120"
+      JWT_ACTIVE_KEY_ID: ${JWT_ACTIVE_KEY_ID:?JWT_ACTIVE_KEY_ID is required}
+      JWT_AUDIENCE: tashan-orgspace
+      JWT_ISSUER: https://orgspace.tashan.chat
+      JWT_PRIVATE_KEY: ${JWT_PRIVATE_KEY:?JWT_PRIVATE_KEY is required}
+      JWT_PUBLIC_KEY: ${JWT_PUBLIC_KEY:?JWT_PUBLIC_KEY is required}
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://127.0.0.1:4120').then(()=>process.exit(0)).catch(()=>process.exit(1))",
+        ]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    networks:
+      default:
+        ipv4_address: 172.31.64.30
+    read_only: true
+    tmpfs:
+      - /tmp:size=32m,mode=1777
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+
   gateway:
     build:
       context: ..
@@ -197,6 +238,8 @@ services:
     restart: unless-stopped
     depends_on:
       api:
+        condition: service_healthy
+      realtime:
         condition: service_healthy
       minio-bootstrap:
         condition: service_completed_successfully

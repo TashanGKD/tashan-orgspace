@@ -402,6 +402,78 @@
     "test": "apps/web/src/features/notifications/notification-center.test.tsx"
   },
   {
+    "capabilityId": "chat.conversation.list",
+    "route": "/org/:organizationId/messages",
+    "action": "chat-conversation-list",
+    "test": "apps/web/src/features/chat/chat-page.test.tsx"
+  },
+  {
+    "capabilityId": "chat.conversation.read",
+    "route": "/org/:organizationId/messages/:conversationId",
+    "action": "chat-conversation-read",
+    "test": "apps/web/src/features/chat/chat-page.test.tsx"
+  },
+  {
+    "capabilityId": "chat.conversation.direct.create",
+    "route": "/org/:organizationId/messages",
+    "action": "chat-direct-create",
+    "test": "apps/web/src/features/chat/chat-page.test.tsx"
+  },
+  {
+    "capabilityId": "chat.conversation.group.create",
+    "route": "/org/:organizationId/messages",
+    "action": "chat-group-create",
+    "test": "apps/web/src/features/chat/chat-page.test.tsx"
+  },
+  {
+    "capabilityId": "chat.message.list",
+    "route": "/org/:organizationId/messages/:conversationId",
+    "action": "chat-message-list",
+    "test": "apps/web/src/features/chat/chat-page.test.tsx"
+  },
+  {
+    "capabilityId": "chat.message.send",
+    "route": "/org/:organizationId/messages/:conversationId",
+    "action": "chat-message-send",
+    "test": "apps/web/src/features/chat/chat-page.test.tsx"
+  },
+  {
+    "capabilityId": "chat.message.edit",
+    "route": "/org/:organizationId/messages/:conversationId",
+    "action": "chat-message-edit",
+    "test": "apps/web/src/features/chat/chat-page.test.tsx"
+  },
+  {
+    "capabilityId": "chat.message.retract",
+    "route": "/org/:organizationId/messages/:conversationId",
+    "action": "chat-message-retract",
+    "test": "apps/web/src/features/chat/chat-page.test.tsx"
+  },
+  {
+    "capabilityId": "chat.message.reaction.set",
+    "route": "/org/:organizationId/messages/:conversationId",
+    "action": "chat-message-reaction",
+    "test": "apps/web/src/features/chat/chat-page.test.tsx"
+  },
+  {
+    "capabilityId": "chat.event.list",
+    "route": "/org/:organizationId/messages/:conversationId",
+    "action": "chat-event-list",
+    "test": "apps/web/src/features/chat/chat-page.test.tsx"
+  },
+  {
+    "capabilityId": "chat.message.convert",
+    "route": "/org/:organizationId/messages/:conversationId",
+    "action": "chat-message-convert",
+    "test": "apps/web/src/features/chat/chat-page.test.tsx"
+  },
+  {
+    "capabilityId": "search.query",
+    "route": "/org/:organizationId/search",
+    "action": "organization-search",
+    "test": "apps/web/src/features/search/search-page.test.tsx"
+  },
+  {
     "capabilityId": "partner.list",
     "route": "/org/:organizationId/partners",
     "action": "partner-list",

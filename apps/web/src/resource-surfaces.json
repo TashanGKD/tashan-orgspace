@@ -146,6 +146,23 @@
     ]
   },
   {
+    "resourceType": "organization-conversation",
+    "context": "organization",
+    "listRoute": "/org/:organizationId/messages",
+    "detailRoute": "/org/:organizationId/messages/:conversationId",
+    "listCapability": "chat.conversation.list",
+    "readCapability": "chat.conversation.read",
+    "actions": [
+      { "capabilityId": "chat.conversation.direct.create", "confirmation": "required" },
+      { "capabilityId": "chat.conversation.group.create", "confirmation": "required" },
+      { "capabilityId": "chat.message.send", "confirmation": "none" },
+      { "capabilityId": "chat.message.edit", "confirmation": "none" },
+      { "capabilityId": "chat.message.retract", "confirmation": "required" },
+      { "capabilityId": "chat.message.reaction.set", "confirmation": "none" },
+      { "capabilityId": "chat.message.convert", "confirmation": "required" }
+    ]
+  },
+  {
     "resourceType": "organization-notification",
     "context": "organization",
     "listRoute": "/org/:organizationId/notifications",

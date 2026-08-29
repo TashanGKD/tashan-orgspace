@@ -24,6 +24,7 @@
     "@tashan/object-store": "workspace:*",
     "@tashan/sdk": "workspace:*",
     "@types/node": "24.13.3",
+    "@types/ws": "8.18.1",
     "esbuild": "0.28.2",
     "eslint": "10.8.1",
     "eslint-config-prettier": "10.1.8",
@@ -34,6 +35,7 @@
     "typescript": "6.0.3",
     "typescript-eslint": "8.67.0",
     "vitest": "4.1.10",
+    "ws": "8.21.3",
     "yaml": "2.9.0"
   },
   "pnpm": {

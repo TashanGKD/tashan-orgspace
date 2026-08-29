@@ -4,6 +4,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { randomUUID } from "node:crypto";
 import { createServer } from "node:net";
+import { exportPKCS8, exportSPKI, generateKeyPair } from "jose";
 
 import { migrateDatabase, resetTestDatabase } from "../../apps/api/src/db/migrate.js";
 
@@ -137,9 +138,11 @@ const runId = randomUUID();
 const postgresPort = await reserveLoopbackPort();
 const redisPort = await reserveLoopbackPort();
 const s3Port = await reserveLoopbackPort();
+const realtimePort = await reserveLoopbackPort();
 const databaseUrl = `postgresql://orgspace:${composePassword}@127.0.0.1:${postgresPort}/orgspace_e2e_test`;
 const redisUrl = `redis://127.0.0.1:${redisPort}`;
 const s3Url = `http://127.0.0.1:${s3Port}`;
+const realtimeUrl = `ws://127.0.0.1:${realtimePort}`;
 const composeProject = `tashan-orgspace-e2e-${process.pid}`;
 const minioRootUser = `e2eroot${process.pid}`;
 const minioRootPassword = `e2e-minio-root-password-${runId}`;
@@ -159,8 +162,10 @@ const composeEnvironment = {
 assertLoopback(databaseUrl, "database");
 assertLoopback(redisUrl, "Redis");
 assertLoopback(s3Url, "S3");
+assertLoopback(realtimeUrl, "realtime");
 let api: ChildProcess | undefined;
 let worker: ChildProcess | undefined;
+let realtime: ChildProcess | undefined;
 
 try {
   await run(
@@ -187,6 +192,7 @@ try {
   );
   await resetTestDatabase(databaseUrl);
   await migrateDatabase(databaseUrl);
+  const { privateKey, publicKey } = await generateKeyPair("EdDSA", { extractable: true });
   const serviceEnvironment = {
     ...composeEnvironment,
     E2E_DATABASE_URL: databaseUrl,
@@ -200,6 +206,11 @@ try {
     S3_ACCESS_KEY_ID: s3AccessKeyId,
     S3_SECRET_ACCESS_KEY: s3SecretAccessKey,
     S3_FORCE_PATH_STYLE: "true",
+    JWT_ACTIVE_KEY_ID: `e2e-${runId}`,
+    JWT_PRIVATE_KEY: await exportPKCS8(privateKey),
+    JWT_PUBLIC_KEY: await exportSPKI(publicKey),
+    JWT_ISSUER: "https://api-org.tashan.chat",
+    JWT_AUDIENCE: "tashan-orgspace",
   };
   const started = await startApi(serviceEnvironment);
   api = started.child;
@@ -217,6 +228,18 @@ try {
     shell: false,
     stdio: ["ignore", "inherit", "inherit"],
   });
+  realtime = spawn(process.execPath, ["--import", "tsx", "apps/realtime/src/main.ts"], {
+    cwd: process.cwd(),
+    env: {
+      ...serviceEnvironment,
+      DATABASE_URL: databaseUrl,
+      REDIS_URL: redisUrl,
+      HOST: "127.0.0.1",
+      PORT: String(realtimePort),
+    },
+    shell: false,
+    stdio: ["ignore", "inherit", "inherit"],
+  });
   await run("pnpm", ["exec", "vitest", "run", "--config", "vitest.e2e.config.ts"], {
     ...workerEnvironment,
     E2E_API_URL: started.apiUrl,
@@ -224,10 +247,12 @@ try {
     E2E_COMPOSE_PROJECT: composeProject,
     E2E_COMPOSE_FILE: composeFile,
     E2E_REPLACEMENT_WORKER_PID_FILE: replacementWorkerPidFile,
+    E2E_REALTIME_URL: realtimeUrl,
   });
 } finally {
   await stopRecordedPid(replacementWorkerPidFile);
   await stopChild(worker);
+  await stopChild(realtime);
   await stopChild(api);
   await run(
     "docker",

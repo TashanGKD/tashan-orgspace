@@ -3,6 +3,7 @@ import { spawn } from "node:child_process";
 import { mkdtemp, readFile, rm, stat, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { WebSocket } from "ws";
 
 import { createFetchTransport, createOrgSpaceClient, type SdkCredentialStore } from "@tashan/sdk";
 import { createNodeFileByteTransport } from "@tashan/sdk/file-transfer";
@@ -28,7 +29,8 @@ interface ScenarioInput {
     | "files-recovery"
     | "work-okr"
     | "partners"
-    | "notifications";
+    | "notifications"
+    | "chat-search";
   apiUrl: string;
   databaseUrl: string;
   alice: { accountId: string; phone: string; password: string };
@@ -60,7 +62,10 @@ function dependencies(
     credentialStore: store,
     deviceId,
     deviceMetadata: { name, os: "e2e-os", architecture: "e2e-arch" },
-    environment: { TORG_API_URL: input.apiUrl },
+    environment: {
+      TORG_API_URL: input.apiUrl,
+      ...(process.env.E2E_REALTIME_URL ? { TORG_REALTIME_URL: process.env.E2E_REALTIME_URL } : {}),
+    },
     promptHidden: async () => password,
     readStdin: async () => password,
     createClient: (credentials: SdkCredentialStore, currentDeviceId: string) =>
@@ -580,6 +585,258 @@ if (input.type === "lifecycle") {
   } finally {
     await db.end();
   }
+} else if (input.type === "chat-search") {
+  if (!input.bob || !input.charlie) throw new Error("chat-search requires Bob and Charlie");
+  const bobStore = new MemoryCredentialStore();
+  const bob = dependencies(bobStore, crypto.randomUUID(), input.bob.password, "Bob Chat E2E");
+  await login(bob, input.bob.phone);
+  const organization = await command<{ organization: { id: string } }>(
+    ["org", "create", "--name", "Chat Search E2E", "--yes", "--idempotency-key", "chat-org"],
+    aliceA,
+  );
+  const organizationId = organization.organization.id;
+  await command(
+    [
+      "org",
+      "member",
+      "add",
+      "--org",
+      organizationId,
+      "--account",
+      input.bob.accountId,
+      "--role",
+      "member",
+      "--yes",
+      "--idempotency-key",
+      "chat-member",
+    ],
+    aliceA,
+  );
+  const crossDenied = await rejected(
+    [
+      "chat",
+      "conversation",
+      "direct-create",
+      "--org",
+      organizationId,
+      "--account",
+      input.charlie.accountId,
+      "--yes",
+      "--idempotency-key",
+      "chat-cross",
+    ],
+    aliceA,
+  );
+  const conversation = await command<{ id: string }>(
+    [
+      "chat",
+      "conversation",
+      "direct-create",
+      "--org",
+      organizationId,
+      "--account",
+      input.bob.accountId,
+      "--yes",
+      "--idempotency-key",
+      "chat-direct",
+    ],
+    aliceA,
+  );
+  const first = await command<{ id: string }>(
+    [
+      "chat",
+      "message",
+      "send",
+      "--org",
+      organizationId,
+      "--conversation",
+      conversation.id,
+      "--body",
+      "实时关键字 第一条",
+      "--mention",
+      input.bob.accountId,
+      "--client-message-id",
+      crypto.randomUUID(),
+      "--idempotency-key",
+      "chat-first",
+    ],
+    aliceA,
+  );
+  const streamed = await command<{ items: unknown[] }>(
+    [
+      "chat",
+      "event",
+      "stream",
+      "--org",
+      organizationId,
+      "--conversation",
+      conversation.id,
+      "--after",
+      "0",
+      "--once",
+    ],
+    bob,
+  );
+  const credentials = await CliSessionCredentials.load(bobStore, `session:${input.apiUrl}`);
+  const token = await credentials.getAccessToken();
+  const realtimeUrl = process.env.E2E_REALTIME_URL;
+  if (!token || !realtimeUrl) throw new Error("realtime E2E credentials are missing");
+  const realtimeHost = new URL(realtimeUrl).hostname;
+  if (!["127.0.0.1", "localhost", "[::1]"].includes(realtimeHost))
+    throw new Error("realtime E2E URL must be loopback");
+  const protocols = ["torg.realtime.v1", `torg.token.${Buffer.from(token).toString("base64url")}`];
+  const socket = await new Promise<WebSocket>((resolve, reject) => {
+    const deadline = Date.now() + 5_000;
+    const attempt = () => {
+      const candidate = new WebSocket(realtimeUrl, protocols);
+      candidate.once("open", () => resolve(candidate));
+      candidate.once("error", (error) => {
+        candidate.close();
+        if (Date.now() >= deadline) reject(error);
+        else setTimeout(attempt, 50);
+      });
+    };
+    attempt();
+  });
+  const received: Array<Record<string, unknown>> = [];
+  let closeCode = 0;
+  socket.on("message", (raw) =>
+    received.push(JSON.parse(raw.toString()) as Record<string, unknown>),
+  );
+  socket.on("close", (code) => (closeCode = code));
+  const wait = async (predicate: () => boolean, label: string) => {
+    const deadline = Date.now() + 5_000;
+    while (Date.now() < deadline) {
+      if (predicate()) return;
+      await new Promise((resolve) => setTimeout(resolve, 20));
+    }
+    throw new Error(`chat-search E2E timeout: ${label}`);
+  };
+  socket.send(
+    JSON.stringify({
+      type: "subscribe",
+      organizationId,
+      conversationId: conversation.id,
+      afterSequence: 0,
+    }),
+  );
+  await wait(() => received.some((item) => item.type === "ready"), "history ready");
+  const second = await command<{ id: string }>(
+    [
+      "chat",
+      "message",
+      "send",
+      "--org",
+      organizationId,
+      "--conversation",
+      conversation.id,
+      "--body",
+      "撤回关键字 第二条",
+      "--client-message-id",
+      crypto.randomUUID(),
+      "--idempotency-key",
+      "chat-second",
+    ],
+    aliceA,
+  );
+  await wait(
+    () =>
+      received.some((item) => (item.event as { sequence?: number } | undefined)?.sequence === 2),
+    "live second event",
+  );
+  const searchBefore = await command<{ totalAuthorized: number }>(
+    ["search", "query", "--org", organizationId, "--text", "实时关键字", "--type", "message"],
+    bob,
+  );
+  const myWork = await command<{ items: Array<{ kind: string }> }>(["my-work", "list"], bob);
+  const converted = await command<{ item: { id: string } }>(
+    [
+      "chat",
+      "message",
+      "convert",
+      "--org",
+      organizationId,
+      "--conversation",
+      conversation.id,
+      "--message",
+      first.id,
+      "--type",
+      "task",
+      "--title",
+      "聊天转任务",
+      "--assignee",
+      input.bob.accountId,
+      "--yes",
+      "--idempotency-key",
+      "chat-convert",
+    ],
+    aliceA,
+  );
+  await command(
+    [
+      "chat",
+      "message",
+      "retract",
+      "--org",
+      organizationId,
+      "--conversation",
+      conversation.id,
+      "--message",
+      second.id,
+      "--yes",
+      "--idempotency-key",
+      "chat-retract",
+    ],
+    aliceA,
+  );
+  const searchAfter = await command<{ totalAuthorized: number }>(
+    ["search", "query", "--org", organizationId, "--text", "撤回关键字", "--type", "message"],
+    bob,
+  );
+  const { createDatabaseClient } = await import("../../../apps/api/src/db/client.js");
+  const db = createDatabaseClient(input.databaseUrl);
+  try {
+    await db`update memberships set status='removed',removed_at=now() where organization_id=${organizationId} and account_id=${input.bob.accountId}`;
+  } finally {
+    await db.end();
+  }
+  await command<{ id: string }>(
+    [
+      "chat",
+      "message",
+      "send",
+      "--org",
+      organizationId,
+      "--conversation",
+      conversation.id,
+      "--body",
+      "撤权后消息",
+      "--client-message-id",
+      crypto.randomUUID(),
+      "--idempotency-key",
+      "chat-third",
+    ],
+    aliceA,
+  );
+  await wait(() => closeCode === 4403, "revoked close");
+  const staleSearch = await rejected(
+    ["search", "query", "--org", organizationId, "--text", "实时关键字"],
+    bob,
+  );
+  socket.close();
+  process.stdout.write(
+    JSON.stringify({
+      crossDenied: crossDenied.stderr.includes("CHAT_FORBIDDEN"),
+      historyEvents: received.filter((item) => item.type === "event").length,
+      cliStreamed: streamed.items.length,
+      searchBefore: searchBefore.totalAuthorized,
+      searchAfter: searchAfter.totalAuthorized,
+      hasMention: myWork.items.some((item) => item.kind === "mention"),
+      convertedTaskId: converted.item.id,
+      revokedClose: closeCode,
+      staleDenied: staleSearch.stderr.includes("ORG_FORBIDDEN"),
+    }),
+  );
 } else if (input.type === "work-okr") {
   if (input.bob === undefined) throw new Error("work-okr requires Bob");
   const bobStore = new MemoryCredentialStore();

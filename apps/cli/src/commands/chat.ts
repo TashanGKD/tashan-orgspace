@@ -1,5 +1,7 @@
 import type { Command } from "commander";
+import { WebSocket } from "ws";
 import type { CapabilityId } from "@tashan/capabilities";
+import { encodeRealtimeAccessToken } from "@tashan/sdk";
 import {
   requireConfirmationAndIdempotency,
   requireIdempotency,
@@ -17,6 +19,7 @@ export const chatCapabilityIds = [
   "chat.message.retract",
   "chat.message.reaction.set",
   "chat.event.list",
+  "chat.event.stream",
   "chat.message.convert",
   "chat.compliance.create",
   "chat.compliance.read",
@@ -267,8 +270,8 @@ export function registerChatCommands(program: Command, context: CommandContext) 
     );
     context.emit(convert, result, `Created ${result.item.type} ${result.item.id}`);
   });
-  const events = chat
-    .command("event")
+  const eventGroup = chat.command("event");
+  const events = eventGroup
     .command("list")
     .requiredOption("--org <id>")
     .requiredOption("--conversation <id>")
@@ -285,6 +288,59 @@ export function registerChatCommands(program: Command, context: CommandContext) 
       result.items.map((item) => `${item.sequence}\t${item.eventType}`).join("\n"),
     );
   });
+  const stream = eventGroup
+    .command("stream")
+    .requiredOption("--org <id>")
+    .requiredOption("--conversation <id>")
+    .option("--after <sequence>", "server sequence", "0")
+    .option("--once", "replay available history and exit after ready");
+  stream.action(
+    async (options: { org: string; conversation: string; after: string; once?: boolean }) => {
+      const runtime = await context.runtime();
+      const token = await runtime.client.getRealtimeAccessToken();
+      const socket = new WebSocket(runtime.realtimeUrl, [
+        "torg.realtime.v1",
+        `torg.token.${encodeRealtimeAccessToken(token)}`,
+      ]);
+      const collected: unknown[] = [];
+      await new Promise<void>((resolve, reject) => {
+        socket.once("open", () =>
+          socket.send(
+            JSON.stringify({
+              type: "subscribe",
+              organizationId: options.org,
+              conversationId: options.conversation,
+              afterSequence: Number(options.after),
+            }),
+          ),
+        );
+        socket.on("message", (raw) => {
+          const value = JSON.parse(raw.toString()) as {
+            type?: string;
+            event?: unknown;
+            cursor?: number;
+          };
+          if (value.type === "event") {
+            if (options.once) collected.push(value.event);
+            else context.emit(stream, value.event, JSON.stringify(value.event));
+          }
+          if (value.type === "ready" && options.once) {
+            context.emit(
+              stream,
+              { items: collected, cursor: value.cursor ?? Number(options.after) },
+              collected.map((event) => JSON.stringify(event)).join("\n"),
+            );
+            socket.close(1000, "history complete");
+          }
+        });
+        socket.once("error", reject);
+        socket.once("close", (code) => {
+          if (code === 1000 || code === 1001) resolve();
+          else reject(new Error(`realtime stream closed (${code})`));
+        });
+      });
+    },
+  );
   const compliance = chat.command("compliance");
   const complianceCreate = compliance
     .command("create")

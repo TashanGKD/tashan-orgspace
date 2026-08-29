@@ -71,6 +71,18 @@ services:
     command: ["pnpm", "--filter", "@tashan/worker", "start"]
     environment:
       DATABASE_URL: postgresql://orgspace:\${ORGSPACE_POSTGRES_PASSWORD}@postgres:5432/orgspace
+  realtime:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile.runtime
+    command: ["pnpm", "--filter", "@tashan/realtime", "start"]
+    read_only: true
+    environment:
+      DATABASE_URL: postgresql://orgspace:\${ORGSPACE_POSTGRES_PASSWORD}@postgres:5432/orgspace
+      REDIS_URL: redis://redis:6379
+      JWT_ACTIVE_KEY_ID: \${JWT_ACTIVE_KEY_ID:?required}
+      JWT_PRIVATE_KEY: \${JWT_PRIVATE_KEY:?required}
+      JWT_PUBLIC_KEY: \${JWT_PUBLIC_KEY:?required}
   gateway:
     build:
       context: ..
@@ -104,6 +116,10 @@ const validGateway = `server {
   listen 8080;
   server_name _;
   root /usr/share/nginx/html;
+  location = /v1/realtime {
+    proxy_set_header Upgrade $http_upgrade;
+    proxy_pass http://realtime:4120;
+  }
   location /v1/ {
     proxy_set_header X-Forwarded-For $http_x_forwarded_for;
     proxy_pass http://api:4110;
@@ -152,7 +168,7 @@ reverse_forward="127.0.0.1:$ecs_port:127.0.0.1:$aup_port"
 nohup autossh -M 0 -N -o ExitOnForwardFailure=yes -o ServerAliveInterval=30 -o ServerAliveCountMax=3 -i "$key_file" -R "$reverse_forward" "$ecs_target"
 `;
 
-const validRuntimeDockerfile = `FROM m.daocloud.io/docker.io/library/node:24.14.0-bookworm-slim\nUSER node\n`;
+const validRuntimeDockerfile = `FROM m.daocloud.io/docker.io/library/node:24.14.0-bookworm-slim\nCOPY apps/realtime/package.json apps/realtime/package.json\nCOPY apps/realtime apps/realtime\nUSER node\n`;
 const validWebDockerfile = `FROM m.daocloud.io/docker.io/library/node:24.14.0-bookworm-slim AS build\nFROM m.daocloud.io/docker.io/library/nginx:1.30.4-alpine\nUSER nginx\n`;
 const validEnvironmentExample = `ORGSPACE_POSTGRES_PASSWORD=
 MINIO_ROOT_USER=
@@ -318,6 +334,13 @@ expectReject("missing version", "api SERVICE_VERSION is required", {
 expectReject("wrong API upstream", "gateway must proxy /v1 to http://api:4110", {
   gateway: validGateway.replace("http://api:4110", "http://other:4110"),
 });
+expectReject(
+  "wrong realtime upstream",
+  "gateway must proxy WebSocket realtime to http://realtime:4120",
+  {
+    gateway: validGateway.replace("http://realtime:4120", "http://other:4120"),
+  },
+);
 expectReject("download SPA fallback", "downloads must return 404 without SPA fallback", {
   gateway: validGateway.replace(
     "location ^~ /downloads/orgspace/v {",
@@ -365,6 +388,12 @@ expectReject("unapproved database image", "postgres and redis must use the appro
 });
 expectReject("runtime image runs as root", "runtime image must declare USER node", {
   runtimeDockerfile: validRuntimeDockerfile.replace("USER node\n", ""),
+});
+expectReject("runtime omits realtime", "runtime image must include realtime service sources", {
+  runtimeDockerfile: validRuntimeDockerfile.replace(
+    "COPY apps/realtime/package.json apps/realtime/package.json\nCOPY apps/realtime apps/realtime\n",
+    "",
+  ),
 });
 expectReject("web image runs as root", "web image must declare USER nginx", {
   webDockerfile: validWebDockerfile.replace("USER nginx\n", ""),

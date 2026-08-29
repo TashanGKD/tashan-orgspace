@@ -997,7 +997,7 @@
     "idempotent": true,
     "confirmation": "none",
     "cli": "chat conversation list",
-    "web": "deferred",
+    "web": "required",
     "auditAction": "chat.conversation.list"
   },
   {
@@ -1010,7 +1010,7 @@
     "idempotent": true,
     "confirmation": "none",
     "cli": "chat conversation get",
-    "web": "deferred",
+    "web": "required",
     "auditAction": "chat.conversation.read"
   },
   {
@@ -1023,7 +1023,7 @@
     "idempotent": true,
     "confirmation": "required",
     "cli": "chat conversation direct-create",
-    "web": "deferred",
+    "web": "required",
     "auditAction": "chat.conversation.direct.create"
   },
   {
@@ -1036,7 +1036,7 @@
     "idempotent": true,
     "confirmation": "required",
     "cli": "chat conversation group-create",
-    "web": "deferred",
+    "web": "required",
     "auditAction": "chat.conversation.group.create"
   },
   {
@@ -1049,7 +1049,7 @@
     "idempotent": true,
     "confirmation": "none",
     "cli": "chat message list",
-    "web": "deferred",
+    "web": "required",
     "auditAction": "chat.message.list"
   },
   {
@@ -1062,7 +1062,7 @@
     "idempotent": true,
     "confirmation": "none",
     "cli": "chat message send",
-    "web": "deferred",
+    "web": "required",
     "auditAction": "chat.message.send"
   },
   {
@@ -1075,7 +1075,7 @@
     "idempotent": true,
     "confirmation": "none",
     "cli": "chat message edit",
-    "web": "deferred",
+    "web": "required",
     "auditAction": "chat.message.edit"
   },
   {
@@ -1088,7 +1088,7 @@
     "idempotent": true,
     "confirmation": "required",
     "cli": "chat message retract",
-    "web": "deferred",
+    "web": "required",
     "auditAction": "chat.message.retract"
   },
   {
@@ -1101,7 +1101,7 @@
     "idempotent": true,
     "confirmation": "none",
     "cli": "chat message reaction",
-    "web": "deferred",
+    "web": "required",
     "auditAction": "chat.message.reaction.set"
   },
   {
@@ -1114,8 +1114,21 @@
     "idempotent": true,
     "confirmation": "none",
     "cli": "chat event list",
-    "web": "deferred",
+    "web": "required",
     "auditAction": "chat.event.list"
+  },
+  {
+    "id": "chat.event.stream",
+    "version": 1,
+    "inputSchema": "ChatMessageListQuery",
+    "outputSchema": "ChatEventListResponse",
+    "permissions": ["conversation.member"],
+    "sideEffect": "none",
+    "idempotent": true,
+    "confirmation": "none",
+    "cli": "chat event stream",
+    "web": "deferred",
+    "auditAction": "chat.event.stream"
   },
   {
     "id": "chat.message.convert",
@@ -1127,7 +1140,7 @@
     "idempotent": true,
     "confirmation": "required",
     "cli": "chat message convert",
-    "web": "deferred",
+    "web": "required",
     "auditAction": "chat.message.convert"
   },
   {
@@ -1166,7 +1179,7 @@
     "idempotent": true,
     "confirmation": "none",
     "cli": "search query",
-    "web": "deferred",
+    "web": "required",
     "auditAction": "search.query"
   },
   {

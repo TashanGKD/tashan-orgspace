@@ -1,6 +1,7 @@
 import { request } from "node:http";
 
 import { describe, expect, test } from "vitest";
+import { WebSocket } from "ws";
 
 const stackUrl = process.env.PRODUCTION_STACK_URL;
 const expectedVersion = process.env.PRODUCTION_STACK_VERSION;
@@ -53,6 +54,17 @@ describe("production-shaped control plane", () => {
       headers: { origin: "https://attacker.example" },
     });
     expect(response.headers.get("access-control-allow-origin")).toBeNull();
+  });
+
+  test("proxies realtime WebSocket handshakes and rejects missing credentials", async () => {
+    const url = new URL("/v1/realtime", stackUrl);
+    url.protocol = "ws:";
+    const closeCode = await new Promise<number>((resolve, reject) => {
+      const socket = new WebSocket(url);
+      socket.once("close", resolve);
+      socket.once("error", reject);
+    });
+    expect(closeCode).toBe(4401);
   });
 
   test("returns security headers from the AUP gateway", async () => {

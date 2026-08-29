@@ -140,7 +140,15 @@ if (model.name !== productionContract.composeProject) {
   fail(`Compose project name must be ${productionContract.composeProject}`);
 }
 const services = record(model.services, "Compose services");
-for (const serviceName of ["postgres", "redis", "migrate", "api", "worker", "gateway"]) {
+for (const serviceName of [
+  "postgres",
+  "redis",
+  "migrate",
+  "api",
+  "worker",
+  "realtime",
+  "gateway",
+]) {
   record(services[serviceName], `service ${serviceName}`);
 }
 
@@ -218,6 +226,21 @@ if (apiEnvironment.NODE_ENV !== "production") fail("api NODE_ENV must be product
 if (typeof apiEnvironment.SERVICE_VERSION !== "string" || apiEnvironment.SERVICE_VERSION === "") {
   fail("api SERVICE_VERSION is required");
 }
+const realtime = record(services.realtime, "service realtime");
+const realtimeEnvironment = record(realtime.environment, "realtime environment");
+if (realtime.read_only !== true) fail("realtime root filesystem must be read-only");
+if (Array.isArray(realtime.ports) && realtime.ports.length > 0)
+  fail("realtime must not publish host ports");
+for (const key of [
+  "DATABASE_URL",
+  "REDIS_URL",
+  "JWT_ACTIVE_KEY_ID",
+  "JWT_PRIVATE_KEY",
+  "JWT_PUBLIC_KEY",
+]) {
+  if (typeof realtimeEnvironment[key] !== "string" || realtimeEnvironment[key] === "")
+    fail(`realtime ${key} is required`);
+}
 
 const gatewayConfig = read(paths.gateway);
 if (
@@ -225,6 +248,13 @@ if (
   !/proxy_pass\s+http:\/\/api:4110;/.test(gatewayConfig)
 ) {
   fail("gateway must proxy /v1 to http://api:4110");
+}
+if (
+  !/location\s+=\s+\/v1\/realtime\s*\{/.test(gatewayConfig) ||
+  !/proxy_set_header\s+Upgrade\s+\$http_upgrade;/.test(gatewayConfig) ||
+  !/proxy_pass\s+http:\/\/realtime:4120;/.test(gatewayConfig)
+) {
+  fail("gateway must proxy WebSocket realtime to http://realtime:4120");
 }
 const appServerStart = gatewayConfig.indexOf("server_name _;");
 if (appServerStart === -1) fail("gateway Web server block is missing");
@@ -316,6 +346,11 @@ if (
   fail("runtime image must pin the approved Node mirror image");
 }
 if (!/^USER node$/m.test(runtimeDockerfile)) fail("runtime image must declare USER node");
+if (
+  !runtimeDockerfile.includes("COPY apps/realtime/package.json apps/realtime/package.json") ||
+  !runtimeDockerfile.includes("COPY apps/realtime apps/realtime")
+)
+  fail("runtime image must include realtime service sources");
 
 const webDockerfile = read(paths.webDockerfile);
 if (

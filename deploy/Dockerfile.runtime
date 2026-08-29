@@ -11,6 +11,7 @@ RUN mkdir -p /opt/corepack \
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml tsconfig.base.json tsconfig.e2e.json ./
 COPY apps/api/package.json apps/api/package.json
 COPY apps/worker/package.json apps/worker/package.json
+COPY apps/realtime/package.json apps/realtime/package.json
 COPY packages/capabilities/package.json packages/capabilities/package.json
 COPY packages/contracts/package.json packages/contracts/package.json
 COPY packages/object-store/package.json packages/object-store/package.json
@@ -20,6 +21,7 @@ RUN pnpm install --frozen-lockfile
 
 COPY apps/api apps/api
 COPY apps/worker apps/worker
+COPY apps/realtime apps/realtime
 COPY packages/capabilities packages/capabilities
 COPY packages/contracts packages/contracts
 COPY packages/object-store packages/object-store

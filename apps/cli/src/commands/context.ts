@@ -14,6 +14,8 @@ export class CliUsageError extends Error {
 }
 
 export interface CliRuntime {
+  apiUrl: string;
+  realtimeUrl: string;
   client: OrgSpaceClient;
   fileByteTransport: FileByteTransport;
   credentials: CliSessionCredentials;

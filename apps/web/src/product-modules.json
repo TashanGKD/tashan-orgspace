@@ -212,10 +212,32 @@
     "label": "消息",
     "description": "查看群聊和成员消息",
     "context": "organization",
-    "status": "coming_soon",
+    "status": "available",
     "route": "/org/:organizationId/messages",
     "roles": ["org_owner", "org_admin", "member"],
-    "capabilities": []
+    "capabilities": [
+      "chat.conversation.list",
+      "chat.conversation.read",
+      "chat.conversation.direct.create",
+      "chat.conversation.group.create",
+      "chat.message.list",
+      "chat.message.send",
+      "chat.message.edit",
+      "chat.message.retract",
+      "chat.message.reaction.set",
+      "chat.message.convert",
+      "chat.event.list"
+    ]
+  },
+  {
+    "id": "organization.search",
+    "label": "搜索",
+    "description": "搜索有权限查看的组织内容",
+    "context": "organization",
+    "status": "available",
+    "route": "/org/:organizationId/search",
+    "roles": ["org_owner", "org_admin", "member"],
+    "capabilities": ["search.query"]
   },
   {
     "id": "organization.runtime",

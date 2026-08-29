@@ -92,7 +92,7 @@ if [ "$gateway_ready" != "1" ]; then
   exit 1
 fi
 
-for private_service in postgres redis minio api; do
+for private_service in postgres redis minio api realtime; do
   published="$(docker compose -f "$compose_file" -p "$project" port "$private_service" 2>/dev/null || true)"
   if [ -n "$published" ]; then
     echo "production-stack: $private_service unexpectedly published $published" >&2
@@ -105,6 +105,8 @@ PRODUCTION_STACK_URL="http://127.0.0.1:44110" \
   pnpm exec vitest run tests/production-stack/stack.test.ts
 
 docker compose -f "$compose_file" -p "$project" restart minio
+docker compose -f "$compose_file" -p "$project" restart realtime
+docker compose -f "$compose_file" -p "$project" up -d --wait realtime gateway
 minio_ready=0
 for readiness_attempt in $(seq 1 200); do
   if curl --fail --silent --show-error --max-time 1 \

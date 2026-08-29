@@ -154,11 +154,24 @@ async function createRuntime(program: Command, dependencies: CliDependencies): P
     credentialFile?: string;
     invocationSource: string;
   }>();
-  const environment = {
+  const environment: Record<string, string | undefined> = {
     ...(dependencies.environment ?? process.env),
     ...(globalOptions.apiUrl === undefined ? {} : { TORG_API_URL: globalOptions.apiUrl }),
   };
   const config = resolveCliConfig(environment);
+  const realtime = new URL(environment.TORG_REALTIME_URL ?? "/v1/realtime", config.apiUrl);
+  if (!["ws:", "wss:"].includes(realtime.protocol)) {
+    realtime.protocol = realtime.protocol === "https:" ? "wss:" : "ws:";
+  }
+  if (
+    !["ws:", "wss:"].includes(realtime.protocol) ||
+    realtime.username ||
+    realtime.password ||
+    realtime.search ||
+    realtime.hash
+  ) {
+    throw new Error("realtime URL must use WebSocket without embedded credentials");
+  }
   const invocationSource = z.enum(["cli", "ai_via_cli"]).parse(globalOptions.invocationSource);
   const prompt = dependencies.promptHidden ?? defaultPromptHidden;
   const credentialPath = globalOptions.credentialFile ?? config.credentialFile;
@@ -188,6 +201,8 @@ async function createRuntime(program: Command, dependencies: CliDependencies): P
       invocationSource,
     });
   return {
+    apiUrl: config.apiUrl,
+    realtimeUrl: realtime.toString(),
     client,
     fileByteTransport: dependencies.fileByteTransport ?? createNodeFileByteTransport(),
     credentials,

@@ -1,6 +1,6 @@
 import { writeFile } from "node:fs/promises";
 
-import { generateKeyPair } from "jose";
+import { importPKCS8, importSPKI } from "jose";
 import { createClient } from "redis";
 import {
   createInternalS3Client,
@@ -62,13 +62,15 @@ requireLoopback(redisUrl, "Redis");
 const sql = createDatabaseClient(databaseUrl);
 const redis = createClient({ url: redisUrl });
 await redis.connect();
-const { privateKey, publicKey } = await generateKeyPair("EdDSA");
+const privateKey = await importPKCS8(required("JWT_PRIVATE_KEY"), "EdDSA");
+const publicKey = await importSPKI(required("JWT_PUBLIC_KEY"), "EdDSA");
+const activeKeyId = required("JWT_ACTIVE_KEY_ID");
 const tokenService = new AccessTokenService({
   issuer: "https://api-org.tashan.chat",
   audience: "tashan-orgspace",
-  activeKeyId: `e2e-${namespace}`,
+  activeKeyId,
   privateKey,
-  publicKeys: new Map([[`e2e-${namespace}`, publicKey]]),
+  publicKeys: new Map([[activeKeyId, publicKey]]),
 });
 const app = await buildApp({
   sql,

@@ -16,10 +16,12 @@
     "@tashan/capabilities": "workspace:*",
     "@tashan/sdk": "workspace:*",
     "commander": "15.0.0",
+    "ws": "8.21.3",
     "zod": "4.4.3"
   },
   "devDependencies": {
     "@tashan/testkit": "workspace:*",
+    "@types/ws": "8.18.1",
     "jose": "6.2.9",
     "tsx": "4.23.12",
     "vitest": "4.1.10"

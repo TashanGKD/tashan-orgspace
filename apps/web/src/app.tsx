@@ -20,6 +20,8 @@ import {
 } from "./features/notifications/notification-center.js";
 import { ComingSoonPage } from "./features/roadmap/coming-soon-page.js";
 import { MyWorkPage } from "./features/my-work/my-work-page.js";
+import { ChatPage } from "./features/chat/chat-page.js";
+import { SearchPage } from "./features/search/search-page.js";
 import { Button } from "./design-system/primitives/index.js";
 import {
   OrganizationProvider,
@@ -51,6 +53,7 @@ const approvalSurface = resourceSurface("organization-approval");
 const objectiveSurface = resourceSurface("organization-objective");
 const partnerSurface = resourceSurface("organization-partner");
 const notificationSurface = resourceSurface("organization-notification");
+const conversationSurface = resourceSurface("organization-conversation");
 const notificationPolicyRoute = (() => {
   const module = productModules.find((candidate) => candidate.id === "organization.policies");
   if (!module) throw new Error("organization policy module is missing");
@@ -234,6 +237,20 @@ function NotificationsRoute({
       organizationId={organizationId}
       sdk={sdk}
       selectedNotificationId={notificationId}
+    />
+  );
+}
+
+function ChatRoute({ organizationId, sdk }: { organizationId: string; sdk: OrgSpaceClient }) {
+  const { conversationId } = useParams<{ conversationId?: string }>();
+  const session = useSession();
+  if (session.status !== "authenticated") return null;
+  return (
+    <ChatPage
+      accountId={session.account.id}
+      organizationId={organizationId}
+      sdk={sdk}
+      selectedConversationId={conversationId}
     />
   );
 }
@@ -643,6 +660,15 @@ function OrganizationRoutes({ sdk, displayName }: { sdk: OrgSpaceClient; display
           path={organizationRelativeRoute(notificationSurface.detailRoute)}
           element={<NotificationsRoute organizationId={organizationId} sdk={sdk} />}
         />
+        <Route
+          path={organizationRelativeRoute(conversationSurface.listRoute)}
+          element={<ChatRoute organizationId={organizationId} sdk={sdk} />}
+        />
+        <Route
+          path={organizationRelativeRoute(conversationSurface.detailRoute)}
+          element={<ChatRoute organizationId={organizationId} sdk={sdk} />}
+        />
+        <Route path="search" element={<SearchPage organizationId={organizationId} sdk={sdk} />} />
         <Route
           path={organizationRelativeRoute(notificationPolicyRoute)}
           element={

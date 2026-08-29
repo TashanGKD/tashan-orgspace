@@ -85,6 +85,7 @@
   "chat.message.retract": "撤回消息",
   "chat.message.reaction.set": "回应消息",
   "chat.event.list": "同步聊天事件",
+  "chat.event.stream": "实时接收聊天事件",
   "chat.message.convert": "将消息转为工作",
   "chat.compliance.create": "发起聊天合规检查",
   "chat.compliance.read": "查看聊天合规记录",

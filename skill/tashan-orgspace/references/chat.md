@@ -15,6 +15,8 @@ torg --invocation-source ai_via_cli --json chat message list --org <organization
 torg --invocation-source ai_via_cli --json chat message send --org <organization-id> --conversation <conversation-id> --body <text> --client-message-id <uuid> --idempotency-key <unique-key>
 torg --invocation-source ai_via_cli --json chat message retract --org <organization-id> --conversation <conversation-id> --message <message-id> --yes --idempotency-key <unique-key>
 torg --invocation-source ai_via_cli --json chat event list --org <organization-id> --conversation <conversation-id> --after <server-sequence>
+torg --invocation-source ai_via_cli --json chat event stream --org <organization-id> --conversation <conversation-id> --after <server-sequence>
+torg --invocation-source ai_via_cli --json chat event stream --org <organization-id> --conversation <conversation-id> --after <server-sequence> --once
 ```
 
 An edited or retracted message remains represented by append-only events. Never claim that withdrawal erases compliance history.
