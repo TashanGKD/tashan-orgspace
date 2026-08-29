@@ -1979,7 +1979,7 @@ if (input.type === "lifecycle") {
   } finally {
     await rm(directory, { recursive: true });
   }
-} else {
+} else if (input.type === "audit") {
   const organization = await command<{ organization: { id: string } }>(
     ["org", "create", "--name", "Audit Evidence", "--yes", "--idempotency-key", "audit-org"],
     aliceA,
@@ -1995,4 +1995,6 @@ if (input.type === "lifecycle") {
       events: audit.items,
     }),
   );
+} else {
+  throw new Error("unknown CLI E2E scenario");
 }

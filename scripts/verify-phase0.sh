@@ -16,6 +16,7 @@ run_step "pnpm format:check" pnpm format:check
 run_step "pnpm lint" pnpm lint
 run_step "pnpm typecheck" pnpm typecheck
 run_step "pnpm test" pnpm test
+run_step "pnpm exec vitest run tests/v1/journey-matrix.test.ts" pnpm exec vitest run tests/v1/journey-matrix.test.ts
 run_step "pnpm test:distribution" pnpm test:distribution
 run_step "node scripts/check-capability-coverage.mjs" node scripts/check-capability-coverage.mjs
 run_step "node scripts/check-file-storage-contract.mjs" node scripts/check-file-storage-contract.mjs

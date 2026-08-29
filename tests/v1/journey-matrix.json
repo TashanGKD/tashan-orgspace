@@ -1,0 +1,78 @@
+[
+  {
+    "area": "phone-auth",
+    "e2e": "tests/e2e/phone-auth-lifecycle.test.ts",
+    "scenario": null,
+    "web": ["apps/web/src/app.test.tsx"]
+  },
+  {
+    "area": "account-organization-audit",
+    "e2e": "tests/e2e/phase0-lifecycle.test.ts",
+    "scenario": "lifecycle",
+    "web": [
+      "apps/web/src/features/account/account-page.tsx",
+      "apps/web/src/features/audit/audit-page.test.tsx"
+    ]
+  },
+  {
+    "area": "cross-organization",
+    "e2e": "tests/e2e/cross-org-rejections.test.ts",
+    "scenario": "cross-org",
+    "web": ["apps/web/src/platform/context/organization-context.test.tsx"]
+  },
+  {
+    "area": "files-lifecycle",
+    "e2e": "tests/e2e/files-lifecycle.test.ts",
+    "scenario": "files",
+    "web": ["apps/web/src/features/files/files-page.test.tsx"]
+  },
+  {
+    "area": "files-authorization",
+    "e2e": "tests/e2e/files-authorization.test.ts",
+    "scenario": "files-authorization",
+    "web": ["apps/web/src/features/files/files-page.test.tsx"]
+  },
+  {
+    "area": "files-recovery",
+    "e2e": "tests/e2e/files-recovery.test.ts",
+    "scenario": "files-recovery",
+    "web": ["apps/web/src/features/files/files-page.test.tsx"]
+  },
+  {
+    "area": "work-okr-process",
+    "e2e": "tests/e2e/work-okr.test.ts",
+    "scenario": "work-okr",
+    "web": [
+      "apps/web/src/features/work/work-page.test.tsx",
+      "apps/web/src/features/okr/okr-page.test.tsx"
+    ]
+  },
+  {
+    "area": "partners",
+    "e2e": "tests/e2e/partners.test.ts",
+    "scenario": "partners",
+    "web": ["apps/web/src/features/partners/partners-page.test.tsx"]
+  },
+  {
+    "area": "notifications",
+    "e2e": "tests/e2e/notifications.test.ts",
+    "scenario": "notifications",
+    "web": ["apps/web/src/features/notifications/notification-center.test.tsx"]
+  },
+  {
+    "area": "chat-search-my-work",
+    "e2e": "tests/e2e/chat-search.test.ts",
+    "scenario": "chat-search",
+    "web": [
+      "apps/web/src/features/chat/chat-page.test.tsx",
+      "apps/web/src/features/search/search-page.test.tsx",
+      "apps/web/src/features/my-work/my-work-page.test.tsx"
+    ]
+  },
+  {
+    "area": "audit-evidence",
+    "e2e": "tests/e2e/audit-evidence.test.ts",
+    "scenario": "audit",
+    "web": ["apps/web/src/features/audit/audit-page.test.tsx"]
+  }
+]

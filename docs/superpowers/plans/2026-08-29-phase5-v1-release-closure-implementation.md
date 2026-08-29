@@ -36,11 +36,11 @@
 
 ### Task 4: Complete user, browser and CLI/Skill journeys
 **Files:** Create v1 E2E journeys, browser checklist and fresh-user distribution tests.
-- [ ] Add RED journey covering every Phase 1–4 transition and cross-organization rejection.
-- [ ] Run journey; record actual page/command blockers.
-- [ ] For every observed blocker, add a failing regression test in its owning Phase 1–4 module, implement the minimum fix there, and keep the Phase 5 change limited to verification wiring.
-- [ ] Rerun desktop/mobile browser, CLI JSON and fresh Skill install.
-- [ ] Commit: `git commit -m "test(v1): add complete user journey"`.
+- [x] Add RED journey covering every Phase 1–4 transition and cross-organization rejection.
+- [x] Run journey; record actual page/command blockers.
+- [x] For every observed blocker, add a failing regression test in its owning Phase 1–4 module, implement the minimum fix there, and keep the Phase 5 change limited to verification wiring.
+- [ ] Rerun desktop/mobile browser, CLI JSON and fresh Skill install. (Production-login browser pass remains after approved AUP deploy.)
+- [x] Commit: `git commit -m "test(v1): add complete user journey"`.
 
 ### Task 5: Production release and evidence
 **Files:** Update release manifests, README, architecture status and `docs/verification/v1-full-product-acceptance.md`.
