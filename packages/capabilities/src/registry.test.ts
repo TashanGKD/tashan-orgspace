@@ -129,6 +129,16 @@ describe("Phase 0 capability source", () => {
         "notification.preference.update",
         "notification.policy.read",
         "notification.policy.publish",
+        "chat.conversation.list",
+        "chat.conversation.read",
+        "chat.conversation.direct.create",
+        "chat.conversation.group.create",
+        "chat.message.list",
+        "chat.message.send",
+        "chat.message.edit",
+        "chat.message.retract",
+        "chat.message.reaction.set",
+        "chat.event.list",
         "partner.list",
         "partner.read",
         "partner.create",
@@ -148,7 +158,7 @@ describe("Phase 0 capability source", () => {
         "partner.export",
       ].sort(),
     );
-    expect(new Set(phase0Capabilities.map(({ id }) => id)).size).toBe(93);
+    expect(new Set(phase0Capabilities.map(({ id }) => id)).size).toBe(103);
   });
 
   test("keeps revocation and organization writes explicitly guarded", () => {

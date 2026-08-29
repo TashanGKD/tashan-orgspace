@@ -20,11 +20,11 @@
 
 ### Task 2: HTTP history and realtime delivery
 **Files:** Create `apps/api/src/routes/chat-routes.ts`, `apps/realtime/package.json`, `apps/realtime/src/main.ts`, `apps/realtime/src/cursor.ts`, `apps/realtime/src/realtime.integration.test.ts`.
-- [ ] Write RED tests for missed WebSocket event, cursor gap, duplicate delivery and revoked Membership.
-- [ ] Run tests; expect realtime service missing.
-- [ ] Implement HTTP history truth, Redis fan-out and WebSocket cursor resume.
-- [ ] Run restart and gap-repair tests.
-- [ ] Commit: `git commit -m "feat(realtime): stream durable chat events"`.
+- [x] Write RED tests for missed WebSocket event, cursor gap, duplicate delivery and revoked Membership.
+- [x] Run tests; expect realtime service missing.
+- [x] Implement HTTP history truth, Redis fan-out and WebSocket cursor resume.
+- [x] Run restart and gap-repair tests.
+- [x] Commit: `git commit -m "feat(realtime): stream durable chat events"`.
 
 ### Task 3: Resource links, withdrawal and compliance
 **Files:** Modify `apps/api/src/chat/chat-service.ts`; create `apps/api/src/chat/compliance-service.ts`, `apps/api/src/routes/chat-compliance-routes.ts`, `apps/api/test/chat/compliance.integration.test.ts`.
@@ -35,7 +35,7 @@
 - [ ] Commit: `git commit -m "security(chat): enforce resource and compliance bounds"`.
 
 ### Task 4: Authorized search providers
-**Files:** Create `apps/api/migrations/018_search.sql`, `packages/contracts/src/search.ts`, `apps/api/src/search/search-service.ts`, `apps/api/src/search/providers/`, `apps/api/test/search/search-inference.integration.test.ts`.
+**Files:** Create `apps/api/migrations/019_search.sql`, `packages/contracts/src/search.ts`, `apps/api/src/search/search-service.ts`, `apps/api/src/search/providers/`, `apps/api/test/search/search-inference.integration.test.ts`.
 - [ ] Write RED tests for file/work/OKR/Partner/member/message providers, restricted counts and stale Membership cache.
 - [ ] Run tests; expect search service missing.
 - [ ] Implement provider interface returning ResourceRefs after domain authorization; index projections consume DomainEvent.

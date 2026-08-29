@@ -142,6 +142,37 @@ importers:
         specifier: 4.1.10
         version: 4.1.10(@types/node@26.2.0)(jsdom@29.0.1(@noble/hashes@2.4.0))(vite@8.2.1(@types/node@26.2.0)(esbuild@0.28.2)(tsx@4.23.12)(yaml@2.9.0))
 
+  apps/realtime:
+    dependencies:
+      "@tashan/contracts":
+        specifier: workspace:*
+        version: link:../../packages/contracts
+      jose:
+        specifier: 6.2.9
+        version: 6.2.9
+      postgres:
+        specifier: 3.4.9
+        version: 3.4.9
+      redis:
+        specifier: 6.2.1
+        version: 6.2.1
+      ws:
+        specifier: 8.21.3
+        version: 8.21.3
+      zod:
+        specifier: 4.4.3
+        version: 4.4.3
+    devDependencies:
+      "@types/ws":
+        specifier: 8.18.1
+        version: 8.18.1
+      tsx:
+        specifier: 4.23.12
+        version: 4.23.12
+      vitest:
+        specifier: 4.1.10
+        version: 4.1.10(@types/node@26.2.0)(jsdom@29.0.1(@noble/hashes@2.4.0))(vite@8.2.1(@types/node@26.2.0)(esbuild@0.28.2)(tsx@4.23.12)(yaml@2.9.0))
+
   apps/web:
     dependencies:
       "@noble/hashes":

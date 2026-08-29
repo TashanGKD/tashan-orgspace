@@ -33,6 +33,9 @@ export const Conversation = z
   })
   .strict();
 export const ConversationReadResponse = Conversation;
+export const ConversationListResponse = z
+  .object({ items: z.array(Conversation), nextCursor: z.null() })
+  .strict();
 
 export const ChatMessageSendRequest = z
   .object({

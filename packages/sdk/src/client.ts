@@ -4,6 +4,14 @@ import { Capability, type CapabilityId } from "@tashan/capabilities";
 import {
   AuditListQuery,
   AuditListResponse,
+  ChatEventListResponse,
+  ChatMessage,
+  ChatMessageEditRequest,
+  ChatMessageListQuery,
+  ChatMessageListResponse,
+  ChatMessageSendRequest,
+  ChatReactionResponse,
+  ChatReactionSetRequest,
   CapabilityIdPath,
   DeviceIdPath,
   DeviceListResponse,
@@ -37,6 +45,10 @@ import {
   HealthResponse,
   LoginRequest,
   LoginResponse,
+  ConversationDirectCreateRequest,
+  ConversationGroupCreateRequest,
+  ConversationListResponse,
+  ConversationReadResponse,
   LogoutRequest,
   LogoutResponse,
   OrganizationCreateRequest,
@@ -1054,6 +1066,131 @@ export function createOrgSpaceClient(options: OrgSpaceClientOptions) {
         notificationPolicyPath(pathId(organizationId)),
         NotificationPolicyResponse,
         NotificationPolicyPublishRequest.parse(input),
+        { ...mutation, authenticated: true },
+      ),
+
+    listConversations: (organizationId: string, signal?: AbortSignal) =>
+      request(
+        "GET",
+        `/v1/organizations/${pathId(organizationId)}/conversations`,
+        ConversationListResponse,
+        undefined,
+        { authenticated: true, signal },
+      ),
+    readConversation: (organizationId: string, conversationId: string, signal?: AbortSignal) =>
+      request(
+        "GET",
+        `/v1/organizations/${pathId(organizationId)}/conversations/${pathId(conversationId)}`,
+        ConversationReadResponse,
+        undefined,
+        { authenticated: true, signal },
+      ),
+    createDirectConversation: (organizationId: string, input: unknown, mutation: MutationOptions) =>
+      request(
+        "POST",
+        `/v1/organizations/${pathId(organizationId)}/conversations/direct`,
+        ConversationReadResponse,
+        ConversationDirectCreateRequest.parse(input),
+        { ...mutation, authenticated: true },
+      ),
+    createGroupConversation: (organizationId: string, input: unknown, mutation: MutationOptions) =>
+      request(
+        "POST",
+        `/v1/organizations/${pathId(organizationId)}/conversations/group`,
+        ConversationReadResponse,
+        ConversationGroupCreateRequest.parse(input),
+        { ...mutation, authenticated: true },
+      ),
+    listChatMessages: (
+      organizationId: string,
+      conversationId: string,
+      input: unknown,
+      signal?: AbortSignal,
+    ) => {
+      const query = ChatMessageListQuery.parse(input);
+      const search = new URLSearchParams({
+        afterSequence: String(query.afterSequence),
+        limit: String(query.limit),
+      });
+      return request(
+        "GET",
+        `/v1/organizations/${pathId(organizationId)}/conversations/${pathId(conversationId)}/messages?${search}`,
+        ChatMessageListResponse,
+        undefined,
+        { authenticated: true, signal },
+      );
+    },
+    listChatEvents: (
+      organizationId: string,
+      conversationId: string,
+      input: unknown,
+      signal?: AbortSignal,
+    ) => {
+      const query = ChatMessageListQuery.parse(input);
+      const search = new URLSearchParams({
+        afterSequence: String(query.afterSequence),
+        limit: String(query.limit),
+      });
+      return request(
+        "GET",
+        `/v1/organizations/${pathId(organizationId)}/conversations/${pathId(conversationId)}/events?${search}`,
+        ChatEventListResponse,
+        undefined,
+        { authenticated: true, signal },
+      );
+    },
+    sendChatMessage: (
+      organizationId: string,
+      conversationId: string,
+      input: unknown,
+      mutation: MutationOptions,
+    ) =>
+      request(
+        "POST",
+        `/v1/organizations/${pathId(organizationId)}/conversations/${pathId(conversationId)}/messages`,
+        ChatMessage,
+        ChatMessageSendRequest.parse(input),
+        { ...mutation, authenticated: true },
+      ),
+    editChatMessage: (
+      organizationId: string,
+      conversationId: string,
+      messageId: string,
+      input: unknown,
+      mutation: MutationOptions,
+    ) =>
+      request(
+        "POST",
+        `/v1/organizations/${pathId(organizationId)}/conversations/${pathId(conversationId)}/messages/${pathId(messageId)}/edit`,
+        ChatMessage,
+        ChatMessageEditRequest.parse(input),
+        { ...mutation, authenticated: true },
+      ),
+    retractChatMessage: (
+      organizationId: string,
+      conversationId: string,
+      messageId: string,
+      mutation: MutationOptions,
+    ) =>
+      request(
+        "POST",
+        `/v1/organizations/${pathId(organizationId)}/conversations/${pathId(conversationId)}/messages/${pathId(messageId)}/retract`,
+        ChatMessage,
+        {},
+        { ...mutation, authenticated: true },
+      ),
+    setChatReaction: (
+      organizationId: string,
+      conversationId: string,
+      messageId: string,
+      input: unknown,
+      mutation: MutationOptions,
+    ) =>
+      request(
+        "POST",
+        `/v1/organizations/${pathId(organizationId)}/conversations/${pathId(conversationId)}/messages/${pathId(messageId)}/reaction`,
+        ChatReactionResponse,
+        ChatReactionSetRequest.parse(input),
         { ...mutation, authenticated: true },
       ),
 

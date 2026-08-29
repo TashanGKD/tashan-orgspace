@@ -159,6 +159,17 @@ export class ChatService {
     await requireConversationAccess(tx, accountId, organizationId, conversationId);
     return this.state(tx, conversationId);
   }
+  public async listConversations(tx: TransactionClient, accountId: string, organizationId: string) {
+    await requireChatOrganizationMember(tx, accountId, organizationId);
+    const rows = await tx<{ id: string }[]>`
+      select conversation.id from conversations conversation
+      join conversation_members member on member.conversation_id=conversation.id
+      where conversation.organization_id=${organizationId} and member.account_id=${accountId}
+        and member.left_at is null
+      order by conversation.updated_at desc,conversation.id
+    `;
+    return Promise.all(rows.map((row) => this.state(tx, row.id)));
+  }
   private async nextSequence(tx: TransactionClient, conversationId: string) {
     const [row] = await tx<{ next_sequence: number | string }[]>`
       update conversations set next_sequence=next_sequence+1,updated_at=now()

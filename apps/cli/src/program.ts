@@ -31,6 +31,7 @@ import {
   notificationCapabilityIds,
   registerNotificationCommands,
 } from "./commands/notification.js";
+import { chatCapabilityIds, registerChatCommands } from "./commands/chat.js";
 import { resolveCliConfig } from "./config.js";
 import { withMemoryFallback, type CredentialStore } from "./credentials/credential-store.js";
 import { EncryptedFileStore } from "./credentials/encrypted-file-store.js";
@@ -55,6 +56,7 @@ export const registeredCapabilityIds = new Set([
   ...okrCapabilityIds,
   ...partnerCapabilityIds,
   ...notificationCapabilityIds,
+  ...chatCapabilityIds,
 ]);
 
 export interface CliDependencies {
@@ -128,6 +130,7 @@ export function buildProgram(output: CliOutput, dependencies: CliDependencies = 
   registerOkrCommands(program, commandContext);
   registerPartnerCommands(program, commandContext);
   registerNotificationCommands(program, commandContext);
+  registerChatCommands(program, commandContext);
 
   program.action(() => {
     if (program.opts<{ json?: boolean }>().json === true) {

@@ -39,6 +39,7 @@ import { registerDeviceRoutes } from "./routes/device-routes.js";
 import { registerOrganizationRoutes } from "./routes/organization-routes.js";
 import { registerOkrRoutes } from "./routes/okr-routes.js";
 import { registerNotificationRoutes } from "./routes/notification-routes.js";
+import { registerChatRoutes } from "./routes/chat-routes.js";
 import { registerPartnerRoutes } from "./routes/partner-routes.js";
 import { registerPhoneRoutes } from "./routes/phone-routes.js";
 import { registerFileRoutes } from "./routes/file-routes.js";
@@ -48,6 +49,7 @@ import { SpaceService } from "./spaces/space-service.js";
 import { WorkService } from "./work/work-service.js";
 import { NotificationService } from "./notifications/notification-service.js";
 import { NotificationPolicyService } from "./notifications/notification-policy-service.js";
+import { ChatService } from "./chat/chat-service.js";
 
 export interface BuildAppOptions {
   sql: DatabaseClient;
@@ -146,6 +148,12 @@ export async function buildApp(options: BuildAppOptions): Promise<FastifyInstanc
     sql: options.sql,
     notifications: new NotificationService(),
     policies: new NotificationPolicyService(),
+    mutations,
+    authenticate,
+  });
+  await registerChatRoutes(app, {
+    sql: options.sql,
+    chat: new ChatService(),
     mutations,
     authenticate,
   });

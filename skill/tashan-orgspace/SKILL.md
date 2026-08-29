@@ -63,7 +63,7 @@ torg --invocation-source ai_via_cli --json device list
 torg --invocation-source ai_via_cli --json audit list --limit 25
 ```
 
-The prerelease covers authentication (including verification-code SMS), device sessions, organizations, spaces and files, work/OKR, partners, notifications, capability discovery, and audit reads. Chat, remote execution, services, databases, domains, and AI employees remain planned capabilities unless the live capability endpoint says otherwise.
+The prerelease covers authentication (including verification-code SMS), device sessions, organizations, spaces and files, work/OKR, partners, notifications, organization chat history, capability discovery, and audit reads. Realtime streaming, remote execution, services, databases, domains, and AI employees remain planned capabilities unless the live capability endpoint says otherwise.
 
 ## Respond
 

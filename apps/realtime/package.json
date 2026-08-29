@@ -1,0 +1,25 @@
+{
+  "name": "@tashan/realtime",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "tsx src/main.ts",
+    "test": "vitest run --exclude '**/network.integration.test.ts'",
+    "test:integration": "vitest run --config vitest.integration.config.ts",
+    "typecheck": "tsc --noEmit -p tsconfig.json"
+  },
+  "dependencies": {
+    "@tashan/contracts": "workspace:*",
+    "jose": "6.2.9",
+    "postgres": "3.4.9",
+    "redis": "6.2.1",
+    "ws": "8.21.3",
+    "zod": "4.4.3"
+  },
+  "devDependencies": {
+    "@types/ws": "8.18.1",
+    "tsx": "4.23.12",
+    "vitest": "4.1.10"
+  }
+}

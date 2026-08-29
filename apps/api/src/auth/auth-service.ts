@@ -13,6 +13,7 @@ import { type AccessTokenInput, AccessTokenService } from "./access-token.js";
 import { hashPassword, verifyPassword } from "./password.js";
 import { generateRefreshToken, hashRefreshToken } from "./refresh-token.js";
 import { createPersonalSpace } from "../spaces/space-bootstrap.js";
+import { SessionAuthenticator } from "./session-authenticator.js";
 
 export interface LoginRateLimiter {
   consume(key: string): Promise<boolean>;
@@ -55,12 +56,14 @@ export class AuthService {
   private readonly tokenService: AccessTokenService;
   private readonly rateLimiter: LoginRateLimiter;
   private readonly phones: PhoneVerificationService;
+  private readonly sessionAuthenticator: SessionAuthenticator;
 
   public constructor(options: AuthServiceOptions) {
     this.sql = options.sql;
     this.tokenService = options.tokenService;
     this.rateLimiter = options.rateLimiter;
     this.phones = options.phones;
+    this.sessionAuthenticator = new SessionAuthenticator(options.sql, options.tokenService);
   }
 
   private async createSession(
@@ -273,70 +276,7 @@ export class AuthService {
   }
 
   public async authenticate(accessToken: string) {
-    const claims = await this.tokenService.verify(accessToken);
-    const [session] = await this.sql<
-      {
-        account_id: string;
-        principal_id: string;
-        device_id: string;
-        token_version: number;
-        session_expires_at: Date;
-        session_revoked_at: Date | null;
-        device_revoked_at: Date | null;
-        account_status: string;
-        client_channel: "web" | "cli";
-        device_name: string;
-        device_os: string;
-        device_architecture: string;
-        device_client_version: string;
-      }[]
-    >`
-      select
-        s.account_id, s.principal_id, s.device_id, s.token_version,
-        s.expires_at as session_expires_at, s.revoked_at as session_revoked_at,
-        d.revoked_at as device_revoked_at, a.status as account_status,
-        d.name as device_name, d.os as device_os, d.architecture as device_architecture,
-        d.client_version as device_client_version,
-        s.client_channel
-      from sessions s
-      join devices d on d.id = s.device_id
-      join accounts a on a.id = s.account_id
-      where s.id = ${claims.sessionId}
-    `;
-    if (session === undefined || session.session_revoked_at !== null) {
-      throw new AuthError("AUTH_TOKEN_REVOKED", "session is revoked");
-    }
-    if (session.device_revoked_at !== null) {
-      throw new AuthError("DEVICE_REVOKED", "device is revoked");
-    }
-    if (session.session_expires_at.getTime() <= Date.now()) {
-      throw new AuthError("AUTH_TOKEN_EXPIRED", "session has expired");
-    }
-    if (
-      session.account_status !== "active" ||
-      session.account_id !== claims.sub ||
-      session.principal_id !== claims.principalId ||
-      session.device_id !== claims.deviceId ||
-      session.token_version !== claims.tokenVersion ||
-      session.client_channel !== claims.actorSource
-    ) {
-      throw new AuthError("AUTH_TOKEN_REVOKED", "access token no longer matches its session");
-    }
-
-    return {
-      accountId: session.account_id,
-      principalId: session.principal_id,
-      sessionId: claims.sessionId,
-      deviceId: session.device_id,
-      tokenVersion: session.token_version,
-      actorSource: session.client_channel,
-      deviceMetadata: {
-        name: session.device_name,
-        os: session.device_os,
-        architecture: session.device_architecture,
-        clientVersion: session.device_client_version,
-      },
-    };
+    return this.sessionAuthenticator.authenticate(accessToken);
   }
 
   public async refresh(
