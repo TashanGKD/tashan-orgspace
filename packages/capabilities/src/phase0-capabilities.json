@@ -1118,6 +1118,45 @@
     "auditAction": "chat.event.list"
   },
   {
+    "id": "chat.message.convert",
+    "version": 1,
+    "inputSchema": "ChatMessageConvertRequest",
+    "outputSchema": "WorkItemStateResponse",
+    "permissions": ["conversation.member"],
+    "sideEffect": "write",
+    "idempotent": true,
+    "confirmation": "required",
+    "cli": "chat message convert",
+    "web": "deferred",
+    "auditAction": "chat.message.convert"
+  },
+  {
+    "id": "chat.compliance.create",
+    "version": 1,
+    "inputSchema": "ChatComplianceReviewRequest",
+    "outputSchema": "ChatComplianceReview",
+    "permissions": ["organization.owner"],
+    "sideEffect": "write",
+    "idempotent": true,
+    "confirmation": "required",
+    "cli": "chat compliance create",
+    "web": "deferred",
+    "auditAction": "chat.compliance.create"
+  },
+  {
+    "id": "chat.compliance.read",
+    "version": 1,
+    "inputSchema": "ComplianceReviewPath",
+    "outputSchema": "ChatComplianceReviewResponse",
+    "permissions": ["organization.owner"],
+    "sideEffect": "none",
+    "idempotent": true,
+    "confirmation": "none",
+    "cli": "chat compliance get",
+    "web": "deferred",
+    "auditAction": "chat.compliance.read"
+  },
+  {
     "id": "partner.list",
     "version": 1,
     "inputSchema": "PartnerListQuery",

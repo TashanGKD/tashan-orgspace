@@ -37,11 +37,17 @@ export const ConversationListResponse = z
   .object({ items: z.array(Conversation), nextCursor: z.null() })
   .strict();
 
+export const ChatAttachment = z.discriminatedUnion("type", [
+  z.object({ type: z.literal("file"), spaceId: z.uuid(), entryId: z.uuid() }).strict(),
+  z.object({ type: z.enum(["task", "meeting", "approval"]), workItemId: z.uuid() }).strict(),
+]);
+
 export const ChatMessageSendRequest = z
   .object({
     clientMessageId: z.uuid(),
     body: z.string().trim().min(1).max(20_000),
     replyToMessageId: z.uuid().optional(),
+    attachments: z.array(ChatAttachment).max(20).default([]),
   })
   .strict();
 export const ChatMessageEditRequest = z
@@ -63,6 +69,7 @@ export const ChatMessage = z
     editedAt: IsoDateTime.nullable(),
     retractedAt: IsoDateTime.nullable(),
     createdAt: IsoDateTime,
+    attachments: z.array(ChatAttachment),
   })
   .strict();
 export const ChatMessageListQuery = z
@@ -106,3 +113,59 @@ export const ChatReactionResponse = z
     sequence: z.number().int().min(1).nullable(),
   })
   .strict();
+
+export const ChatMessageConvertRequest = z
+  .object({
+    type: z.enum(["task", "meeting", "approval"]),
+    title: z.string().trim().min(1).max(200),
+    assigneeAccountIds: z.array(AccountId).max(100).default([]),
+    dueAt: IsoDateTime.optional(),
+    meetingStartsAt: IsoDateTime.optional(),
+    sendSms: z.boolean().default(false),
+  })
+  .strict()
+  .refine((value) => value.type !== "meeting" || value.meetingStartsAt !== undefined, {
+    message: "meeting start time is required",
+  });
+
+export const ChatComplianceReviewRequest = z
+  .object({
+    conversationId: z.uuid(),
+    reason: z.string().trim().min(10).max(2_000),
+    startsAt: IsoDateTime,
+    endsAt: IsoDateTime,
+  })
+  .strict()
+  .refine((value) => {
+    const start = Date.parse(value.startsAt),
+      end = Date.parse(value.endsAt);
+    return end > start && end - start <= 31 * 24 * 60 * 60 * 1_000;
+  }, "compliance window must be positive and no longer than 31 days");
+export const ChatComplianceReview = z
+  .object({
+    id: z.uuid(),
+    organizationId: OrganizationId,
+    conversationId: z.uuid(),
+    requestedByAccountId: AccountId,
+    reason: z.string(),
+    startsAt: IsoDateTime,
+    endsAt: IsoDateTime,
+    createdAt: IsoDateTime,
+  })
+  .strict();
+export const ChatComplianceEvent = z
+  .object({
+    id: z.uuid(),
+    sequence: z.number().int().min(1),
+    eventType: ChatEventType,
+    messageId: z.uuid(),
+    actorAccountId: AccountId,
+    body: z.string().nullable(),
+    createdAt: IsoDateTime,
+  })
+  .strict();
+export const ChatComplianceReviewResponse = z
+  .object({ review: ChatComplianceReview, events: z.array(ChatComplianceEvent) })
+  .strict();
+
+export type ChatAttachment = z.infer<typeof ChatAttachment>;

@@ -3,6 +3,7 @@ import type { JSONValue } from "postgres";
 import {
   ChatEvent,
   ChatMessage,
+  ChatMessageConvertRequest,
   ChatMessageEditRequest,
   ChatMessageListQuery,
   ChatMessageSendRequest,
@@ -10,10 +11,13 @@ import {
   Conversation,
   ConversationDirectCreateRequest,
   ConversationGroupCreateRequest,
+  type ChatAttachment,
 } from "@tashan/contracts";
 import { AuthError } from "../auth/auth-errors.js";
 import type { TransactionClient } from "../db/transaction.js";
 import { requireChatOrganizationMember, requireConversationAccess } from "./chat-authorization.js";
+import { requireFilePermission } from "../files/file-authorization.js";
+import { WorkService } from "../work/work-service.js";
 
 interface ConversationRow {
   id: string;
@@ -50,7 +54,7 @@ interface EventRow {
   payload: Record<string, JSONValue>;
   created_at: Date;
 }
-const message = (row: MessageRow) =>
+const message = (row: MessageRow, attachments: ChatAttachment[]) =>
   ChatMessage.parse({
     id: row.id,
     conversationId: row.conversation_id,
@@ -63,6 +67,7 @@ const message = (row: MessageRow) =>
     editedAt: row.edited_at?.toISOString() ?? null,
     retractedAt: row.retracted_at?.toISOString() ?? null,
     createdAt: row.created_at.toISOString(),
+    attachments,
   });
 const event = (row: EventRow) =>
   ChatEvent.parse({
@@ -80,6 +85,24 @@ function payloadHash(value: unknown) {
 }
 
 export class ChatService {
+  private readonly work = new WorkService();
+  private async attachments(tx: TransactionClient, messageId: string): Promise<ChatAttachment[]> {
+    const rows = await tx<
+      {
+        attachment_type: "file" | "task" | "meeting" | "approval";
+        target_id: string;
+        space_id: string | null;
+      }[]
+    >`select attachment_type,target_id,space_id from chat_message_attachments where message_id=${messageId} order by position`;
+    return rows.map((row) =>
+      row.attachment_type === "file"
+        ? { type: "file", spaceId: row.space_id!, entryId: row.target_id }
+        : { type: row.attachment_type, workItemId: row.target_id },
+    );
+  }
+  private async publicMessage(tx: TransactionClient, row: MessageRow) {
+    return message(row, await this.attachments(tx, row.id));
+  }
   private async state(tx: TransactionClient, conversationId: string) {
     const [row] = await tx<
       ConversationRow[]
@@ -213,7 +236,7 @@ export class ChatService {
     if (existing) {
       if (existing.client_payload_hash !== hash)
         throw new AuthError("CHAT_CONFLICT", "client message ID was reused with different content");
-      return message(existing);
+      return this.publicMessage(tx, existing);
     }
     if (input.replyToMessageId) {
       const [reply] = await tx<
@@ -229,15 +252,83 @@ export class ChatService {
     `;
     if (!row) throw new Error("chat message insert failed");
     await tx`insert into collaboration_resources(organization_id,resource_type,resource_id)values(${organizationId},'message',${id})`;
+    await this.storeAttachments(
+      tx,
+      organizationId,
+      conversationId,
+      id,
+      accountId,
+      input.attachments,
+    );
     await this.appendEvent(tx, {
       conversationId,
       sequence,
       eventType: "message.sent",
       messageId: id,
       actorAccountId: accountId,
-      payload: { body: input.body, replyToMessageId: input.replyToMessageId ?? null },
+      payload: {
+        body: input.body,
+        replyToMessageId: input.replyToMessageId ?? null,
+        attachmentCount: input.attachments.length,
+      },
     });
-    return message(row);
+    return this.publicMessage(tx, row);
+  }
+  private async storeAttachments(
+    tx: TransactionClient,
+    organizationId: string,
+    conversationId: string,
+    messageId: string,
+    actorAccountId: string,
+    attachments: ChatAttachment[],
+  ) {
+    const members = await tx<{ account_id: string }[]>`
+      select account_id from conversation_members where conversation_id=${conversationId} and left_at is null
+    `;
+    for (const [position, attachment] of attachments.entries()) {
+      const targetType = attachment.type === "file" ? "file" : "work_item";
+      const targetId = attachment.type === "file" ? attachment.entryId : attachment.workItemId;
+      if (attachment.type === "file") {
+        for (const member of members) {
+          try {
+            await requireFilePermission(tx, {
+              accountId: member.account_id,
+              spaceId: attachment.spaceId,
+              entryId: attachment.entryId,
+              permission: "read",
+            });
+          } catch (error) {
+            if (error instanceof AuthError)
+              throw new AuthError("CHAT_FORBIDDEN", "attachment is not readable by every member");
+            throw error;
+          }
+        }
+      } else {
+        const [work] = await tx<{ id: string; type: string }[]>`
+          select id,type from work_items where id=${attachment.workItemId} and organization_id=${organizationId}
+        `;
+        if (!work || work.type !== attachment.type)
+          throw new AuthError("CHAT_FORBIDDEN", "attached work item is unavailable");
+      }
+      const [resource] = await tx<{ exists: boolean }[]>`
+        select exists(select 1 from collaboration_resources where organization_id=${organizationId} and resource_type=${targetType} and resource_id=${targetId}) exists
+      `;
+      if (!resource?.exists) throw new AuthError("CHAT_FORBIDDEN", "attachment is unavailable");
+      await tx`
+        insert into chat_message_attachments(message_id,position,attachment_type,target_id,space_id)
+        values(${messageId},${position},${attachment.type},${targetId},${attachment.type === "file" ? attachment.spaceId : null})
+      `;
+      await tx`
+        insert into resource_links(organization_id,source_type,source_id,target_type,target_id,relation_type,created_by_account_id)
+        values(${organizationId},'message',${messageId},${targetType},${targetId},'attachment',${actorAccountId})
+        on conflict do nothing
+      `;
+      await tx`
+        insert into resource_links(organization_id,source_type,source_id,target_type,target_id,relation_type,created_by_account_id)
+        values(${organizationId},${targetType},${targetId},'message',${messageId},'attached_by_message',${actorAccountId})
+        on conflict do nothing
+      `;
+    }
   }
   public async listMessages(
     tx: TransactionClient,
@@ -252,7 +343,7 @@ export class ChatService {
       MessageRow[]
     >`select * from chat_messages where conversation_id=${conversationId} and sequence>${input.afterSequence} order by sequence,id limit ${input.limit}`;
     return {
-      items: rows.map(message),
+      items: await Promise.all(rows.map((row) => this.publicMessage(tx, row))),
       nextCursor: rows.length === input.limit ? Number(rows.at(-1)!.sequence) : null,
     };
   }
@@ -295,7 +386,8 @@ export class ChatService {
       actorAccountId: accountId,
       payload: { body: input.body },
     });
-    return message(row!);
+    if (!row) throw new Error("message edit failed");
+    return this.publicMessage(tx, row);
   }
   public async retractMessage(
     tx: TransactionClient,
@@ -318,7 +410,8 @@ export class ChatService {
       actorAccountId: accountId,
       payload: {},
     });
-    return message(row!);
+    if (!row) throw new Error("message retract failed");
+    return this.publicMessage(tx, row);
   }
   public async setReaction(
     tx: TransactionClient,
@@ -366,5 +459,59 @@ export class ChatService {
       items: rows.map(event),
       nextCursor: rows.length === input.limit ? Number(rows.at(-1)!.sequence) : null,
     };
+  }
+  public async convertMessage(
+    tx: TransactionClient,
+    accountId: string,
+    organizationId: string,
+    conversationId: string,
+    messageId: string,
+    raw: unknown,
+    idempotencyKey: string,
+  ) {
+    const input = ChatMessageConvertRequest.parse(raw);
+    if (!idempotencyKey.trim() || idempotencyKey.length > 200)
+      throw new AuthError("VALIDATION_FAILED", "valid conversion key required");
+    await requireConversationAccess(tx, accountId, organizationId, conversationId);
+    const [source] = await tx<MessageRow[]>`
+      select * from chat_messages where id=${messageId} and conversation_id=${conversationId}
+    `;
+    if (!source || source.status !== "active")
+      throw new AuthError("CHAT_CONFLICT", "message cannot be converted");
+    const hash = payloadHash(input);
+    await tx`select pg_advisory_xact_lock(hashtextextended(${`${messageId}:${idempotencyKey}`},0))`;
+    const [existing] = await tx<{ request_hash: string; work_item_id: string }[]>`
+      select request_hash,work_item_id from chat_message_conversions
+      where message_id=${messageId} and idempotency_key=${idempotencyKey}
+    `;
+    if (existing) {
+      if (existing.request_hash !== hash)
+        throw new AuthError("CHAT_CONFLICT", "conversion key was reused with different input");
+      return this.work.read(tx, accountId, organizationId, existing.work_item_id);
+    }
+    const created = await this.work.create(tx, accountId, organizationId, {
+      type: input.type,
+      title: input.title,
+      description: `来自聊天消息 ${messageId}`,
+      priority: "normal",
+      dueAt: input.dueAt,
+      meetingStartsAt: input.meetingStartsAt,
+      assigneeAccountIds: input.assigneeAccountIds,
+      sendSms: input.sendSms,
+    });
+    await tx`
+      insert into chat_message_conversions(message_id,idempotency_key,request_hash,work_item_id,created_by_account_id)
+      values(${messageId},${idempotencyKey},${hash},${created.item.id},${accountId})
+    `;
+    for (const [sourceType, sourceId, targetType, targetId, relation] of [
+      ["message", messageId, "work_item", created.item.id, "converted_to"],
+      ["work_item", created.item.id, "message", messageId, "converted_from"],
+    ] as const)
+      await tx`
+        insert into resource_links(organization_id,source_type,source_id,target_type,target_id,relation_type,created_by_account_id)
+        values(${organizationId},${sourceType},${sourceId},${targetType},${targetId},${relation},${accountId})
+        on conflict do nothing
+      `;
+    return created;
   }
 }

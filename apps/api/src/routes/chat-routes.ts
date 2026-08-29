@@ -4,6 +4,7 @@ import type { CapabilityId } from "@tashan/capabilities";
 import {
   ChatEventListResponse,
   ChatMessageEditRequest,
+  ChatMessageConvertRequest,
   ChatMessageListQuery,
   ChatMessageListResponse,
   ChatMessageSendRequest,
@@ -13,10 +14,11 @@ import {
   ConversationGroupCreateRequest,
   ConversationListResponse,
   ConversationReadResponse,
+  WorkItemStateResponse,
 } from "@tashan/contracts";
 import type { ChatService } from "../chat/chat-service.js";
 import type { DatabaseClient } from "../db/client.js";
-import type { MutationCoordinator } from "../http/idempotency.js";
+import { requireIdempotencyKey, type MutationCoordinator } from "../http/idempotency.js";
 import { requestContext } from "../http/request-context.js";
 
 const OrganizationPath = z.object({ organizationId: z.uuid() }).strict();
@@ -174,6 +176,30 @@ export async function registerChatRoutes(
         }),
       );
       return reply.code(201).send(result);
+    },
+  );
+  app.post(
+    "/v1/organizations/:organizationId/conversations/:conversationId/messages/:messageId/convert",
+    { config: { capabilityId: "chat.message.convert" }, preHandler: dependencies.authenticate },
+    async (request) => {
+      const path = MessagePath.parse(request.params),
+        body = ChatMessageConvertRequest.parse(request.body),
+        accountId = context(request, path.organizationId),
+        conversionKey = requireIdempotencyKey(request);
+      return mutate(request, "chat.message.convert", { ...path, ...body }, async (tx) => ({
+        statusCode: 200,
+        body: WorkItemStateResponse.parse(
+          await dependencies.chat.convertMessage(
+            tx,
+            accountId,
+            path.organizationId,
+            path.conversationId,
+            path.messageId,
+            body,
+            conversionKey,
+          ),
+        ),
+      }));
     },
   );
   for (const [action, capabilityId] of [

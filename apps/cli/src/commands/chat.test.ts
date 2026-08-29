@@ -59,7 +59,7 @@ describe("chat CLI", () => {
     expect(sendChatMessage).toHaveBeenCalledWith(
       expect.any(String),
       expect.any(String),
-      { clientMessageId, body: "你好" },
+      { clientMessageId, body: "你好", attachments: [] },
       { idempotencyKey: "chat-send-1" },
     );
   });

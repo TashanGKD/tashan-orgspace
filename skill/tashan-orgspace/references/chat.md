@@ -18,3 +18,7 @@ torg --invocation-source ai_via_cli --json chat event list --org <organization-i
 ```
 
 An edited or retracted message remains represented by append-only events. Never claim that withdrawal erases compliance history.
+
+Messages can be converted into tasks, meetings or approvals with an explicit confirmation and idempotency key. File attachments are accepted only when every current conversation member can read the file.
+
+Organization owners may create a reasoned, time-bounded compliance review. This is a high-risk action; do not run it for ordinary members or expand the requested time window.

@@ -28,14 +28,14 @@
 
 ### Task 3: Resource links, withdrawal and compliance
 **Files:** Modify `apps/api/src/chat/chat-service.ts`; create `apps/api/src/chat/compliance-service.ts`, `apps/api/src/routes/chat-compliance-routes.ts`, `apps/api/test/chat/compliance.integration.test.ts`.
-- [ ] Write RED tests for cross-permission attachment, message-to-task idempotency, withdrawn search and unauthorized compliance read.
-- [ ] Run tests; expect missing actions.
-- [ ] Implement file links, task/meeting/approval conversion, retract projection and reason/time-bounded owner compliance workflow.
-- [ ] Run audit/notification assertions.
-- [ ] Commit: `git commit -m "security(chat): enforce resource and compliance bounds"`.
+- [x] Write RED tests for cross-permission attachment, message-to-task idempotency, withdrawn search and unauthorized compliance read.
+- [x] Run tests; expect missing actions.
+- [x] Implement file links, task/meeting/approval conversion, retract projection and reason/time-bounded owner compliance workflow.
+- [x] Run audit/notification assertions.
+- [x] Commit: `git commit -m "security(chat): enforce resource and compliance bounds"`.
 
 ### Task 4: Authorized search providers
-**Files:** Create `apps/api/migrations/019_search.sql`, `packages/contracts/src/search.ts`, `apps/api/src/search/search-service.ts`, `apps/api/src/search/providers/`, `apps/api/test/search/search-inference.integration.test.ts`.
+**Files:** Create `apps/api/migrations/020_search.sql`, `packages/contracts/src/search.ts`, `apps/api/src/search/search-service.ts`, `apps/api/src/search/providers/`, `apps/api/test/search/search-inference.integration.test.ts`.
 - [ ] Write RED tests for file/work/OKR/Partner/member/message providers, restricted counts and stale Membership cache.
 - [ ] Run tests; expect search service missing.
 - [ ] Implement provider interface returning ResourceRefs after domain authorization; index projections consume DomainEvent.

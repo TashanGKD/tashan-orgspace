@@ -5,7 +5,11 @@ import {
   AuditListQuery,
   AuditListResponse,
   ChatEventListResponse,
+  ChatComplianceReview,
+  ChatComplianceReviewRequest,
+  ChatComplianceReviewResponse,
   ChatMessage,
+  ChatMessageConvertRequest,
   ChatMessageEditRequest,
   ChatMessageListQuery,
   ChatMessageListResponse,
@@ -1192,6 +1196,40 @@ export function createOrgSpaceClient(options: OrgSpaceClientOptions) {
         ChatReactionResponse,
         ChatReactionSetRequest.parse(input),
         { ...mutation, authenticated: true },
+      ),
+    convertChatMessage: (
+      organizationId: string,
+      conversationId: string,
+      messageId: string,
+      input: unknown,
+      mutation: MutationOptions,
+    ) =>
+      request(
+        "POST",
+        `/v1/organizations/${pathId(organizationId)}/conversations/${pathId(conversationId)}/messages/${pathId(messageId)}/convert`,
+        WorkItemStateResponse,
+        ChatMessageConvertRequest.parse(input),
+        { ...mutation, authenticated: true },
+      ),
+    createChatComplianceReview: (
+      organizationId: string,
+      input: unknown,
+      mutation: MutationOptions,
+    ) =>
+      request(
+        "POST",
+        `/v1/organizations/${pathId(organizationId)}/chat-compliance-reviews`,
+        ChatComplianceReview,
+        ChatComplianceReviewRequest.parse(input),
+        { ...mutation, authenticated: true },
+      ),
+    readChatComplianceReview: (organizationId: string, reviewId: string, signal?: AbortSignal) =>
+      request(
+        "GET",
+        `/v1/organizations/${pathId(organizationId)}/chat-compliance-reviews/${pathId(reviewId)}`,
+        ChatComplianceReviewResponse,
+        undefined,
+        { authenticated: true, signal },
       ),
 
     listPartners: (organizationId: string, input: unknown, signal?: AbortSignal) => {

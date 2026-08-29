@@ -17,6 +17,9 @@ export const chatCapabilityIds = [
   "chat.message.retract",
   "chat.message.reaction.set",
   "chat.event.list",
+  "chat.message.convert",
+  "chat.compliance.create",
+  "chat.compliance.read",
 ] as const satisfies readonly CapabilityId[];
 
 export function registerChatCommands(program: Command, context: CommandContext) {
@@ -114,6 +117,7 @@ export function registerChatCommands(program: Command, context: CommandContext) 
     .requiredOption("--conversation <id>")
     .requiredOption("--body <text>")
     .option("--reply-to <message-id>")
+    .option("--attachments <json>", "file and work attachments", "[]")
     .option("--client-message-id <id>")
     .option("--idempotency-key <key>");
   send.action(
@@ -122,6 +126,7 @@ export function registerChatCommands(program: Command, context: CommandContext) 
       conversation: string;
       body: string;
       replyTo?: string;
+      attachments: string;
       clientMessageId?: string;
       idempotencyKey?: string;
     }) => {
@@ -134,6 +139,7 @@ export function registerChatCommands(program: Command, context: CommandContext) 
         {
           clientMessageId: options.clientMessageId ?? crypto.randomUUID(),
           body: options.body,
+          attachments: JSON.parse(options.attachments),
           ...(options.replyTo ? { replyToMessageId: options.replyTo } : {}),
         },
         { idempotencyKey: key },
@@ -225,6 +231,39 @@ export function registerChatCommands(program: Command, context: CommandContext) 
       context.emit(reaction, result, `${result.emoji}\t${result.active ? "active" : "removed"}`);
     },
   );
+  const convert = message
+    .command("convert")
+    .requiredOption("--org <id>")
+    .requiredOption("--conversation <id>")
+    .requiredOption("--message <id>")
+    .requiredOption("--type <task|meeting|approval>")
+    .requiredOption("--title <title>")
+    .option("--assignee <account-id...>")
+    .option("--due-at <iso>")
+    .option("--starts-at <iso>")
+    .option("--send-sms")
+    .option("--yes")
+    .option("--idempotency-key <key>");
+  convert.action(async (options: Record<string, unknown>) => {
+    const key = requireConfirmationAndIdempotency(context, options);
+    const result = await (
+      await context.runtime()
+    ).client.convertChatMessage(
+      String(options.org),
+      String(options.conversation),
+      String(options.message),
+      {
+        type: options.type,
+        title: options.title,
+        assigneeAccountIds: options.assignee ?? [],
+        ...(options.dueAt ? { dueAt: options.dueAt } : {}),
+        ...(options.startsAt ? { meetingStartsAt: options.startsAt } : {}),
+        sendSms: options.sendSms === true,
+      },
+      { idempotencyKey: key },
+    );
+    context.emit(convert, result, `Created ${result.item.type} ${result.item.id}`);
+  });
   const events = chat
     .command("event")
     .command("list")
@@ -241,6 +280,46 @@ export function registerChatCommands(program: Command, context: CommandContext) 
       events,
       result,
       result.items.map((item) => `${item.sequence}\t${item.eventType}`).join("\n"),
+    );
+  });
+  const compliance = chat.command("compliance");
+  const complianceCreate = compliance
+    .command("create")
+    .requiredOption("--org <id>")
+    .requiredOption("--conversation <id>")
+    .requiredOption("--reason <text>")
+    .requiredOption("--starts-at <iso>")
+    .requiredOption("--ends-at <iso>")
+    .option("--yes")
+    .option("--idempotency-key <key>");
+  complianceCreate.action(async (options: Record<string, unknown>) => {
+    const key = requireConfirmationAndIdempotency(context, options);
+    const result = await (
+      await context.runtime()
+    ).client.createChatComplianceReview(
+      String(options.org),
+      {
+        conversationId: options.conversation,
+        reason: options.reason,
+        startsAt: options.startsAt,
+        endsAt: options.endsAt,
+      },
+      { idempotencyKey: key },
+    );
+    context.emit(complianceCreate, result, `Compliance review ${result.id}`);
+  });
+  const complianceGet = compliance
+    .command("get")
+    .requiredOption("--org <id>")
+    .requiredOption("--review <id>");
+  complianceGet.action(async (options: { org: string; review: string }) => {
+    const result = await (
+      await context.runtime()
+    ).client.readChatComplianceReview(options.org, options.review);
+    context.emit(
+      complianceGet,
+      result,
+      result.events.map((event) => `${event.sequence}\t${event.eventType}`).join("\n"),
     );
   });
 }
