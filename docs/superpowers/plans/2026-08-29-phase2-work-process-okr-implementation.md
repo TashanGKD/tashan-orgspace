@@ -64,8 +64,8 @@
 
 **Files:** Create `apps/web/src/features/work/`, `apps/web/src/features/okr/`, `skill/tashan-orgspace/references/work.md`, `skill/tashan-orgspace/references/okr.md`, `tests/e2e/work-okr.test.ts`; modify module/resource/capability surfaces.
 
-- [ ] Write RED Web tests for organization/personal projections, list/detail, roles, conflicts and action visibility; add E2E creator/assignee/admin/uninvolved journeys.
-- [ ] Run Web/E2E tests; expect coming-soon routes.
-- [ ] Implement shared surfaces, Skill references and capability mappings; flip tasks/OKR/approvals/meetings only after complete parity.
-- [ ] Run `pnpm --filter @tashan/web test`, full gates and `pnpm test:e2e`.
-- [ ] Commit: `git commit -m "docs(verification): record Phase 2 acceptance"`.
+- [x] Write RED Web tests for organization/personal projections, list/detail, roles, conflicts and action visibility; add E2E creator/assignee/admin/uninvolved journeys.
+- [x] Run Web/E2E tests; expect coming-soon routes.
+- [x] Implement shared surfaces, Skill references and capability mappings; flip tasks/OKR/approvals/meetings only after complete parity.
+- [x] Run `pnpm --filter @tashan/web test`, full gates and `pnpm test:e2e`.
+- [x] Commit: `git commit -m "docs(verification): record Phase 2 acceptance"`.

@@ -135,23 +135,23 @@ Create two users and two organizations; prove personal privacy, organization acc
 - Create: `apps/web/src/features/work/`
 - Create: `skill/tashan-orgspace/references/work.md`
 
-- [ ] **Step 1: Approve WorkItem and ProcessDefinition state machines**
+- [x] **Step 1: Approve WorkItem and ProcessDefinition state machines**
 
 Fix task, meeting, approval and change-request types; assignment, dispute, transfer, completion, reopen, withdraw, approve, reject and return transitions; published process versions are immutable.
 
-- [ ] **Step 2: Write RED permission and concurrency tests**
+- [x] **Step 2: Write RED permission and concurrency tests**
 
 Prove organization-wide task visibility, self/admin edit rules, immediate assignment, dispute without removing responsibility, transfer approval, stale-version conflict and restricted-item visibility.
 
-- [ ] **Step 3: Implement backend state/event model**
+- [x] **Step 3: Implement backend state/event model**
 
 Use immutable transition events and optimistic versions. Personal inbox, organization list, approval inbox and calendar remain projections of the same facts.
 
-- [ ] **Step 4: Implement unified Work Web and CLI**
+- [x] **Step 4: Implement unified Work Web and CLI**
 
 Web uses tabs backed by shared list/detail components. CLI delivers `task`, `meeting`, `approval` and generic `process` list/get/create/action commands. Skill documents state-sensitive actions and confirmations.
 
-- [ ] **Step 5: Verify complete organization-work journeys**
+- [x] **Step 5: Verify complete organization-work journeys**
 
 Simulate creator, assignee, administrator and uninvolved member across create, assign, dispute, transfer, complete, approve, reject and audit history.
 
@@ -166,23 +166,23 @@ Simulate creator, assignee, administrator and uninvolved member across create, a
 - Create: `apps/web/src/features/okr/`
 - Create: `skill/tashan-orgspace/references/okr.md`
 
-- [ ] **Step 1: Approve Objective/KR/version semantics**
+- [x] **Step 1: Approve Objective/KR/version semantics**
 
 Fix organization and member ownership, numeric/linked-task/manual formulas, cycle and weight constraints, immediate progress updates and administrator-approved substantive changes.
 
-- [ ] **Step 2: Write RED formula, history and authorization tests**
+- [x] **Step 2: Write RED formula, history and authorization tests**
 
 Reject invalid weights, cross-organization links, historical recomputation, member direct substantive edit and stale change approval.
 
-- [ ] **Step 3: Implement OKR backend and change requests**
+- [x] **Step 3: Implement OKR backend and change requests**
 
 Store formula version and input snapshot for every calculated progress event. Substantive edits create WorkItem change requests; administrator direct edits create equivalent audit events.
 
-- [ ] **Step 4: Implement OKR lists/details across surfaces**
+- [x] **Step 4: Implement OKR lists/details across surfaces**
 
 Web delivers organization/member views and Objective/KR detail. CLI delivers `okr list/get/create/progress/change-request/approve`. Skill explains which updates are immediate and which require approval.
 
-- [ ] **Step 5: Verify organization-wide visibility and edit boundaries**
+- [x] **Step 5: Verify organization-wide visibility and edit boundaries**
 
 Simulate three members and one administrator; prove everyone can read, only self/admin can propose, and only authorized approval changes substantive fields.
 
