@@ -153,7 +153,7 @@ git add pnpm-lock.yaml packages/object-store apps/api/package.json apps/worker/p
 git commit -m "feat(storage): add private S3 foundation"
 ```
 
-### Task 2: Define exact contracts, error codes and capabilities
+### Task 2: Define exact contracts and error codes
 
 **Files:**
 - Create: `packages/contracts/src/spaces.ts`
@@ -162,8 +162,6 @@ git commit -m "feat(storage): add private S3 foundation"
 - Modify: `packages/contracts/src/common.ts`
 - Modify: `packages/contracts/src/error.ts`
 - Modify: `packages/contracts/src/index.ts`
-- Modify: `packages/capabilities/src/phase0-capabilities.json`
-- Modify: `packages/capabilities/src/registry.test.ts`
 
 - [ ] **Step 1: Write RED contract tests**
 
@@ -214,9 +212,9 @@ FOLDER_MANAGER_REQUIRED, FOLDER_LAST_MANAGER
 
 Map them in `apps/api/src/http/error-handler.ts` during Task 6: 404 for missing objects, 403 for forbidden, 409 for state/name/version/manager conflicts, 413 for quota, and 400 for incomplete/checksum input errors.
 
-- [ ] **Step 4: Register the 26 Phase 1 capabilities**
+- [ ] **Step 4: Freeze the 26 Phase 1 capability IDs in the file contract**
 
-Add these IDs with exact CLI bindings and `web: "required"`:
+Export `FileCapabilityId` as the exact enum below for later Task 8 registry insertion. Do not add these IDs to the live server registry yet, because they have no mounted API/CLI implementation at this point:
 
 ```text
 space.list, space.read, space.usage.read, space.quota.set,
@@ -229,7 +227,7 @@ folder.access.read, folder.access.set, folder.grant.set,
 folder.grant.revoke, folder.manager.recover
 ```
 
-Read capabilities use `sideEffect: "none"`; URL creation and all mutations use `write`; trash/delete/grant revoke/upload cancel use `revoke`. Confirmation is required for quota changes, trash, permanent delete, permission-scope changes, grant revoke and manager recovery.
+Task 8 registers read capabilities with `sideEffect: "none"`; URL creation and all mutations with `write`; trash/delete/grant revoke/upload cancel with `revoke`. Confirmation is required for quota changes, trash, permanent delete, permission-scope changes, grant revoke and manager recovery.
 
 - [ ] **Step 5: Verify and commit**
 
@@ -237,14 +235,13 @@ Run:
 
 ```bash
 pnpm --filter @tashan/contracts test
-pnpm --filter @tashan/capabilities test
 pnpm typecheck
 ```
 
 Commit:
 
 ```bash
-git add packages/contracts packages/capabilities/src/phase0-capabilities.json packages/capabilities/src/registry.test.ts
+git add packages/contracts
 git commit -m "feat(files): define file capability contracts"
 ```
 
@@ -420,19 +417,15 @@ git add apps/api/src/files/upload-service.ts apps/api/src/config.ts apps/api/src
 git commit -m "feat(files): add resumable upload sessions"
 ```
 
-### Task 6: Implement file operations, routes and error mapping
+### Task 6: Implement file operations and error mapping
 
 **Files:**
 - Create: `apps/api/src/files/file-service.ts`
-- Create: `apps/api/src/routes/space-routes.ts`
-- Create: `apps/api/src/routes/file-routes.ts`
-- Create: `apps/api/test/http/file-routes.integration.test.ts`
-- Modify: `apps/api/src/app.ts`
 - Modify: `apps/api/src/http/error-handler.ts`
 
-- [ ] **Step 1: Write RED API tests**
+- [ ] **Step 1: Write RED service contract tests**
 
-Exercise the exact routes:
+Exercise the service methods that Task 8 will mount on these exact routes:
 
 ```text
 GET    /v1/spaces
@@ -463,7 +456,7 @@ DELETE /v1/spaces/:spaceId/folders/:folderId/grants/:accountId
 POST   /v1/spaces/:spaceId/folders/:folderId/manager-recovery
 ```
 
-Tests must assert capability ID, audit record, idempotency behavior and stable error envelope for every mutation.
+Tests must assert authorization, audit input, idempotency result and stable domain errors for every mutation. Route/capability assertions belong to Task 8 when the vertical API/CLI slice becomes executable.
 
 - [ ] **Step 2: Implement file semantics**
 
@@ -473,9 +466,9 @@ Tests must assert capability ID, audit record, idempotency behavior and stable e
 
 Only `available` versions receive GET URLs, valid at most 5 minutes. The signed response sets safe content disposition and does not inline active HTML/SVG/script content. URL creation is audited as `file.download.create`.
 
-- [ ] **Step 4: Mount routes and map errors**
+- [ ] **Step 4: Map errors without mounting unavailable routes**
 
-Inject `SpaceService`, `FileService`, `UploadService` and S3 adapters from `buildApp`. Map the Task 2 error codes exactly and ensure unknown failures remain `INTERNAL_ERROR` without leaking object keys or S3 details.
+Map the Task 2 error codes exactly and ensure unknown failures remain `INTERNAL_ERROR` without leaking object keys or S3 details. Keep file services unmounted until Task 8 can add API, SDK, CLI and Skill in one gate-consistent submission.
 
 - [ ] **Step 5: Verify and commit**
 
@@ -490,7 +483,7 @@ pnpm typecheck
 Commit:
 
 ```bash
-git add apps/api/src/app.ts apps/api/src/files apps/api/src/routes apps/api/src/http/error-handler.ts apps/api/test/http/file-routes.integration.test.ts
+git add apps/api/src/files apps/api/src/http/error-handler.ts apps/api/test/files
 git commit -m "feat(api): expose space and file operations"
 ```
 
@@ -536,22 +529,28 @@ git add apps/worker
 git commit -m "feat(worker): verify and reconcile file objects"
 ```
 
-### Task 8: Extend SDK, CLI and byte-transfer client
+### Task 8: Register the executable API, SDK, CLI and Skill slice
 
 **Files:**
 - Create: `packages/sdk/src/file-transfer.ts`
 - Modify: `packages/sdk/src/client.ts`
 - Modify: `packages/sdk/src/client.test.ts`
+- Create: `apps/api/src/routes/space-routes.ts`
+- Create: `apps/api/src/routes/file-routes.ts`
+- Create: `apps/api/test/http/file-routes.integration.test.ts`
+- Modify: `apps/api/src/app.ts`
 - Create: `apps/cli/src/commands/space.ts`
 - Create: `apps/cli/src/commands/file.ts`
 - Create: `apps/cli/src/commands/folder.ts`
 - Create: `apps/cli/src/commands/files.test.ts`
 - Modify: `apps/cli/src/program.ts`
 - Modify: `apps/cli/src/capability-bindings.json`
+- Modify: `packages/capabilities/src/phase0-capabilities.json`
+- Modify: `skill/tashan-orgspace/capability-references.json`
 
-- [ ] **Step 1: Write RED SDK and CLI tests**
+- [ ] **Step 1: Write RED route, SDK and CLI tests**
 
-Assert all 26 capabilities call the Task 6 routes. Upload tests use a local HTTP fixture and verify part retry, resume, SHA-256 header, missing-part recovery and that Authorization/user tokens are never sent to presigned origins. Download tests reject redirects to a different origin unless the exact presigned response URL authorizes it.
+Assert all 26 capabilities call the Task 6 services through the exact routes. Upload tests use a local HTTP fixture and verify part retry, resume, SHA-256 header, missing-part recovery and that Authorization/user tokens are never sent to presigned origins. Download tests reject redirects to a different origin unless the exact presigned response URL authorizes it.
 
 - [ ] **Step 2: Add an explicit transfer interface**
 
@@ -566,9 +565,9 @@ export interface FileByteTransport {
 
 Keep this separate from JSON `Transport`. Strip OrgSpace auth headers on presigned requests, reject non-HTTP(S) URLs and verify final downloaded SHA-256 before rename from a temporary file.
 
-- [ ] **Step 3: Implement CLI commands**
+- [ ] **Step 3: Register capabilities, mount routes and implement CLI commands**
 
-Register the commands fixed in the design. `file upload` requires `--space`, `--parent`, and local path; `--target-file` is the only version-upload path. `file download` writes to a temporary sibling and atomically renames after checksum success. `upload resume` reads server state rather than trusting a local-only part list.
+Add all 26 IDs to the server registry with exact CLI bindings and Skill references in the same change; set `web: "deferred"` until Task 10. Mount space/file routes and inject services in `buildApp`. Register the commands fixed in the design. `file upload` requires `--space`, `--parent`, and local path; `--target-file` is the only version-upload path. `file download` writes to a temporary sibling and atomically renames after checksum success. `upload resume` reads server state rather than trusting a local-only part list.
 
 - [ ] **Step 4: Enforce safe defaults**
 
@@ -579,15 +578,18 @@ No-argument groups print help without runtime initialization. Same-name upload e
 Run:
 
 ```bash
+pnpm --filter @tashan/api test
+pnpm --filter @tashan/api test:integration
 pnpm --filter @tashan/sdk test
 pnpm --filter @tashan/cli test
 pnpm --filter @tashan/cli typecheck
+node scripts/check-capability-coverage.mjs
 ```
 
 Commit:
 
 ```bash
-git add packages/sdk apps/cli
+git add packages/capabilities packages/sdk apps/api/src/routes apps/api/src/app.ts apps/api/test/http apps/cli skill/tashan-orgspace/capability-references.json
 git commit -m "feat(cli): add resumable file commands"
 ```
 
@@ -676,7 +678,7 @@ The dialog creates a session, computes per-part checksum, uploads directly to pr
 
 - [ ] **Step 5: Flip modules only after the full surface is green**
 
-Set `personal.overview`, `personal.files`, `personal.usage`, and `organization.files` to `available` only after all route/action tests pass. Keep runtime/services deferred. Run:
+Change the 26 file capabilities from `web: "deferred"` to `web: "required"` only after all route/action tests pass, and add every required Web surface in the same change. Set `personal.overview`, `personal.files`, `personal.usage`, and `organization.files` to `available`. Keep runtime/services deferred. Run:
 
 ```bash
 pnpm --filter @tashan/web test
