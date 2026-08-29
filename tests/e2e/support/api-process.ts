@@ -2,6 +2,12 @@ import { writeFile } from "node:fs/promises";
 
 import { generateKeyPair } from "jose";
 import { createClient } from "redis";
+import {
+  createInternalS3Client,
+  createPresignS3Client,
+  parseObjectStoreConfig,
+  S3FileDataStore,
+} from "@tashan/object-store";
 
 import { buildApp } from "../../../apps/api/src/app.js";
 import { AccessTokenService } from "../../../apps/api/src/auth/access-token.js";
@@ -38,6 +44,18 @@ const databaseUrl = required("E2E_DATABASE_URL");
 const redisUrl = required("E2E_REDIS_URL");
 const codeFile = required("E2E_CODE_FILE");
 const namespace = required("E2E_RUN_ID");
+const objectStore = parseObjectStoreConfig(
+  {
+    endpoint: required("S3_ENDPOINT"),
+    publicOrigin: required("S3_PUBLIC_ORIGIN"),
+    region: required("S3_REGION"),
+    bucket: required("S3_BUCKET"),
+    accessKeyId: required("S3_ACCESS_KEY_ID"),
+    secretAccessKey: required("S3_SECRET_ACCESS_KEY"),
+    forcePathStyle: required("S3_FORCE_PATH_STYLE") === "true",
+  },
+  "test",
+);
 requireLoopback(databaseUrl, "database");
 requireLoopback(redisUrl, "Redis");
 
@@ -72,6 +90,11 @@ const app = await buildApp({
   phoneCodePepper: "phase0-e2e-phone-code-pepper",
   trustedProxyCidrs: [],
   corsOrigins: ["http://127.0.0.1:4173"],
+  fileDataStore: new S3FileDataStore({
+    internalClient: createInternalS3Client(objectStore),
+    presignClient: createPresignS3Client(objectStore),
+    bucket: objectStore.bucket,
+  }),
 });
 
 let stopping = false;

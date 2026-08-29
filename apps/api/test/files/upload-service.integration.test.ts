@@ -69,8 +69,8 @@ describe("upload service", () => {
       },
       "upload-create-1",
     );
-    expect(created.temporaryObjectKey).toMatch(/^temporary\/[0-9a-f-]{36}$/);
-    expect(created.s3UploadId).toBe("opaque-upload-id");
+    expect(created).not.toHaveProperty("temporaryObjectKey");
+    expect(created).not.toHaveProperty("s3UploadId");
     await expect(
       service.authorizeParts(owner.id, space.id, created.id, { partNumbers: [0] }),
     ).rejects.toBeDefined();
@@ -142,5 +142,37 @@ describe("upload service", () => {
       where job_type = 'verify_upload' and payload->>'uploadSessionId' = ${created.id}
     `;
     expect(jobs?.count).toBe(1);
+  });
+
+  test("reads server-confirmed parts and cancels with reservation cleanup", async () => {
+    const { owner, space } = await fixture();
+    const store = new FakeStore();
+    const service = new UploadService({ sql, objectStore: store });
+    const created = await service.create(
+      owner.id,
+      space.id,
+      {
+        parentId: space.rootFolderId,
+        fileName: "resume.bin",
+        expectedSizeBytes: 5,
+        contentType: "application/octet-stream",
+      },
+      "upload-resume-1",
+    );
+
+    await expect(service.list(owner.id, space.id)).resolves.toHaveLength(1);
+    await expect(service.read(owner.id, space.id, created.id)).resolves.toMatchObject({
+      uploadSession: { id: created.id },
+      uploadedParts: [{ partNumber: 1, etag: '"etag-1"' }],
+    });
+    await expect(service.cancel(owner.id, space.id, created.id)).resolves.toEqual({
+      uploadSessionId: created.id,
+      cancelled: true,
+    });
+    expect(store.aborted).toEqual(["opaque-upload-id"]);
+    const [usage] = await sql<
+      { reserved_bytes: string }[]
+    >`select reserved_bytes from spaces where id = ${space.id}`;
+    expect(usage?.reserved_bytes).toBe("0");
   });
 });

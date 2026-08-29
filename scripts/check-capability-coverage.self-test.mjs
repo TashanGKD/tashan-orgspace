@@ -2,7 +2,7 @@ import { strict as assert } from "node:assert";
 
 import { checkCoverage } from "./check-capability-coverage.mjs";
 
-const server = [{ id: "device.revoke", web: "required" }];
+const server = [{ id: "device.revoke", web: "required", cli: "device revoke" }];
 const cli = { "device.revoke": "device revoke" };
 const surface = {
   capabilityId: "device.revoke",
@@ -21,6 +21,10 @@ assert.throws(
 assert.throws(
   () => checkCoverage(server, { ...cli, "device.list": "device list" }, web, skill, files),
   /unknown CLI binding: device.list/,
+);
+assert.throws(
+  () => checkCoverage(server, { "device.revoke": "device remove" }, web, skill, files),
+  /CLI binding drift: device.revoke/,
 );
 assert.throws(
   () => checkCoverage(server, cli, [], skill, files),

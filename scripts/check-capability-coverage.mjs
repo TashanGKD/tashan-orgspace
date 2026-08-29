@@ -76,6 +76,7 @@ export function checkCoverage(server, cli, web, skill, files = new Set()) {
       typeof capability !== "object" ||
       capability === null ||
       typeof capability.id !== "string" ||
+      typeof capability.cli !== "string" ||
       !["required", "deferred"].includes(capability.web)
     ) {
       throw new Error("invalid server capability entry");
@@ -109,6 +110,10 @@ export function checkCoverage(server, cli, web, skill, files = new Set()) {
     if (!cliSet.has(id)) throw new Error(`missing CLI binding: ${id}`);
     if (typeof cli[id] !== "string" || cli[id].trim() === "") {
       throw new Error(`empty CLI binding: ${id}`);
+    }
+    const capability = server.find((candidate) => candidate.id === id);
+    if (capability.cli !== cli[id]) {
+      throw new Error(`CLI binding drift: ${id}; server=${capability.cli}; cli=${cli[id]}`);
     }
     if (!skillSet.has(id)) throw new Error(`missing Skill capability: ${id}`);
   }

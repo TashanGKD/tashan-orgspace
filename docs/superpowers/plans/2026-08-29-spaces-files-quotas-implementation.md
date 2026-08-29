@@ -549,11 +549,11 @@ git commit -m "feat(worker): verify and reconcile file objects"
 - Modify: `packages/capabilities/src/phase0-capabilities.json`
 - Modify: `skill/tashan-orgspace/capability-references.json`
 
-- [ ] **Step 1: Write RED route, SDK and CLI tests**
+- [x] **Step 1: Write RED route, SDK and CLI tests**
 
 Assert all 26 capabilities call the Task 6 services through the exact routes. Upload tests use a local HTTP fixture and verify part retry, resume, SHA-256 header, missing-part recovery and that Authorization/user tokens are never sent to presigned origins. Download tests reject redirects to a different origin unless the exact presigned response URL authorizes it.
 
-- [ ] **Step 2: Add an explicit transfer interface**
+- [x] **Step 2: Add an explicit transfer interface**
 
 Export:
 
@@ -564,17 +564,17 @@ export interface FileByteTransport {
 }
 ```
 
-Keep this separate from JSON `Transport`. Strip OrgSpace auth headers on presigned requests, reject non-HTTP(S) URLs and verify final downloaded SHA-256 before rename from a temporary file.
+Keep this separate from JSON `Transport`. Strip OrgSpace auth headers on presigned requests, reject non-HTTP(S) URLs and verify final downloaded SHA-256 before atomically publishing from a temporary sibling. Refuse an existing destination and use a no-clobber operation so a race cannot overwrite it.
 
-- [ ] **Step 3: Register capabilities, mount routes and implement CLI commands**
+- [x] **Step 3: Register capabilities, mount routes and implement CLI commands**
 
-Add all 26 IDs to the server registry with exact CLI bindings and Skill references in the same change; set `web: "deferred"` until Task 10. Mount space/file routes and inject services in `buildApp`. Register the commands fixed in the design. `file upload` requires `--space`, `--parent`, and local path; `--target-file` is the only version-upload path. `file download` writes to a temporary sibling and atomically renames after checksum success. `upload resume` reads server state rather than trusting a local-only part list.
+Add all 26 IDs to the server registry with exact CLI bindings and Skill references in the same change; set `web: "deferred"` until Task 10. Mount space/file routes and inject services in `buildApp`. Register the commands fixed in the design. `file upload` requires `--space`, `--parent`, and local path; `--target-file` is the only version-upload path. `file download` writes to a temporary sibling and atomically publishes without overwriting after checksum success. `upload resume` reads server state rather than trusting a local-only part list.
 
-- [ ] **Step 4: Enforce safe defaults**
+- [x] **Step 4: Enforce safe defaults**
 
 No-argument groups print help without runtime initialization. Same-name upload exits with `FILE_NAME_CONFLICT`. Trash, delete, access-scope changes, revoke and manager recovery require confirmation/idempotency using existing helpers; permanent delete text states that all versions are removed.
 
-- [ ] **Step 5: Verify and commit**
+- [x] **Step 5: Verify and commit**
 
 Run:
 

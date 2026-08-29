@@ -21,6 +21,7 @@
   "devDependencies": {
     "@eslint/js": "10.0.1",
     "@tashan/contracts": "workspace:*",
+    "@tashan/object-store": "workspace:*",
     "@tashan/sdk": "workspace:*",
     "@types/node": "24.13.3",
     "esbuild": "0.28.2",

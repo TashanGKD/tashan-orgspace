@@ -22,6 +22,10 @@ services:
     command: ["redis-server", "--appendonly", "yes"]
     volumes:
       - redis-data:/data
+  minio-bootstrap:
+    image: quay.io/minio/mc:RELEASE.2025-04-16T18-13-26Z
+    volumes:
+      - ./minio:/config:ro
   migrate:
     build:
       context: ..
@@ -124,6 +128,16 @@ const validEcsIngress = `server {
 }
 server {
   listen 443 ssl http2;
+  server_name files.orgspace.tashan.chat;
+  ssl_certificate /etc/ssl/wildcard-tashan/fullchain.cer;
+  ssl_certificate_key /etc/ssl/wildcard-tashan/tashan.chat.key;
+  location / {
+    proxy_set_header X-Forwarded-For $remote_addr;
+    proxy_pass http://127.0.0.1:14010;
+  }
+}
+server {
+  listen 443 ssl http2;
   server_name orgspace.tashan.chat;
   ssl_certificate /etc/ssl/wildcard-tashan/fullchain.cer;
   ssl_certificate_key /etc/ssl/wildcard-tashan/tashan.chat.key;
@@ -141,6 +155,10 @@ nohup autossh -M 0 -N -o ExitOnForwardFailure=yes -o ServerAliveInterval=30 -o S
 const validRuntimeDockerfile = `FROM m.daocloud.io/docker.io/library/node:24.14.0-bookworm-slim\nUSER node\n`;
 const validWebDockerfile = `FROM m.daocloud.io/docker.io/library/node:24.14.0-bookworm-slim AS build\nFROM m.daocloud.io/docker.io/library/nginx:1.30.4-alpine\nUSER nginx\n`;
 const validEnvironmentExample = `ORGSPACE_POSTGRES_PASSWORD=
+MINIO_ROOT_USER=
+MINIO_ROOT_PASSWORD=
+S3_ACCESS_KEY_ID=
+S3_SECRET_ACCESS_KEY=
 SERVICE_VERSION=
 JWT_ACTIVE_KEY_ID=
 JWT_PRIVATE_KEY=
@@ -261,6 +279,13 @@ expectReject("host home mount", "host-control mounts are forbidden", {
     '    volumes: ["/home:/host-home:ro"]\n    networks:\n      default:\n        ipv4_address: 172.31.64.20',
   ),
 });
+expectReject(
+  "MinIO bootstrap docker socket",
+  "MinIO bootstrap config mount must be the exact read-only repository directory",
+  {
+    compose: validCompose.replace("./minio:/config:ro", "/var/run/docker.sock:/config:ro"),
+  },
+);
 expectReject("writable public downloads", "public downloads bind must be read-only", {
   compose: validCompose.replace(
     "        read_only: true\nvolumes:",

@@ -1,6 +1,7 @@
 import type { Command } from "commander";
 
 import type { OrgSpaceClient } from "@tashan/sdk";
+import type { FileByteTransport } from "@tashan/sdk/file-transfer";
 
 import type { CliSessionCredentials } from "../credentials/session-credentials.js";
 import type { CliOutput } from "../output.js";
@@ -14,6 +15,7 @@ export class CliUsageError extends Error {
 
 export interface CliRuntime {
   client: OrgSpaceClient;
+  fileByteTransport: FileByteTransport;
   credentials: CliSessionCredentials;
   deviceId: string;
   device: {

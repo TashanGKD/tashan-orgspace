@@ -173,6 +173,13 @@ try {
     E2E_REDIS_URL: redisUrl,
     E2E_CODE_FILE: codeFile,
     E2E_RUN_ID: runId,
+    S3_ENDPOINT: s3Url,
+    S3_PUBLIC_ORIGIN: s3Url,
+    S3_REGION: "us-east-1",
+    S3_BUCKET: "orgspace-files",
+    S3_ACCESS_KEY_ID: s3AccessKeyId,
+    S3_SECRET_ACCESS_KEY: s3SecretAccessKey,
+    S3_FORCE_PATH_STYLE: "true",
   };
   const started = await startApi(serviceEnvironment);
   api = started.child;

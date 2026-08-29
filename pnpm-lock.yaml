@@ -13,6 +13,9 @@ importers:
       "@tashan/contracts":
         specifier: workspace:*
         version: link:packages/contracts
+      "@tashan/object-store":
+        specifier: workspace:*
+        version: link:packages/object-store
       "@tashan/sdk":
         specifier: workspace:*
         version: link:packages/sdk

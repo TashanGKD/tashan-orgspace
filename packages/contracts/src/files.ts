@@ -97,6 +97,7 @@ export const FileEntrySummary = z
     kind: FileEntryKind,
     name: FileName,
     state: FileEntryState,
+    lockVersion: z.number().int().min(1),
     createdByAccountId: AccountId,
     currentVersionId: FileVersionId.nullable(),
     sizeBytes: SafeByteCount,
@@ -155,7 +156,7 @@ export const FolderCreateRequest = z
       .default([]),
   })
   .strict();
-export const FolderCreateResponse = z.object({ entry: FileEntryDetail }).strict();
+export const FolderCreateResponse = z.object({ entry: FileEntrySummary }).strict();
 export const FileMoveRequest = z
   .object({
     targetParentId: FileEntryId,
@@ -163,7 +164,7 @@ export const FileMoveRequest = z
     expectedVersion: z.number().int().min(1),
   })
   .strict();
-export const FileMoveResponse = z.object({ entry: FileEntryDetail }).strict();
+export const FileMoveResponse = z.object({ entry: FileEntrySummary }).strict();
 export const FileTrashResponse = z
   .object({ entryId: FileEntryId, expiresAt: IsoDateTime })
   .strict();
@@ -174,16 +175,19 @@ export const FileRestoreRequest = z
     expectedVersion: z.number().int().min(1),
   })
   .strict();
-export const FileRestoreResponse = z.object({ entry: FileEntryDetail }).strict();
+export const FileRestoreResponse = z.object({ entry: FileEntrySummary }).strict();
 export const FileDeleteResponse = z
-  .object({ entryId: FileEntryId, deleted: z.literal(true) })
+  .object({ entryId: FileEntryId, queued: z.literal(true) })
   .strict();
 export const FileDownloadResponse = z
   .object({ url: z.url(), expiresAt: IsoDateTime, checksumSha256: Sha256Hex, fileName: FileName })
   .strict();
 export const FileVersionListResponse = z.object({ items: z.array(FileVersionSummary) }).strict();
+export const FileVersionRestoreRequest = z
+  .object({ expectedVersion: z.number().int().min(1) })
+  .strict();
 export const FileVersionRestoreResponse = z
-  .object({ entry: FileEntryDetail, version: FileVersionSummary })
+  .object({ entry: FileEntrySummary, version: FileVersionSummary })
   .strict();
 
 export const UploadPartNumber = z.number().int().min(1).max(10_000);
@@ -194,6 +198,7 @@ const UploadSessionSummary = z
     parentId: FileEntryId,
     targetFileId: FileEntryId.optional(),
     fileName: FileName,
+    contentType: z.string().trim().min(1).max(255),
     expectedSizeBytes: SafeByteCount,
     partSizeBytes: SafeByteCount,
     partCount: z.number().int().min(1).max(10_000),
@@ -214,7 +219,17 @@ export const UploadCreateRequest = z
   })
   .strict();
 export const UploadCreateResponse = z.object({ uploadSession: UploadSessionSummary }).strict();
-export const UploadReadResponse = UploadCreateResponse;
+export const UploadedPart = z
+  .object({
+    partNumber: UploadPartNumber,
+    etag: Etag,
+    checksumSha256: ChecksumBase64,
+    sizeBytes: SafeByteCount,
+  })
+  .strict();
+export const UploadReadResponse = z
+  .object({ uploadSession: UploadSessionSummary, uploadedParts: z.array(UploadedPart) })
+  .strict();
 export const UploadListResponse = z.object({ items: z.array(UploadSessionSummary) }).strict();
 export const UploadPartUrlsRequest = z
   .object({ partNumbers: z.array(UploadPartNumber).min(1).max(100) })
@@ -249,6 +264,7 @@ export const FolderAccessResponse = z
   .object({
     folderId: FileEntryId,
     scope: FolderAccessScope,
+    lockVersion: z.number().int().min(1),
     grants: z.array(FolderGrant),
     inheritedFromFolderId: FileEntryId,
   })

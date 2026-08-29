@@ -6,6 +6,104 @@ import { DEFAULT_PERSONAL_QUOTA_BYTES } from "./constants.js";
 export class SpaceService {
   public constructor(private readonly sql: DatabaseClient) {}
 
+  private summary(row: {
+    id: string;
+    type: "personal" | "organization";
+    account_id: string | null;
+    organization_id: string | null;
+    root_folder_id: string;
+    quota_bytes: string | number;
+    used_bytes: string | number;
+    reserved_bytes: string | number;
+    write_state: "writable" | "quota_readonly";
+    created_at: Date;
+    updated_at: Date;
+  }) {
+    return {
+      id: row.id,
+      type: row.type,
+      accountId: row.account_id,
+      organizationId: row.organization_id,
+      rootFolderId: row.root_folder_id,
+      quotaBytes: Number(row.quota_bytes),
+      usedBytes: Number(row.used_bytes),
+      reservedBytes: Number(row.reserved_bytes),
+      writeState: row.write_state,
+      createdAt: row.created_at.toISOString(),
+      updatedAt: row.updated_at.toISOString(),
+    };
+  }
+
+  public async list(accountId: string) {
+    const rows = await this.sql<Parameters<SpaceService["summary"]>[0][]>`
+      select distinct space.* from spaces space
+      left join memberships membership on membership.organization_id = space.organization_id
+        and membership.account_id = ${accountId} and membership.status = 'active'
+      where space.account_id = ${accountId} or membership.id is not null
+      order by space.created_at, space.id
+    `;
+    return rows.map((row) => this.summary(row));
+  }
+
+  public async read(accountId: string, spaceId: string) {
+    const [space] = (await this.list(accountId)).filter((candidate) => candidate.id === spaceId);
+    if (space === undefined) throw new AuthError("SPACE_NOT_FOUND", "space not found");
+    return space;
+  }
+
+  public async usage(accountId: string, spaceId: string) {
+    const space = await this.read(accountId, spaceId);
+    return {
+      spaceId,
+      quotaBytes: space.quotaBytes,
+      usedBytes: space.usedBytes,
+      reservedBytes: space.reservedBytes,
+      availableBytes: Math.max(0, space.quotaBytes - space.usedBytes - space.reservedBytes),
+      writeState: space.writeState,
+    };
+  }
+
+  public async setPersonalQuota(
+    adminAccountId: string,
+    organizationId: string,
+    accountId: string,
+    quotaBytes: number,
+  ) {
+    return this.sql.begin(async (transaction) => {
+      const [allowed] = await transaction<{ allowed: boolean }[]>`
+        select exists(
+          select 1 from memberships where organization_id = ${organizationId}
+            and account_id = ${adminAccountId} and status = 'active'
+            and role in ('org_owner', 'org_admin')
+        ) and exists(
+          select 1 from memberships where organization_id = ${organizationId}
+            and account_id = ${accountId} and status = 'active'
+        ) as allowed
+      `;
+      if (allowed?.allowed !== true)
+        throw new AuthError("ORG_FORBIDDEN", "quota change is forbidden");
+      await transaction`
+        insert into personal_quota_entitlements (
+          organization_id, account_id, quota_bytes, granted_by_account_id
+        ) values (${organizationId}, ${accountId}, ${quotaBytes}, ${adminAccountId})
+        on conflict (organization_id, account_id) where status = 'active'
+        do update set quota_bytes = excluded.quota_bytes,
+          granted_by_account_id = excluded.granted_by_account_id, updated_at = now()
+      `;
+      const [personal] = await transaction<{ id: string }[]>`
+        select id from spaces where type = 'personal' and account_id = ${accountId}
+      `;
+      if (personal === undefined)
+        throw new AuthError("SPACE_NOT_FOUND", "personal space not found");
+      const refreshed = await this.refreshEffectiveQuota(transaction, personal.id);
+      const [full] = await transaction<Parameters<SpaceService["summary"]>[0][]>`
+        select * from spaces where id = ${refreshed.id}
+      `;
+      if (full === undefined) throw new AuthError("SPACE_NOT_FOUND", "personal space not found");
+      return { accountId, organizationId, space: this.summary(full) };
+    });
+  }
+
   private async refreshEffectiveQuota(transaction: TransactionClient, spaceId: string) {
     const [space] = await transaction<
       {

@@ -10,16 +10,20 @@ import {
   type OrgSpaceClient,
   type SdkCredentialStore,
 } from "@tashan/sdk";
+import { createNodeFileByteTransport, type FileByteTransport } from "@tashan/sdk/file-transfer";
 
 import { auditCapabilityIds, registerAuditCommands } from "./commands/audit.js";
 import { authCapabilityIds, registerAuthCommands } from "./commands/auth.js";
 import { capabilityCapabilityIds, registerCapabilityCommands } from "./commands/capability.js";
 import { CliUsageError, type CliRuntime, type CommandContext } from "./commands/context.js";
 import { deviceCapabilityIds, registerDeviceCommands } from "./commands/device.js";
+import { fileCapabilityIds, registerFileCommands } from "./commands/file.js";
+import { folderCapabilityIds, registerFolderCommands } from "./commands/folder.js";
 import {
   organizationCapabilityIds,
   registerOrganizationCommands,
 } from "./commands/organization.js";
+import { registerSpaceCommands, spaceCapabilityIds } from "./commands/space.js";
 import { resolveCliConfig } from "./config.js";
 import { withMemoryFallback, type CredentialStore } from "./credentials/credential-store.js";
 import { EncryptedFileStore } from "./credentials/encrypted-file-store.js";
@@ -37,6 +41,9 @@ export const registeredCapabilityIds = new Set([
   ...organizationCapabilityIds,
   ...capabilityCapabilityIds,
   ...auditCapabilityIds,
+  ...spaceCapabilityIds,
+  ...fileCapabilityIds,
+  ...folderCapabilityIds,
 ]);
 
 export interface CliDependencies {
@@ -51,6 +58,7 @@ export interface CliDependencies {
   deviceId?: string;
   deviceMetadata?: Partial<Pick<CliRuntime["device"], "name" | "os" | "architecture">>;
   environment?: Record<string, string | undefined>;
+  fileByteTransport?: FileByteTransport;
 }
 
 function osCredentialStore(): CredentialStore {
@@ -102,6 +110,9 @@ export function buildProgram(output: CliOutput, dependencies: CliDependencies = 
   registerDeviceCommands(program, commandContext);
   registerOrganizationCommands(program, commandContext);
   registerAuditCommands(program, commandContext);
+  registerSpaceCommands(program, commandContext);
+  registerFileCommands(program, commandContext);
+  registerFolderCommands(program, commandContext);
 
   program.action(() => {
     if (program.opts<{ json?: boolean }>().json === true) {
@@ -154,6 +165,7 @@ async function createRuntime(program: Command, dependencies: CliDependencies): P
     });
   return {
     client,
+    fileByteTransport: dependencies.fileByteTransport ?? createNodeFileByteTransport(),
     credentials,
     deviceId: credentials.deviceId,
     device: {

@@ -35,6 +35,8 @@ Inspect live capabilities before using a feature; the bundled capability list is
 
 Read [authentication.md](references/authentication.md) before registering, logging in, resetting a password, or changing devices. Let `torg` collect passwords and verification codes through its hidden interactive prompt. Never place a password, code, access token, refresh token, or credential-file passphrase in arguments, environment variables, chat, logs, or command output.
 
+Read [files.md](references/files.md) before listing spaces, uploading or downloading files, changing versions, using trash, or changing folder access.
+
 Use the login token stored by the CLI as the real user and device identity. Do not create subaccounts to represent additional computers.
 
 ## Execute commands
@@ -55,7 +57,7 @@ torg --invocation-source ai_via_cli --json device list
 torg --invocation-source ai_via_cli --json audit list --limit 25
 ```
 
-The prerelease currently covers authentication (including verification-code SMS), device sessions, organizations, capability discovery, and audit reads. Files, OKR/tasks, approvals, chat, remote execution, services, databases, domains, general notification SMS, and AI employees remain planned capabilities unless the live capability endpoint says otherwise.
+The prerelease covers authentication (including verification-code SMS), device sessions, organizations, spaces and files, capability discovery, and audit reads. OKR/tasks, approvals, chat, remote execution, services, databases, domains, general notification SMS, and AI employees remain planned capabilities unless the live capability endpoint says otherwise.
 
 ## Respond
 

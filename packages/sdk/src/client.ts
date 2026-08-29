@@ -9,6 +9,31 @@ import {
   DeviceListResponse,
   DeviceRevokeResponse,
   ErrorEnvelope,
+  FileDeleteResponse,
+  FileDownloadResponse,
+  FileListQuery,
+  FileListResponse,
+  FileMoveRequest,
+  FileMoveResponse,
+  FileReadResponse,
+  FileRestoreRequest,
+  FileRestoreResponse,
+  FileSearchQuery,
+  FileSearchResponse,
+  FileTrashResponse,
+  FileVersionListResponse,
+  FileVersionRestoreRequest,
+  FileVersionRestoreResponse,
+  FolderAccessResponse,
+  FolderAccessSetRequest,
+  FolderAccessSetResponse,
+  FolderCreateRequest,
+  FolderCreateResponse,
+  FolderGrantRevokeResponse,
+  FolderGrantSetRequest,
+  FolderGrantSetResponse,
+  FolderManagerRecoverRequest,
+  FolderManagerRecoverResponse,
   HealthResponse,
   LoginRequest,
   LoginResponse,
@@ -23,10 +48,24 @@ import {
   OrganizationMemberListResponse,
   PasswordResetRequest,
   PasswordResetResponse,
+  PersonalQuotaSetRequest,
+  PersonalQuotaSetResponse,
   RefreshRequest,
   RefreshResponse,
   RegisterRequest,
   RegisterResponse,
+  SpaceListResponse,
+  SpaceReadResponse,
+  SpaceUsageResponse,
+  UploadCancelResponse,
+  UploadCompleteRequest,
+  UploadCompleteResponse,
+  UploadCreateRequest,
+  UploadCreateResponse,
+  UploadListResponse,
+  UploadPartUrlsRequest,
+  UploadPartUrlsResponse,
+  UploadReadResponse,
   VerificationSendRequest,
   VerificationSendResponse,
   WhoAmIResponse,
@@ -83,6 +122,12 @@ interface RequestOptions {
   idempotencyKey?: string;
   signal?: AbortSignal | undefined;
   allowRefresh?: boolean;
+}
+
+type MutationOptions = { idempotencyKey: string; signal?: AbortSignal };
+
+function pathId(raw: string): string {
+  return encodeURIComponent(z.uuid().parse(raw));
 }
 
 export function createOrgSpaceClient(options: OrgSpaceClientOptions) {
@@ -366,6 +411,287 @@ export function createOrgSpaceClient(options: OrgSpaceClientOptions) {
         { ...mutation, authenticated: true },
       );
     },
+
+    listSpaces: (signal?: AbortSignal) =>
+      request("GET", "/v1/spaces", SpaceListResponse, undefined, { authenticated: true, signal }),
+
+    readSpace: (spaceId: string, signal?: AbortSignal) =>
+      request("GET", `/v1/spaces/${pathId(spaceId)}`, SpaceReadResponse, undefined, {
+        authenticated: true,
+        signal,
+      }),
+
+    readSpaceUsage: (spaceId: string, signal?: AbortSignal) =>
+      request("GET", `/v1/spaces/${pathId(spaceId)}/usage`, SpaceUsageResponse, undefined, {
+        authenticated: true,
+        signal,
+      }),
+
+    setPersonalSpaceQuota: (
+      organizationId: string,
+      accountId: string,
+      input: unknown,
+      mutation: { idempotencyKey: string; signal?: AbortSignal },
+    ) =>
+      request(
+        "POST",
+        `/v1/organizations/${pathId(organizationId)}/members/${pathId(accountId)}/personal-space-quota`,
+        PersonalQuotaSetResponse,
+        PersonalQuotaSetRequest.parse(input),
+        { ...mutation, authenticated: true },
+      ),
+
+    listFiles: (spaceId: string, input: unknown, signal?: AbortSignal) => {
+      const query = FileListQuery.parse(input);
+      const search = new URLSearchParams({
+        parentId: query.parentId,
+        includeTrash: String(query.includeTrash),
+        limit: String(query.limit),
+      });
+      if (query.cursor !== undefined) search.set("cursor", query.cursor);
+      return request(
+        "GET",
+        `/v1/spaces/${pathId(spaceId)}/entries?${search}`,
+        FileListResponse,
+        undefined,
+        { authenticated: true, signal },
+      );
+    },
+
+    readFile: (spaceId: string, entryId: string, signal?: AbortSignal) =>
+      request(
+        "GET",
+        `/v1/spaces/${pathId(spaceId)}/entries/${pathId(entryId)}`,
+        FileReadResponse,
+        undefined,
+        { authenticated: true, signal },
+      ),
+
+    searchFiles: (spaceId: string, input: unknown, signal?: AbortSignal) => {
+      const query = FileSearchQuery.parse(input);
+      const search = new URLSearchParams({ query: query.query, limit: String(query.limit) });
+      if (query.cursor !== undefined) search.set("cursor", query.cursor);
+      return request(
+        "GET",
+        `/v1/spaces/${pathId(spaceId)}/search?${search}`,
+        FileSearchResponse,
+        undefined,
+        { authenticated: true, signal },
+      );
+    },
+
+    createFolder: (spaceId: string, input: unknown, mutation: MutationOptions) =>
+      request(
+        "POST",
+        `/v1/spaces/${pathId(spaceId)}/folders`,
+        FolderCreateResponse,
+        FolderCreateRequest.parse(input),
+        { ...mutation, authenticated: true },
+      ),
+
+    moveFile: (spaceId: string, entryId: string, input: unknown, mutation: MutationOptions) =>
+      request(
+        "POST",
+        `/v1/spaces/${pathId(spaceId)}/entries/${pathId(entryId)}/move`,
+        FileMoveResponse,
+        FileMoveRequest.parse(input),
+        { ...mutation, authenticated: true },
+      ),
+
+    trashFile: (spaceId: string, entryId: string, mutation: MutationOptions) =>
+      request(
+        "POST",
+        `/v1/spaces/${pathId(spaceId)}/entries/${pathId(entryId)}/trash`,
+        FileTrashResponse,
+        {},
+        {
+          ...mutation,
+          authenticated: true,
+        },
+      ),
+
+    restoreFile: (spaceId: string, entryId: string, input: unknown, mutation: MutationOptions) =>
+      request(
+        "POST",
+        `/v1/spaces/${pathId(spaceId)}/entries/${pathId(entryId)}/restore`,
+        FileRestoreResponse,
+        FileRestoreRequest.parse(input),
+        { ...mutation, authenticated: true },
+      ),
+
+    deleteFile: (spaceId: string, entryId: string, mutation: MutationOptions) =>
+      request(
+        "DELETE",
+        `/v1/spaces/${pathId(spaceId)}/entries/${pathId(entryId)}`,
+        FileDeleteResponse,
+        undefined,
+        {
+          ...mutation,
+          authenticated: true,
+        },
+      ),
+
+    createFileDownload: (spaceId: string, entryId: string, mutation: MutationOptions) =>
+      request(
+        "POST",
+        `/v1/spaces/${pathId(spaceId)}/entries/${pathId(entryId)}/download`,
+        FileDownloadResponse,
+        {},
+        { ...mutation, authenticated: true },
+      ),
+
+    listFileVersions: (spaceId: string, entryId: string, signal?: AbortSignal) =>
+      request(
+        "GET",
+        `/v1/spaces/${pathId(spaceId)}/entries/${pathId(entryId)}/versions`,
+        FileVersionListResponse,
+        undefined,
+        { authenticated: true, signal },
+      ),
+
+    restoreFileVersion: (
+      spaceId: string,
+      entryId: string,
+      versionId: string,
+      input: unknown,
+      mutation: MutationOptions,
+    ) =>
+      request(
+        "POST",
+        `/v1/spaces/${pathId(spaceId)}/entries/${pathId(entryId)}/versions/${pathId(versionId)}/restore`,
+        FileVersionRestoreResponse,
+        FileVersionRestoreRequest.parse(input),
+        { ...mutation, authenticated: true },
+      ),
+
+    listUploads: (spaceId: string, signal?: AbortSignal) =>
+      request("GET", `/v1/spaces/${pathId(spaceId)}/uploads`, UploadListResponse, undefined, {
+        authenticated: true,
+        signal,
+      }),
+
+    readUpload: (spaceId: string, uploadId: string, signal?: AbortSignal) =>
+      request(
+        "GET",
+        `/v1/spaces/${pathId(spaceId)}/uploads/${pathId(uploadId)}`,
+        UploadReadResponse,
+        undefined,
+        {
+          authenticated: true,
+          signal,
+        },
+      ),
+
+    createUpload: (spaceId: string, input: unknown, mutation: MutationOptions) =>
+      request(
+        "POST",
+        `/v1/spaces/${pathId(spaceId)}/uploads`,
+        UploadCreateResponse,
+        UploadCreateRequest.parse(input),
+        { ...mutation, authenticated: true },
+      ),
+
+    createUploadPartUrls: (
+      spaceId: string,
+      uploadId: string,
+      input: unknown,
+      mutation: MutationOptions,
+    ) =>
+      request(
+        "POST",
+        `/v1/spaces/${pathId(spaceId)}/uploads/${pathId(uploadId)}/parts`,
+        UploadPartUrlsResponse,
+        UploadPartUrlsRequest.parse(input),
+        { ...mutation, authenticated: true },
+      ),
+
+    completeUpload: (
+      spaceId: string,
+      uploadId: string,
+      input: unknown,
+      mutation: MutationOptions,
+    ) =>
+      request(
+        "POST",
+        `/v1/spaces/${pathId(spaceId)}/uploads/${pathId(uploadId)}/complete`,
+        UploadCompleteResponse,
+        UploadCompleteRequest.parse(input),
+        { ...mutation, authenticated: true },
+      ),
+
+    cancelUpload: (spaceId: string, uploadId: string, mutation: MutationOptions) =>
+      request(
+        "POST",
+        `/v1/spaces/${pathId(spaceId)}/uploads/${pathId(uploadId)}/cancel`,
+        UploadCancelResponse,
+        {},
+        { ...mutation, authenticated: true },
+      ),
+
+    readFolderAccess: (spaceId: string, folderId: string, signal?: AbortSignal) =>
+      request(
+        "GET",
+        `/v1/spaces/${pathId(spaceId)}/folders/${pathId(folderId)}/access`,
+        FolderAccessResponse,
+        undefined,
+        { authenticated: true, signal },
+      ),
+
+    setFolderAccess: (
+      spaceId: string,
+      folderId: string,
+      input: unknown,
+      mutation: MutationOptions,
+    ) =>
+      request(
+        "POST",
+        `/v1/spaces/${pathId(spaceId)}/folders/${pathId(folderId)}/access`,
+        FolderAccessSetResponse,
+        FolderAccessSetRequest.parse(input),
+        { ...mutation, authenticated: true },
+      ),
+
+    setFolderGrant: (
+      spaceId: string,
+      folderId: string,
+      input: unknown,
+      mutation: MutationOptions,
+    ) =>
+      request(
+        "POST",
+        `/v1/spaces/${pathId(spaceId)}/folders/${pathId(folderId)}/grants`,
+        FolderGrantSetResponse,
+        FolderGrantSetRequest.parse(input),
+        { ...mutation, authenticated: true },
+      ),
+
+    revokeFolderGrant: (
+      spaceId: string,
+      folderId: string,
+      accountId: string,
+      mutation: MutationOptions,
+    ) =>
+      request(
+        "DELETE",
+        `/v1/spaces/${pathId(spaceId)}/folders/${pathId(folderId)}/grants/${pathId(accountId)}`,
+        FolderGrantRevokeResponse,
+        undefined,
+        { ...mutation, authenticated: true },
+      ),
+
+    recoverFolderManager: (
+      spaceId: string,
+      folderId: string,
+      input: unknown,
+      mutation: MutationOptions,
+    ) =>
+      request(
+        "POST",
+        `/v1/spaces/${pathId(spaceId)}/folders/${pathId(folderId)}/manager-recovery`,
+        FolderManagerRecoverResponse,
+        FolderManagerRecoverRequest.parse(input),
+        { ...mutation, authenticated: true },
+      ),
 
     listAuditEvents: (input: unknown, signal?: AbortSignal) => {
       const query = AuditListQuery.parse(input);

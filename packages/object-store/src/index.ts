@@ -9,6 +9,7 @@ export {
 export { sha256Stream } from "./checksum.js";
 export { presignS3Command } from "./presign.js";
 export { S3FileMaintenanceStore } from "./maintenance.js";
+export { S3FileDataStore } from "./file-data.js";
 
 const ObjectId = z.uuid("object ID must be a UUID");
 

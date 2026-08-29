@@ -79,7 +79,7 @@ describe("Phase 0 command behavior", () => {
       for (const child of command.commands) visit(child, [...prefix, child.name()]);
     };
     visit(program, []);
-    expect(leafPaths.sort()).toEqual(Object.values(capabilityBindings).sort());
+    expect(leafPaths.sort()).toEqual([...new Set(Object.values(capabilityBindings))].sort());
   });
 
   test("login prompts securely and never prints tokens", async () => {

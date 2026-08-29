@@ -33,6 +33,10 @@ interface EntryRow {
   name: string;
   state: "active" | "trash";
   lock_version: number;
+  current_version_id?: string | null;
+  size_bytes?: string | number | null;
+  content_type?: string | null;
+  checksum_sha256?: string | null;
   created_by_account_id: string;
   created_at: Date;
   updated_at: Date;
@@ -51,6 +55,9 @@ function entry(row: EntryRow) {
     name: row.name,
     state: row.state,
     lockVersion: row.lock_version,
+    currentVersionId: row.current_version_id ?? null,
+    sizeBytes: Number(row.size_bytes ?? 0),
+    contentType: row.content_type ?? null,
     createdByAccountId: row.created_by_account_id,
     createdAt: row.created_at.toISOString(),
     updatedAt: row.updated_at.toISOString(),
@@ -76,21 +83,24 @@ export class FileService {
       folderId,
       scope: policy.scope,
       lockVersion: policy.lock_version,
+      inheritedFromFolderId: folderId,
       grants: grants.map((grant) => ({ accountId: grant.account_id, role: grant.role })),
     };
   }
 
   private async row(transaction: TransactionClient, spaceId: string, entryId: string) {
     const [row] = await transaction<EntryRow[]>`
-      select id, space_id, parent_id, kind, name, state, lock_version,
-        created_by_account_id, created_at, updated_at
-      from file_entries where id = ${entryId} and space_id = ${spaceId}
+      select entry.id, entry.space_id, entry.parent_id, entry.kind, entry.name, entry.state,
+        entry.lock_version, entry.current_version_id, version.size_bytes, version.content_type,
+        version.checksum_sha256, entry.created_by_account_id, entry.created_at, entry.updated_at
+      from file_entries entry left join file_versions version on version.id = entry.current_version_id
+      where entry.id = ${entryId} and entry.space_id = ${spaceId}
     `;
     if (row === undefined) throw new AuthError("FILE_NOT_FOUND", "file entry not found");
     return row;
   }
 
-  public async list(accountId: string, spaceId: string, parentId: string) {
+  public async list(accountId: string, spaceId: string, parentId: string, includeTrash = false) {
     return this.sql.begin(async (transaction) => {
       await requireFilePermission(transaction, {
         accountId,
@@ -99,10 +109,13 @@ export class FileService {
         permission: "read",
       });
       const rows = await transaction<EntryRow[]>`
-        select id, space_id, parent_id, kind, name, state, lock_version,
-          created_by_account_id, created_at, updated_at
-        from file_entries where space_id = ${spaceId} and parent_id = ${parentId} and state = 'active'
-        order by normalized_name, id
+        select entry.id, entry.space_id, entry.parent_id, entry.kind, entry.name, entry.state,
+          entry.lock_version, entry.current_version_id, version.size_bytes, version.content_type,
+          version.checksum_sha256, entry.created_by_account_id, entry.created_at, entry.updated_at
+        from file_entries entry left join file_versions version on version.id = entry.current_version_id
+        where entry.space_id = ${spaceId} and entry.parent_id = ${parentId}
+          and (${includeTrash} or entry.state = 'active')
+        order by entry.normalized_name, entry.id
       `;
       const visible: ReturnType<typeof entry>[] = [];
       for (const row of rows) {
@@ -125,13 +138,19 @@ export class FileService {
 
   public async read(accountId: string, spaceId: string, entryId: string) {
     return this.sql.begin(async (transaction) => {
-      await requireFilePermission(transaction, {
+      const access = await requireFilePermission(transaction, {
         accountId,
         spaceId,
         entryId,
         permission: "read",
       });
-      return entry(await this.row(transaction, spaceId, entryId));
+      const row = await this.row(transaction, spaceId, entryId);
+      return {
+        ...entry(row),
+        inheritedFromFolderId: access.inheritedFromFolderId ?? access.space.root_folder_id,
+        effectiveRole: access.effectiveRole,
+        checksumSha256: row.checksum_sha256 ?? null,
+      };
     });
   }
 
@@ -140,12 +159,13 @@ export class FileService {
     return this.sql.begin(async (transaction) => {
       await requireFilePermission(transaction, { accountId, spaceId, permission: "metadata" });
       const rows = await transaction<EntryRow[]>`
-        select id, space_id, parent_id, kind, name, state, lock_version,
-          created_by_account_id, created_at, updated_at
-        from file_entries
-        where space_id = ${spaceId} and state = 'active'
-          and normalized_name like ${`%${normalizedQuery}%`}
-        order by updated_at desc, id limit 200
+        select entry.id, entry.space_id, entry.parent_id, entry.kind, entry.name, entry.state,
+          entry.lock_version, entry.current_version_id, version.size_bytes, version.content_type,
+          version.checksum_sha256, entry.created_by_account_id, entry.created_at, entry.updated_at
+        from file_entries entry left join file_versions version on version.id = entry.current_version_id
+        where entry.space_id = ${spaceId} and entry.state = 'active'
+          and entry.normalized_name like ${`%${normalizedQuery}%`}
+        order by entry.updated_at desc, entry.id limit 200
       `;
       const visible: ReturnType<typeof entry>[] = [];
       for (const row of rows) {
@@ -242,7 +262,7 @@ export class FileService {
             lock_version, created_by_account_id, created_at, updated_at
         `;
         if (updated === undefined) throw new Error("file move returned no row");
-        return entry(updated);
+        return entry(await this.row(transaction, spaceId, updated.id));
       } catch (error) {
         if (
           typeof error === "object" &&
@@ -358,16 +378,7 @@ export class FileService {
           granted_by_account_id = excluded.granted_by_account_id, updated_at = now()
       `;
       await transaction`update folder_access_policies set lock_version = lock_version + 1, updated_by_account_id = ${accountId}, updated_at = now() where folder_id = ${folderId}`;
-      const grants = await transaction<
-        { account_id: string; role: "manager" | "editor" | "viewer" }[]
-      >`
-        select account_id, role from folder_grants where folder_id = ${folderId} order by created_at, account_id
-      `;
-      return {
-        folderId,
-        scope: policy.scope,
-        grants: grants.map((grant) => ({ accountId: grant.account_id, role: grant.role })),
-      };
+      return this.accessRows(transaction, folderId);
     });
   }
 
@@ -475,7 +486,7 @@ export class FileService {
         update folder_access_policies set lock_version = lock_version + 1,
           updated_by_account_id = ${adminAccountId}, updated_at = now() where folder_id = ${folderId}
       `;
-      return { folderId, recoveredAccountId: input.accountId, reason: input.reason };
+      return this.accessRows(transaction, folderId);
     });
   }
 
@@ -487,12 +498,35 @@ export class FileService {
         entryId: fileEntryId,
         permission: "read",
       });
-      return transaction`
+      const rows = await transaction<
+        {
+          id: string;
+          file_entry_id: string;
+          version_number: number;
+          size_bytes: string | number;
+          content_type: string;
+          checksum_sha256: string;
+          status: "verifying" | "available" | "corrupt";
+          created_by_account_id: string;
+          created_at: Date;
+        }[]
+      >`
         select id, file_entry_id, version_number, size_bytes, content_type,
           checksum_sha256, status, created_by_account_id, created_at
         from file_versions where file_entry_id = ${fileEntryId}
         order by version_number desc
       `;
+      return rows.map((row) => ({
+        id: row.id,
+        fileEntryId: row.file_entry_id,
+        versionNumber: row.version_number,
+        sizeBytes: Number(row.size_bytes),
+        contentType: row.content_type,
+        checksumSha256: row.checksum_sha256,
+        status: row.status,
+        createdByAccountId: row.created_by_account_id,
+        createdAt: row.created_at.toISOString(),
+      }));
     });
   }
 
@@ -510,8 +544,21 @@ export class FileService {
         entryId: fileEntryId,
         permission: "write",
       });
-      const [version] = await transaction<{ id: string }[]>`
-        select id from file_versions where id = ${versionId}
+      const [version] = await transaction<
+        {
+          id: string;
+          file_entry_id: string;
+          version_number: number;
+          size_bytes: string | number;
+          content_type: string;
+          checksum_sha256: string;
+          status: "available";
+          created_by_account_id: string;
+          created_at: Date;
+        }[]
+      >`
+        select id, file_entry_id, version_number, size_bytes, content_type, checksum_sha256,
+          status, created_by_account_id, created_at from file_versions where id = ${versionId}
           and file_entry_id = ${fileEntryId} and status = 'available'
       `;
       if (version === undefined) throw new AuthError("FILE_NOT_FOUND", "file version not found");
@@ -521,7 +568,20 @@ export class FileService {
         returning id
       `;
       if (updated.length !== 1) throw new AuthError("FILE_VERSION_CONFLICT", "file entry changed");
-      return entry(await this.row(transaction, spaceId, fileEntryId));
+      return {
+        entry: entry(await this.row(transaction, spaceId, fileEntryId)),
+        version: {
+          id: version.id,
+          fileEntryId: version.file_entry_id,
+          versionNumber: version.version_number,
+          sizeBytes: Number(version.size_bytes),
+          contentType: version.content_type,
+          checksumSha256: version.checksum_sha256,
+          status: version.status,
+          createdByAccountId: version.created_by_account_id,
+          createdAt: version.created_at.toISOString(),
+        },
+      };
     });
   }
 

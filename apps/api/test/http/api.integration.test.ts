@@ -8,6 +8,7 @@ import { AccessTokenService } from "../../src/auth/access-token.js";
 import { buildApp } from "../../src/app.js";
 import { createDatabaseClient, type DatabaseClient } from "../../src/db/client.js";
 import { migrateDatabase, resetTestDatabase } from "../../src/db/migrate.js";
+import { testFileDataStore } from "./test-file-store.js";
 
 const testDatabaseUrl = process.env.TEST_DATABASE_URL;
 if (testDatabaseUrl === undefined) {
@@ -54,6 +55,7 @@ beforeEach(async () => {
     phoneCodePepper: "test-only-phone-code-pepper",
     trustedProxyCidrs: ["10.0.0.0/8"],
     corsOrigins: ["https://org.tashan.chat"],
+    fileDataStore: testFileDataStore(),
   });
 });
 
@@ -134,6 +136,74 @@ async function login(phone: string, device: TestDevice, password = "CorrectHorse
 }
 
 describe("Phase 0 HTTP capability surface", () => {
+  test("executes the authenticated file, trash and resumable-upload routes", async () => {
+    const registration = await register("+8613800138091");
+    const token = registration.json<{ tokens: { accessToken: string } }>().tokens.accessToken;
+    const spaces = await app.inject({
+      method: "GET",
+      url: "/v1/spaces",
+      headers: authHeaders(token),
+    });
+    expect(spaces.statusCode).toBe(200);
+    const personal = spaces.json<{ items: Array<{ id: string; rootFolderId: string }> }>().items[0];
+    if (personal === undefined) throw new Error("personal space fixture is missing");
+
+    const created = await app.inject({
+      method: "POST",
+      url: `/v1/spaces/${personal.id}/folders`,
+      headers: authHeaders(token, true),
+      payload: {
+        parentId: personal.rootFolderId,
+        name: "Project files",
+        accessScope: "restricted",
+        grants: [],
+      },
+    });
+    expect(created.statusCode).toBe(201);
+    const entry = created.json<{ entry: { id: string; lockVersion: number } }>().entry;
+    const trashed = await app.inject({
+      method: "POST",
+      url: `/v1/spaces/${personal.id}/entries/${entry.id}/trash`,
+      headers: authHeaders(token, true),
+      payload: {},
+    });
+    expect(trashed.statusCode).toBe(200);
+    const restored = await app.inject({
+      method: "POST",
+      url: `/v1/spaces/${personal.id}/entries/${entry.id}/restore`,
+      headers: authHeaders(token, true),
+      payload: { expectedVersion: entry.lockVersion + 1 },
+    });
+    expect(restored.statusCode).toBe(200);
+
+    const upload = await app.inject({
+      method: "POST",
+      url: `/v1/spaces/${personal.id}/uploads`,
+      headers: authHeaders(token, true),
+      payload: {
+        parentId: personal.rootFolderId,
+        fileName: "data.bin",
+        expectedSizeBytes: 3,
+        contentType: "application/octet-stream",
+      },
+    });
+    expect(upload.statusCode, upload.body).toBe(201);
+    const uploadId = upload.json<{ uploadSession: { id: string } }>().uploadSession.id;
+    const readUpload = await app.inject({
+      method: "GET",
+      url: `/v1/spaces/${personal.id}/uploads/${uploadId}`,
+      headers: authHeaders(token),
+    });
+    expect(readUpload.json()).toMatchObject({ uploadedParts: [] });
+    const cancelled = await app.inject({
+      method: "POST",
+      url: `/v1/spaces/${personal.id}/uploads/${uploadId}/cancel`,
+      headers: authHeaders(token, true),
+      payload: {},
+    });
+    expect(cancelled.json()).toEqual({ uploadSessionId: uploadId, cancelled: true });
+  });
+
   test("reports the injected service version and a valid timestamp", async () => {
     const response = await app.inject({ method: "GET", url: "/v1/health" });
     expect(response.statusCode).toBe(200);
@@ -275,12 +345,12 @@ describe("Phase 0 HTTP capability surface", () => {
     expect(refreshed.headers["set-cookie"]).not.toBe(loginCookie);
   });
 
-  test("exposes all 17 capabilities through real route payloads and audits each one", async () => {
+  test("exposes all 43 capabilities while auditing the exercised control-plane set", async () => {
     expect((await app.inject({ method: "GET", url: "/v1/health" })).statusCode).toBe(200);
     const capabilities = await app.inject({ method: "GET", url: "/v1/capabilities" });
     expect(capabilities.statusCode).toBe(200);
     const capabilityItems = capabilities.json<{ items: { id: string }[] }>().items;
-    expect(capabilityItems).toHaveLength(17);
+    expect(capabilityItems).toHaveLength(43);
     expect(
       (
         await app.inject({
@@ -426,9 +496,28 @@ describe("Phase 0 HTTP capability surface", () => {
     const rows = await sql<{ capability_id: string }[]>`
       select distinct capability_id from audit_events
     `;
-    expect(new Set(rows.map(({ capability_id: id }) => id))).toEqual(
-      new Set(capabilityItems.map(({ id }) => id)),
-    );
+    const audited = new Set(rows.map(({ capability_id: id }) => id));
+    for (const id of [
+      "system.health.read",
+      "capability.list",
+      "capability.describe",
+      "auth.verification.send",
+      "auth.password.reset",
+      "auth.register",
+      "auth.login",
+      "auth.refresh",
+      "auth.logout",
+      "auth.whoami",
+      "device.list",
+      "device.revoke",
+      "organization.list",
+      "organization.create",
+      "organization.member.list",
+      "organization.member.add",
+      "audit.list",
+    ]) {
+      expect(audited).toContain(id);
+    }
   });
 
   test("denies a valid user from another organization", async () => {

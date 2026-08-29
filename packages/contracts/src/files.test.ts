@@ -3,6 +3,8 @@ import { describe, expect, test } from "vitest";
 import { SafeByteCount } from "./common.js";
 import {
   FileCapabilityId,
+  FileDeleteResponse,
+  FileVersionRestoreRequest,
   FileEntryKind,
   FileName,
   FolderAccessScope,
@@ -10,6 +12,7 @@ import {
   UploadCompleteRequest,
   UploadCreateResponse,
   UploadPartNumber,
+  UploadReadResponse,
   UploadSessionStatus,
 } from "./files.js";
 import { SpaceType } from "./spaces.js";
@@ -73,6 +76,7 @@ describe("space and file primitive contracts", () => {
         spaceId: "35f503c2-a5d7-4250-a337-4f4fd03cf8df",
         parentId: "84ecfe2e-c11a-4a56-8735-934955bef834",
         fileName: "data.bin",
+        contentType: "application/octet-stream",
         expectedSizeBytes: 1024,
         partSizeBytes: 16 * 1024 * 1024,
         partCount: 1,
@@ -85,5 +89,45 @@ describe("space and file primitive contracts", () => {
     expect(
       UploadCreateResponse.safeParse({ ...response, accessKeyId: "must-not-leak" }).success,
     ).toBe(false);
+  });
+
+  test("exposes server-confirmed parts when reading a resumable upload", () => {
+    const uploadSession = {
+      id: "746fb70b-a27e-4a78-a231-aa55ef8c343e",
+      spaceId: "35f503c2-a5d7-4250-a337-4f4fd03cf8df",
+      parentId: "84ecfe2e-c11a-4a56-8735-934955bef834",
+      fileName: "data.bin",
+      contentType: "application/octet-stream",
+      expectedSizeBytes: 3,
+      partSizeBytes: 2,
+      partCount: 2,
+      status: "uploading",
+      expiresAt: "2026-08-29T01:00:00.000Z",
+      createdAt: "2026-08-29T00:00:00.000Z",
+    };
+    expect(
+      UploadReadResponse.parse({
+        uploadSession,
+        uploadedParts: [
+          { partNumber: 1, etag: '"etag-1"', checksumSha256: "YWJjZA==", sizeBytes: 2 },
+        ],
+      }).uploadedParts,
+    ).toHaveLength(1);
+  });
+
+  test("reports permanent deletion as queued until the worker finishes it", () => {
+    expect(
+      FileDeleteResponse.parse({
+        entryId: "b228e557-2214-4f95-b49d-d4ff7d9759d4",
+        queued: true,
+      }),
+    ).toEqual({ entryId: "b228e557-2214-4f95-b49d-d4ff7d9759d4", queued: true });
+  });
+
+  test("requires optimistic concurrency for version restore", () => {
+    expect(FileVersionRestoreRequest.parse({ expectedVersion: 2 })).toEqual({
+      expectedVersion: 2,
+    });
+    expect(FileVersionRestoreRequest.safeParse({}).success).toBe(false);
   });
 });

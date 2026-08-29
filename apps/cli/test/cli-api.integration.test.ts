@@ -57,6 +57,14 @@ beforeAll(async () => {
     phoneCodePepper: "cli-integration-phone-code-pepper",
     trustedProxyCidrs: [],
     corsOrigins: ["https://org.tashan.chat"],
+    fileDataStore: {
+      createMultipart: async () => "test-upload-id",
+      presignPart: async ({ partNumber }) => `https://files.test/part/${partNumber}`,
+      listParts: async () => [],
+      completeMultipart: async () => undefined,
+      abortMultipart: async () => undefined,
+      sign: async () => "https://files.test/download",
+    },
   });
 });
 
@@ -134,7 +142,7 @@ describe("CLI against the real Phase 0 API", () => {
     const capabilities = (await runJson(["capability", "list"], aliceA)) as {
       items: { id: string }[];
     };
-    expect(capabilities.items).toHaveLength(17);
+    expect(capabilities.items).toHaveLength(43);
     expect(await runJson(["capability", "describe", "device.revoke"], aliceA)).toMatchObject({
       id: "device.revoke",
       cli: "device revoke",

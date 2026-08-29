@@ -64,8 +64,6 @@ function publicRow(row: UploadRow) {
     fileName: row.file_name,
     contentType: row.content_type,
     expectedSizeBytes: Number(row.expected_size_bytes),
-    temporaryObjectKey: row.temporary_object_key,
-    s3UploadId: row.s3_upload_id,
     partSizeBytes: Number(row.part_size_bytes),
     partCount: row.part_count,
     status: row.status,
@@ -98,6 +96,85 @@ export class UploadService {
     `;
     if (row === undefined) throw new AuthError("UPLOAD_NOT_FOUND", "upload session not found");
     return row;
+  }
+
+  public async list(accountId: string, spaceId: string) {
+    const rows = await this.options.sql<UploadRow[]>`
+      select * from upload_sessions where space_id = ${spaceId}
+      order by created_at desc, id
+    `;
+    const visible: ReturnType<typeof publicRow>[] = [];
+    for (const row of rows) {
+      try {
+        await this.options.sql.begin((transaction) =>
+          requireFilePermission(transaction, {
+            accountId,
+            spaceId,
+            entryId: row.parent_id,
+            permission: "write",
+          }),
+        );
+        visible.push(publicRow(row));
+      } catch (error) {
+        if (error instanceof AuthError && error.code === "FILE_FORBIDDEN") continue;
+        throw error;
+      }
+    }
+    return visible;
+  }
+
+  public async read(accountId: string, spaceId: string, uploadSessionId: string) {
+    const row = await this.row(uploadSessionId);
+    if (row.space_id !== spaceId)
+      throw new AuthError("UPLOAD_NOT_FOUND", "upload session not found");
+    await this.options.sql.begin((transaction) =>
+      requireFilePermission(transaction, {
+        accountId,
+        spaceId,
+        entryId: row.parent_id,
+        permission: "write",
+      }),
+    );
+    const uploadedParts =
+      row.s3_upload_id === null || row.status !== "uploading"
+        ? []
+        : await this.options.objectStore.listParts({
+            key: row.temporary_object_key,
+            uploadId: row.s3_upload_id,
+          });
+    return { uploadSession: publicRow(row), uploadedParts };
+  }
+
+  public async cancel(accountId: string, spaceId: string, uploadSessionId: string) {
+    const row = await this.row(uploadSessionId);
+    if (row.space_id !== spaceId)
+      throw new AuthError("UPLOAD_NOT_FOUND", "upload session not found");
+    await this.options.sql.begin((transaction) =>
+      requireFilePermission(transaction, {
+        accountId,
+        spaceId,
+        entryId: row.parent_id,
+        permission: "write",
+      }),
+    );
+    if (row.status === "cancelled") return { uploadSessionId, cancelled: true as const };
+    if (row.status !== "created" && row.status !== "uploading" && row.status !== "failed") {
+      throw new AuthError("UPLOAD_INCOMPLETE", "upload session can no longer be cancelled");
+    }
+    if (row.s3_upload_id !== null) {
+      await this.options.objectStore.abortMultipart({
+        key: row.temporary_object_key,
+        uploadId: row.s3_upload_id,
+      });
+    }
+    await this.options.sql.begin(async (transaction) => {
+      await transaction`
+        update upload_sessions set status = 'cancelled', updated_at = now()
+        where id = ${uploadSessionId} and status in ('created', 'uploading', 'failed')
+      `;
+      await this.spaces.releaseReservation(transaction, uploadSessionId);
+    });
+    return { uploadSessionId, cancelled: true as const };
   }
 
   public async create(

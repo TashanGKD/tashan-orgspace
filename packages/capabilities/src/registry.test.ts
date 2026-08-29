@@ -50,7 +50,7 @@ describe("capability registry invariants", () => {
 });
 
 describe("Phase 0 capability source", () => {
-  test("contains exactly the approved 17 unique IDs", () => {
+  test("contains exactly the approved 43 unique IDs", () => {
     expect(phase0Capabilities.map(({ id }) => id).sort()).toEqual(
       [
         "system.health.read",
@@ -70,9 +70,35 @@ describe("Phase 0 capability source", () => {
         "organization.member.list",
         "organization.member.add",
         "audit.list",
+        "space.list",
+        "space.read",
+        "space.usage.read",
+        "space.quota.set",
+        "file.list",
+        "file.read",
+        "file.search",
+        "file.folder.create",
+        "file.move",
+        "file.trash",
+        "file.restore",
+        "file.delete",
+        "file.download.create",
+        "file.version.list",
+        "file.version.restore",
+        "file.upload.list",
+        "file.upload.read",
+        "file.upload.create",
+        "file.upload.parts.create",
+        "file.upload.complete",
+        "file.upload.cancel",
+        "folder.access.read",
+        "folder.access.set",
+        "folder.grant.set",
+        "folder.grant.revoke",
+        "folder.manager.recover",
       ].sort(),
     );
-    expect(new Set(phase0Capabilities.map(({ id }) => id)).size).toBe(17);
+    expect(new Set(phase0Capabilities.map(({ id }) => id)).size).toBe(43);
   });
 
   test("keeps revocation and organization writes explicitly guarded", () => {

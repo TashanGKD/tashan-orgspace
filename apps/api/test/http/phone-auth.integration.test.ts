@@ -8,6 +8,7 @@ import { AccessTokenService } from "../../src/auth/access-token.js";
 import { buildApp } from "../../src/app.js";
 import { createDatabaseClient, type DatabaseClient } from "../../src/db/client.js";
 import { migrateDatabase, resetTestDatabase } from "../../src/db/migrate.js";
+import { testFileDataStore } from "./test-file-store.js";
 
 const testDatabaseUrl = process.env.TEST_DATABASE_URL;
 if (testDatabaseUrl === undefined) {
@@ -57,6 +58,7 @@ beforeAll(async () => {
     phoneCodePepper: "test-only-phone-code-pepper",
     trustedProxyCidrs: [],
     corsOrigins: ["https://org.tashan.chat"],
+    fileDataStore: testFileDataStore(),
   });
 }, 30_000);
 

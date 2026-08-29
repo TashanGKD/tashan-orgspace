@@ -1,5 +1,10 @@
 import { importPKCS8, importSPKI } from "jose";
 import { createClient } from "redis";
+import {
+  createInternalS3Client,
+  createPresignS3Client,
+  S3FileDataStore,
+} from "@tashan/object-store";
 
 import { AccessTokenService } from "./auth/access-token.js";
 import { buildApp } from "./app.js";
@@ -11,6 +16,9 @@ import { RedisFixedWindowRateLimiter } from "./rate-limit/redis-fixed-window.js"
 
 async function main(): Promise<void> {
   const config = loadConfig();
+  if (config.objectStore === undefined) {
+    throw new Error("FILE_STORAGE_ENABLED=true is required for the file capability server");
+  }
   const sql = createDatabaseClient(config.databaseUrl);
   const redis = createClient({ url: config.redisUrl });
   await redis.connect();
@@ -46,6 +54,11 @@ async function main(): Promise<void> {
     phoneCodePepper: config.phoneCodePepper,
     trustedProxyCidrs: config.trustedProxyCidrs,
     corsOrigins: config.corsOrigins,
+    fileDataStore: new S3FileDataStore({
+      internalClient: createInternalS3Client(config.objectStore),
+      presignClient: createPresignS3Client(config.objectStore),
+      bucket: config.objectStore.bucket,
+    }),
   });
 
   const shutdown = async () => {

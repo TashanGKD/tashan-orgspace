@@ -1,7 +1,9 @@
 import { describe, expect, test } from "vitest";
+import type { S3Client } from "@aws-sdk/client-s3";
 
 import {
   parseObjectStoreConfig,
+  S3FileDataStore,
   sha256Stream,
   temporaryObjectKey,
   versionObjectKey,
@@ -84,5 +86,43 @@ describe("object identity and checksums", () => {
     await expect(sha256Stream(bytes())).resolves.toBe(
       "3f2d1552cdc7483f40dd720c80b900225dfecfd5cae7cd168d79ab6ee5959885",
     );
+  });
+});
+
+describe("S3 file data plane", () => {
+  test("uses opaque multipart commands and attachment-only downloads", async () => {
+    const commands: unknown[] = [];
+    const internal = {
+      send: async (command: unknown) => {
+        commands.push(command);
+        return commands.length === 1 ? { UploadId: "opaque-upload" } : {};
+      },
+    };
+    const signed: unknown[] = [];
+    const store = new S3FileDataStore({
+      internalClient: internal as unknown as S3Client,
+      presignClient: internal as unknown as S3Client,
+      bucket: "orgspace-files",
+      presign: async (_client, command) => {
+        signed.push(command);
+        return "https://files.example/signed";
+      },
+    });
+    await expect(
+      store.createMultipart({
+        key: "temporary/746fb70b-a27e-4a78-a231-aa55ef8c343e",
+        contentType: "application/octet-stream",
+      }),
+    ).resolves.toBe("opaque-upload");
+    await expect(
+      store.sign({
+        objectKey: "versions/35f503c2-a5d7-4250-a337-4f4fd03cf8df",
+        fileName: 'report".html',
+        contentType: "text/html",
+        expiresInSeconds: 300,
+      }),
+    ).resolves.toBe("https://files.example/signed");
+    expect(JSON.stringify(signed)).toContain("attachment");
+    expect(JSON.stringify(signed)).toContain("application/octet-stream");
   });
 });

@@ -150,9 +150,13 @@ printf '%s\n' "$help_output" | grep -Fq "Tashan OrgSpace command line client" ||
 }
 capability_output=$(HOME="$fresh_home" PATH="$safe_bin" TORG_API_URL="https://127.0.0.1:$port" \
   NODE_EXTRA_CA_CERTS="$cert_file" "$torg" --invocation-source ai_via_cli --json capability list)
-CAPABILITY_OUTPUT="$capability_output" "$node_path" -e '
+CAPABILITY_OUTPUT="$capability_output" \
+  CAPABILITY_REFERENCE_FILE="$repository_root/skill/tashan-orgspace/capability-references.json" \
+  "$node_path" -e '
+  const { readFileSync } = require("node:fs");
   const value = JSON.parse(process.env.CAPABILITY_OUTPUT);
-  if (!Array.isArray(value.items) || value.items.length !== 17) process.exit(1);
+  const expected = JSON.parse(readFileSync(process.env.CAPABILITY_REFERENCE_FILE, "utf8"));
+  if (!Array.isArray(value.items) || value.items.length !== expected.capabilities.length) process.exit(1);
 ' || {
   printf '%s\n' "fresh-user: capability JSON smoke test failed" >&2
   exit 1

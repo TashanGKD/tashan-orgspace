@@ -24,6 +24,7 @@ const paths = {
   productionContract: join(root, "deploy/production-contract.json"),
   release: join(root, "release/cli-release.json"),
   skillRelease: join(root, "skill/tashan-orgspace/release.json"),
+  minioConfig: join(root, "deploy/minio"),
 };
 
 const fixtureEnvironment = {
@@ -39,6 +40,10 @@ const fixtureEnvironment = {
   JWT_PRIVATE_KEY: "fixture-private-key",
   JWT_PUBLIC_KEY: "fixture-public-key",
   ORGSPACE_POSTGRES_PASSWORD: "fixture-postgres-password",
+  MINIO_ROOT_USER: "fixture-minio-root",
+  MINIO_ROOT_PASSWORD: "fixture-minio-root-password",
+  S3_ACCESS_KEY_ID: "fixture-s3-app",
+  S3_SECRET_ACCESS_KEY: "fixture-s3-app-password",
   PHONE_CODE_PEPPER: "fixture-phone-code-pepper-value",
   SERVICE_VERSION: "0.1.0-alpha.2",
 };
@@ -157,6 +162,16 @@ for (const [serviceName, serviceValue] of Object.entries(services)) {
   for (const volumeValue of service.volumes) {
     const volume = record(volumeValue, `service ${serviceName} volume`);
     if (volume.type !== "bind") continue;
+    if (serviceName === "minio-bootstrap") {
+      if (
+        volume.source !== paths.minioConfig ||
+        volume.target !== "/config" ||
+        volume.read_only !== true
+      ) {
+        fail("MinIO bootstrap config mount must be the exact read-only repository directory");
+      }
+      continue;
+    }
     if (serviceName !== "gateway") fail("host-control mounts are forbidden");
     if (volume.source !== "/home/aup/tashan-orgspace/shared/public-downloads") {
       fail("public downloads bind source must be exact");
@@ -205,11 +220,17 @@ if (
 ) {
   fail("gateway must proxy /v1 to http://api:4110");
 }
+const appServerStart = gatewayConfig.indexOf("server_name _;");
+if (appServerStart === -1) fail("gateway Web server block is missing");
 const stableDownloadLocation = gatewayConfig.indexOf(
   "location = /downloads/orgspace/install-skill.sh",
+  appServerStart,
 );
-const versionedDownloadLocation = gatewayConfig.indexOf("location ^~ /downloads/orgspace/v");
-const spaLocation = gatewayConfig.indexOf("location / {");
+const versionedDownloadLocation = gatewayConfig.indexOf(
+  "location ^~ /downloads/orgspace/v",
+  appServerStart,
+);
+const spaLocation = gatewayConfig.indexOf("location / {", appServerStart);
 if (
   stableDownloadLocation === -1 ||
   versionedDownloadLocation === -1 ||
@@ -238,6 +259,9 @@ const publicHost = new URL(productionContract.publicOrigin).hostname;
 if (!ecsIngress.includes(`server_name ${publicHost};`)) {
   fail("ECS ingress host must match production publicOrigin");
 }
+if (!ecsIngress.includes("server_name files.orgspace.tashan.chat;")) {
+  fail("ECS ingress file host must be files.orgspace.tashan.chat");
+}
 if (!ecsIngress.includes("listen 443 ssl http2;")) fail("ECS ingress must require HTTPS");
 if (!ecsIngress.includes(`ssl_certificate ${productionContract.ecsCertificate};`)) {
   fail("ECS ingress certificate must match production contract");
@@ -247,7 +271,10 @@ if (!ecsIngress.includes(`ssl_certificate_key ${productionContract.ecsCertificat
 }
 const ecsUpstreams = [...ecsIngress.matchAll(/proxy_pass\s+([^;]+);/g)].map((match) => match[1]);
 const expectedEcsUpstream = `http://127.0.0.1:${productionContract.ecsLoopbackPort}`;
-if (ecsUpstreams.length !== 1 || ecsUpstreams[0] !== expectedEcsUpstream) {
+if (
+  ecsUpstreams.length !== 2 ||
+  ecsUpstreams.some((upstream) => upstream !== expectedEcsUpstream)
+) {
   fail(`ECS ingress must proxy only to 127.0.0.1:${productionContract.ecsLoopbackPort}`);
 }
 if (!ecsIngress.includes("proxy_set_header X-Forwarded-For $remote_addr;")) {
@@ -297,6 +324,10 @@ if (!/^USER nginx$/m.test(webDockerfile)) fail("web image must declare USER ngin
 
 const requiredEnvironmentKeys = [
   "ORGSPACE_POSTGRES_PASSWORD",
+  "MINIO_ROOT_USER",
+  "MINIO_ROOT_PASSWORD",
+  "S3_ACCESS_KEY_ID",
+  "S3_SECRET_ACCESS_KEY",
   "SERVICE_VERSION",
   "JWT_ACTIVE_KEY_ID",
   "JWT_PRIVATE_KEY",

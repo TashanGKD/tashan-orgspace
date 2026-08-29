@@ -60,6 +60,7 @@ validate_template() {
     const required = [
       "listen 443 ssl http2;",
       "server_name orgspace.tashan.chat;",
+      "server_name files.orgspace.tashan.chat;",
       "ssl_certificate /etc/ssl/wildcard-tashan/fullchain.cer;",
       "ssl_certificate_key /etc/ssl/wildcard-tashan/tashan.chat.key;",
       "proxy_set_header X-Forwarded-For $remote_addr;",
@@ -67,7 +68,7 @@ validate_template() {
     ];
     if (required.some((value) => !text.includes(value))) process.exit(42);
     const upstreams = [...text.matchAll(/proxy_pass\s+([^;]+);/g)].map((match) => match[1]);
-    if (upstreams.length !== 1 || upstreams[0] !== "http://127.0.0.1:14010") process.exit(42);
+    if (upstreams.length !== 2 || upstreams.some((value) => value !== "http://127.0.0.1:14010")) process.exit(42);
   ' "$template" || die "ingress template violates the production contract"
 }
 
