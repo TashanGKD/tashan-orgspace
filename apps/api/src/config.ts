@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { parseObjectStoreConfig } from "@tashan/object-store";
+
 import { validateTrustedProxyCidrs } from "./http/trusted-proxy.js";
 
 const RuntimeEnvironment = z.enum(["development", "test", "production"]);
@@ -79,6 +81,27 @@ export function loadConfig(environment: NodeJS.ProcessEnv = process.env) {
   }
 
   const provider = PhoneProvider.parse(environment.PHONE_PROVIDER ?? "disabled");
+  const fileStorageEnabled = z
+    .enum(["true", "false"])
+    .transform((value) => value === "true")
+    .parse(environment.FILE_STORAGE_ENABLED ?? "false");
+  const objectStore = fileStorageEnabled
+    ? parseObjectStoreConfig(
+        {
+          endpoint: required(environment, "S3_ENDPOINT"),
+          publicOrigin: required(environment, "S3_PUBLIC_ORIGIN"),
+          region: required(environment, "S3_REGION"),
+          bucket: required(environment, "S3_BUCKET"),
+          accessKeyId: required(environment, "S3_ACCESS_KEY_ID"),
+          secretAccessKey: required(environment, "S3_SECRET_ACCESS_KEY"),
+          forcePathStyle: z
+            .enum(["true", "false"])
+            .transform((value) => value === "true")
+            .parse(required(environment, "S3_FORCE_PATH_STYLE")),
+        },
+        runtime,
+      )
+    : undefined;
   const phone =
     provider === "disabled"
       ? ({ provider } as const)
@@ -110,6 +133,8 @@ export function loadConfig(environment: NodeJS.ProcessEnv = process.env) {
     trustedProxyCidrs,
     phoneCodePepper,
     phone,
+    objectStore,
+    fileStorageEnabled,
     jwt: {
       issuer: environment.JWT_ISSUER?.trim() || "https://api-org.tashan.chat",
       audience: environment.JWT_AUDIENCE?.trim() || "tashan-orgspace",

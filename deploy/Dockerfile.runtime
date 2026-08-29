@@ -13,6 +13,7 @@ COPY apps/api/package.json apps/api/package.json
 COPY apps/worker/package.json apps/worker/package.json
 COPY packages/capabilities/package.json packages/capabilities/package.json
 COPY packages/contracts/package.json packages/contracts/package.json
+COPY packages/object-store/package.json packages/object-store/package.json
 COPY packages/sdk/package.json packages/sdk/package.json
 COPY packages/testkit/package.json packages/testkit/package.json
 RUN pnpm install --frozen-lockfile
@@ -21,6 +22,7 @@ COPY apps/api apps/api
 COPY apps/worker apps/worker
 COPY packages/capabilities packages/capabilities
 COPY packages/contracts packages/contracts
+COPY packages/object-store packages/object-store
 COPY packages/sdk packages/sdk
 COPY packages/testkit packages/testkit
 RUN chown -R node:node /workspace

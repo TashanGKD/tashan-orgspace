@@ -13,6 +13,14 @@ const validEnvironment = {
   SERVICE_VERSION: "0.0.0-development",
   PHONE_CODE_PEPPER: "test-only-phone-code-pepper",
   PHONE_PROVIDER: "disabled",
+  S3_ENDPOINT: "http://minio:9000",
+  S3_PUBLIC_ORIGIN: "http://127.0.0.1:59000",
+  S3_REGION: "us-east-1",
+  S3_BUCKET: "orgspace-files",
+  S3_ACCESS_KEY_ID: "test-access",
+  S3_SECRET_ACCESS_KEY: "test-secret",
+  S3_FORCE_PATH_STYLE: "true",
+  FILE_STORAGE_ENABLED: "true",
 } as const;
 
 function productionEnvironment(overrides: Record<string, string> = {}) {
@@ -24,6 +32,7 @@ function productionEnvironment(overrides: Record<string, string> = {}) {
     CORS_ORIGINS: "https://orgspace.tashan.chat",
     PHONE_CODE_PEPPER: "production-phone-code-pepper-value",
     SERVICE_VERSION: "0.1.0-alpha.2",
+    S3_PUBLIC_ORIGIN: "https://files.orgspace.tashan.chat",
     ...overrides,
   };
 }
@@ -63,6 +72,18 @@ describe("API configuration safety", () => {
     expect(() => loadConfig({ ...validEnvironment, PHONE_PROVIDER: "aliyun" })).toThrow(
       "ALIYUN_SMS_ACCESS_KEY_ID",
     );
+  });
+
+  test("loads S3 configuration and rejects unsafe production public origins", () => {
+    expect(loadConfig(validEnvironment).objectStore).toMatchObject({
+      endpoint: "http://minio:9000",
+      publicOrigin: "http://127.0.0.1:59000",
+      bucket: "orgspace-files",
+      forcePathStyle: true,
+    });
+    expect(() =>
+      loadConfig(productionEnvironment({ S3_PUBLIC_ORIGIN: "http://files.orgspace.tashan.chat" })),
+    ).toThrow("production S3 public origin must use HTTPS");
   });
 
   test("requires a release service version in production", () => {

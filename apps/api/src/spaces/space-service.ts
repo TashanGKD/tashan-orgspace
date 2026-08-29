@@ -40,11 +40,14 @@ export class SpaceService {
     return space;
   }
 
-  public async reserve(input: { spaceId: string; uploadSessionId: string; bytes: number }) {
+  public async reserve(
+    input: { spaceId: string; uploadSessionId: string; bytes: number },
+    existingTransaction?: TransactionClient,
+  ) {
     if (!Number.isSafeInteger(input.bytes) || input.bytes < 0) {
       throw new AuthError("VALIDATION_FAILED", "reservation bytes are invalid");
     }
-    return this.sql.begin(async (transaction) => {
+    const operation = async (transaction: TransactionClient) => {
       const space = await this.refreshEffectiveQuota(transaction, input.spaceId);
       if (space.write_state !== "writable") {
         throw new AuthError("SPACE_READONLY", "space is read-only");
@@ -66,7 +69,10 @@ export class SpaceService {
         where id = ${space.id}
       `;
       return reservation;
-    }) as Promise<{ id: string }>;
+    };
+    return existingTransaction === undefined
+      ? ((await this.sql.begin(operation)) as { id: string })
+      : operation(existingTransaction);
   }
 
   public async commitReservation(

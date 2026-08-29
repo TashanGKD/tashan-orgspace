@@ -131,9 +131,10 @@ S3_BUCKET=orgspace-files
 S3_ACCESS_KEY_ID=
 S3_SECRET_ACCESS_KEY=
 S3_FORCE_PATH_STYLE=true
+FILE_STORAGE_ENABLED=false
 ```
 
-Production requires HTTPS `S3_PUBLIC_ORIGIN`, rejects loopback public origins and never supplies fallback credentials.
+Before Task 9, `FILE_STORAGE_ENABLED=false` preserves the currently deployed Phase 0 stack and does not parse unused S3 credentials. Task 9 sets it explicitly to true in local/E2E/production Compose; once true, production requires HTTPS `S3_PUBLIC_ORIGIN`, rejects loopback public origins and never supplies fallback credentials.
 
 - [x] **Step 5: Run package tests and commit**
 
@@ -376,11 +377,11 @@ git commit -m "security(files): enforce folder and quota boundaries"
 - Modify: `apps/api/src/config.test.ts`
 - Modify: `apps/api/src/server.ts`
 
-- [ ] **Step 1: Write RED adversarial upload tests**
+- [x] **Step 1: Write RED adversarial upload tests**
 
 Before implementation, reject forged object keys/upload IDs, part 0/10001, duplicate parts, presign requests outside the server-determined part range, expired/cancelled sessions, cross-device users without current permission, same-name ambiguity, mismatched target file IDs, and private/loopback production public origins.
 
-- [ ] **Step 2: Implement upload session creation**
+- [x] **Step 2: Implement upload session creation**
 
 `UploadService.create` must:
 
@@ -393,15 +394,15 @@ Before implementation, reject forged object keys/upload IDs, part 0/10001, dupli
 
 If S3 creation fails, mark the session failed and release the reservation. If DB persistence after S3 creation fails, abort that exact multipart upload.
 
-- [ ] **Step 3: Implement bounded part URL batches**
+- [x] **Step 3: Implement bounded part URL batches**
 
 `authorizeParts` accepts at most 100 unique part numbers, checks the session and current permission, and returns URLs valid for at most 15 minutes. Sign `UploadPartCommand` with `ChecksumSHA256`; never accept bucket, key, endpoint or upload ID from the caller.
 
-- [ ] **Step 4: Implement completion transition**
+- [x] **Step 4: Implement completion transition**
 
 Compare the caller part list to S3 `ListParts`, verify total byte size, complete the multipart object, enqueue a `file.verify` maintenance job and move the session to `verifying`. Repeated completion returns the same session/version state. It must not publish a downloadable version before Worker verification.
 
-- [ ] **Step 5: Verify and commit**
+- [x] **Step 5: Verify and commit**
 
 Run unit tests with a fake S3 adapter, then MinIO integration tests after Task 9 adds Compose:
 
