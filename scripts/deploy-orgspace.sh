@@ -95,6 +95,9 @@ EOF
 [ "$compose_project" = "tashan-orgspace-prod" ] || die "deployment contract is outside the OrgSpace boundary"
 secret_file="$remote_root/shared/.env.production"
 release_version="$(node -p "JSON.parse(require('node:fs').readFileSync('$repository_root/release/cli-release.json')).version")"
+required_env_keys="$(sed -n 's/^\([A-Z][A-Z0-9_]*\)=.*$/\1/p' "$repository_root/deploy/env.production.example" | sort -u)"
+[ -n "$required_env_keys" ] || die "production environment contract has no required keys"
+required_env_key_words="$(printf '%s\n' "$required_env_keys" | tr '\n' ' ')"
 
 print_plan() {
   cat <<EOF
@@ -129,6 +132,23 @@ read_only_preflight() {
   orgspace_ssh "$aup_host" "set -eu; command -v docker >/dev/null; docker compose version >/dev/null; command -v curl >/dev/null; test -d '$remote_root' || test ! -e '$remote_root'; if test -e '$remote_root/shared/public-downloads'; then test -d '$remote_root/shared/public-downloads'; test ! -L '$remote_root/shared/public-downloads'; fi; if ss -ltn | grep -q ':$aup_port '; then docker ps --format '{{.Names}}' | grep -q '^tashan-orgspace-prod-'; fi"
   secret_mode="$(orgspace_ssh "$aup_host" "if test -f '$secret_file'; then stat -c %a '$secret_file'; else echo missing; fi")"
   [ "$secret_mode" = "600" ] || die "remote secret file must have mode 600: $secret_file"
+  remote_env_issues="$(orgspace_ssh "$aup_host" "set -eu; for orgspace_required_key in $required_env_key_words; do orgspace_required_status=\$(awk -v wanted=\"\$orgspace_required_key\" '
+    BEGIN { count = 0; nonempty = 0 }
+    \$0 ~ (\"^\" wanted \"=\") {
+      count += 1
+      value = substr(\$0, length(wanted) + 2)
+      gsub(/^[[:space:]]+|[[:space:]]+\$/, \"\", value)
+      if (value != \"\" && value != \"\\\"\\\"\" && value != \"\\047\\047\") nonempty = 1
+    }
+    END {
+      if (count == 0) print \"missing\"
+      else if (count > 1) print \"duplicate\"
+      else if (!nonempty) print \"empty\"
+      else print \"ok\"
+    }
+  ' '$secret_file'); if test \"\$orgspace_required_status\" != ok; then printf '%s:%s\\n' \"\$orgspace_required_key\" \"\$orgspace_required_status\"; fi; done")"
+  [ -z "$remote_env_issues" ] ||
+    die "remote secret file has invalid required keys: $(printf '%s' "$remote_env_issues" | paste -sd, -)"
   remote_service_version="$(orgspace_ssh "$aup_host" "sed -n 's/^SERVICE_VERSION=//p' '$secret_file' | tail -n 1")"
   [ "$remote_service_version" = "$release_version" ] || die "remote SERVICE_VERSION must equal local release manifest version"
   echo "deploy-orgspace preflight: PASS ($aup_host $remote_root)"

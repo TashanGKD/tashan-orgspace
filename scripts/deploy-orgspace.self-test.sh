@@ -27,6 +27,7 @@ set -eu
 printf 'ssh %s\n' "$*" >> "${ORGSPACE_TEST_TRANSPORT_LOG:?}"
 case "$*" in
   *"stat -c %a"*) printf '%s\n' "${FAKE_SECRET_MODE:-600}" ;;
+  *"orgspace_required_key"*) printf '%s\n' "${FAKE_ENV_ISSUES:-}" ;;
   *"SERVICE_VERSION="*) printf '%s\n' "${FAKE_SERVICE_VERSION:-1.0.0}" ;;
   *"curl -fsS"*) printf '%s\n' '{"status":"ok","version":"0.1.0-alpha.2"}' ;;
 esac
@@ -103,6 +104,22 @@ if grep -q '^rsync ' "$transport_log"; then
   echo "rsync ran before service version rejection" >&2
   exit 1
 fi
+
+for environment_issue in \
+  "MINIO_ROOT_PASSWORD:missing" \
+  "S3_SECRET_ACCESS_KEY:empty" \
+  "JWT_PRIVATE_KEY:duplicate"
+do
+  : > "$transport_log"
+  expect_failure "remote secret file has invalid required keys: $environment_issue" env \
+    PATH="$fake_bin:$PATH" ORGSPACE_DEPLOY_TESTING=1 \
+    ORGSPACE_TEST_TRANSPORT_LOG="$transport_log" FAKE_ENV_ISSUES="$environment_issue" \
+    "$deployer" --apply --confirm-production
+  if grep -q '^rsync ' "$transport_log"; then
+    echo "rsync ran before required environment rejection: $environment_issue" >&2
+    exit 1
+  fi
+done
 
 unsafe_contract="$temporary_root/unsafe-contract.json"
 cat > "$unsafe_contract" <<'EOF'
