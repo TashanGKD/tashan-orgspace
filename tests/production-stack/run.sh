@@ -136,7 +136,7 @@ fi
 minio_ready=0
 for readiness_attempt in $(seq 1 200); do
   if curl --fail --silent --show-error --max-time 1 \
-    -H 'Host: files.orgspace.tashan.chat' \
+    -H 'Host: orgspace-files.tashan.chat' \
     http://127.0.0.1:44110/minio/health/live >/dev/null 2>&1; then
     minio_ready=1
     break

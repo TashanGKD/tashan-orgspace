@@ -4,7 +4,7 @@
 
 **Goal:** Deliver personal and organization spaces, MinIO-backed files, folder permissions, quotas, versions, resumable multipart upload and 30-day trash consistently across API, Web, CLI and Skill.
 
-**Architecture:** PostgreSQL is the control-plane truth for spaces, entries, grants, versions, reservations and upload sessions. MinIO is a private S3-compatible data plane; clients transfer bytes through short-lived presigned URLs on `files.orgspace.tashan.chat`, while API and Worker share a focused `@tashan/object-store` package for S3 operations. No file capability becomes available until API/Web/CLI/Skill parity, adversarial tests and production-stack recovery all pass.
+**Architecture:** PostgreSQL is the control-plane truth for spaces, entries, grants, versions, reservations and upload sessions. MinIO is a private S3-compatible data plane; clients transfer bytes through short-lived presigned URLs on `orgspace-files.tashan.chat`, while API and Worker share a focused `@tashan/object-store` package for S3 operations. No file capability becomes available until API/Web/CLI/Skill parity, adversarial tests and production-stack recovery all pass.
 
 **Tech Stack:** Node.js 24, TypeScript 6, Fastify 5, Zod 4, PostgreSQL 17, Redis 8, MinIO `RELEASE.2025-04-22T22-12-26Z`, AWS SDK for JavaScript v3 `3.1120.0`, React 19, TanStack Query 5, Commander 15, Docker Compose, Vitest.
 
@@ -611,7 +611,7 @@ git commit -m "feat(cli): add resumable file commands"
 
 - [x] **Step 1: Add RED production-boundary assertions**
 
-The production test must fail if MinIO S3 or Console ports are published, bucket policy is public, CORS permits `*`, API/Worker lack S3 credentials, or `files.orgspace.tashan.chat` does not preserve Host through the gateway.
+The production test must fail if MinIO S3 or Console ports are published, bucket policy is public, CORS permits `*`, API/Worker lack S3 credentials, or `orgspace-files.tashan.chat` does not preserve Host through the gateway.
 
 - [x] **Step 2: Add pinned MinIO services**
 
@@ -626,7 +626,7 @@ Use `quay.io/minio/mc:RELEASE.2025-04-16T18-13-26Z` for one-shot bootstrap. Loca
 
 - [x] **Step 3: Route the platform file hostname**
 
-Add an AUP gateway server block for `files.orgspace.tashan.chat` that proxies S3 traffic to `minio:9000`, disables request buffering, permits large bodies, preserves Host and uses long streaming timeouts. Add an ECS TLS server block for the same hostname pointing to the existing OrgSpace platform tunnel; do not create per-file or per-user tunnels.
+Add an AUP gateway server block for `orgspace-files.tashan.chat` that proxies S3 traffic to `minio:9000`, disables request buffering, permits large bodies, preserves Host and uses long streaming timeouts. Add an ECS TLS server block for the same hostname pointing to the existing OrgSpace platform tunnel; do not create per-file or per-user tunnels.
 
 - [x] **Step 4: Make tests isolated and recoverable**
 
@@ -713,7 +713,7 @@ The Skill reference covers space discovery, list/get/search, resumable upload, e
 
 - [x] **Step 2: Write the RED gate self-test**
 
-Construct fixtures that independently fail for missing CLI binding, missing Skill capability, missing Web action, file module still `coming_soon`, runtime module accidentally `available`, MinIO production port exposure, wildcard CORS, public bucket command, and absent `files.orgspace.tashan.chat` gateway block.
+Construct fixtures that independently fail for missing CLI binding, missing Skill capability, missing Web action, file module still `coming_soon`, runtime module accidentally `available`, MinIO production port exposure, wildcard CORS, public bucket command, and absent `orgspace-files.tashan.chat` gateway block.
 
 - [x] **Step 3: Implement and wire the gate**
 

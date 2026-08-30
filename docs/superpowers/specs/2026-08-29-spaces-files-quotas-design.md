@@ -67,7 +67,7 @@ OrgSpace API ─────────────── PostgreSQL
         │                    元数据、权限、版本、配额、审计
         │ 短期预签名地址
         ▼
-files.orgspace.tashan.chat ─ MinIO
+orgspace-files.tashan.chat ─ MinIO
                              临时分片、正式文件 Blob
         ▲
         │ 内部调和、SHA-256 校验、到期清理
@@ -76,7 +76,7 @@ OrgSpace Worker
 
 本地开发和 AUP 都部署 MinIO。应用只依赖标准 S3 接口，不依赖 MinIO 私有业务 API。以后迁移到阿里云 OSS 时，保持对象 key、上传会话和 API 契约不变。
 
-`files.orgspace.tashan.chat` 是 OrgSpace 自身的平台文件入口，不是用户网站托管功能。
+`orgspace-files.tashan.chat` 是 OrgSpace 自身的平台文件入口，不是用户网站托管功能。
 
 ## 4. 数据模型
 
@@ -239,7 +239,7 @@ MinIO object key 使用随机 ID，不包含账号、组织、文件夹或文件
 
 ### 6.2 分片上传与续传
 
-- 客户端直接上传到 `files.orgspace.tashan.chat`。
+- 客户端直接上传到 `orgspace-files.tashan.chat`。
 - 每个分片提交 SHA-256 transport checksum，MinIO/S3 校验传输完整性。
 - 客户端向 API 登记分片号、ETag 和 checksum。
 - API 可以从 S3 `ListParts` 复核，不把客户端清单当作唯一真源。
@@ -365,7 +365,7 @@ Skill 先调用 `torg capability list|describe --json`，再使用已发布命�
 ### 10.2 AUP
 
 - MinIO 使用 OrgSpace 独立服务账号、数据目录、Compose service 和备份路径。
-- S3 API 只在平台内部网络和 `files.orgspace.tashan.chat` 受控入口可达。
+- S3 API 只在平台内部网络和 `orgspace-files.tashan.chat` 受控入口可达。
 - MinIO Console 和管理端口不向公网开放。
 - API 和 Worker 使用最小权限服务凭据；凭据不进入 Git、CLI、Skill、审计或前端包。
 - bucket 禁止匿名访问和公开列举。

@@ -32,7 +32,7 @@ function productionEnvironment(overrides: Record<string, string> = {}) {
     CORS_ORIGINS: "https://orgspace.tashan.chat",
     PHONE_CODE_PEPPER: "production-phone-code-pepper-value",
     SERVICE_VERSION: "0.1.0-alpha.2",
-    S3_PUBLIC_ORIGIN: "https://files.orgspace.tashan.chat",
+    S3_PUBLIC_ORIGIN: "https://orgspace-files.tashan.chat",
     ...overrides,
   };
 }
@@ -117,7 +117,7 @@ describe("API configuration safety", () => {
       forcePathStyle: true,
     });
     expect(() =>
-      loadConfig(productionEnvironment({ S3_PUBLIC_ORIGIN: "http://files.orgspace.tashan.chat" })),
+      loadConfig(productionEnvironment({ S3_PUBLIC_ORIGIN: "http://orgspace-files.tashan.chat" })),
     ).toThrow("production S3 public origin must use HTTPS");
   });
 

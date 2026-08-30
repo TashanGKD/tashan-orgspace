@@ -27,7 +27,7 @@ describe("object store configuration", () => {
   test("rejects insecure or loopback public origins in production", () => {
     expect(() =>
       parseObjectStoreConfig(
-        { ...local, publicOrigin: "http://files.orgspace.tashan.chat" },
+        { ...local, publicOrigin: "http://orgspace-files.tashan.chat" },
         "production",
       ),
     ).toThrow(/production S3 public origin must use HTTPS/);
@@ -57,8 +57,8 @@ describe("object store configuration", () => {
       parseObjectStoreConfig(
         {
           ...local,
-          endpoint: "https://files.orgspace.tashan.chat",
-          publicOrigin: "https://files.orgspace.tashan.chat",
+          endpoint: "https://orgspace-files.tashan.chat",
+          publicOrigin: "https://orgspace-files.tashan.chat",
         },
         "production",
       ),

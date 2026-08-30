@@ -124,7 +124,7 @@ services:
       PARTNER_FIELD_KEYS: ${PARTNER_FIELD_KEYS:?PARTNER_FIELD_KEYS is required}
       PARTNER_BLIND_INDEX_KEY: ${PARTNER_BLIND_INDEX_KEY:?PARTNER_BLIND_INDEX_KEY is required}
       S3_ENDPOINT: http://minio:9000
-      S3_PUBLIC_ORIGIN: https://files.orgspace.tashan.chat
+      S3_PUBLIC_ORIGIN: https://orgspace-files.tashan.chat
       S3_REGION: us-east-1
       S3_BUCKET: orgspace-files
       S3_ACCESS_KEY_ID: ${S3_ACCESS_KEY_ID:?S3_ACCESS_KEY_ID is required}
@@ -176,7 +176,7 @@ services:
       ALIYUN_SMS_REGION_ID: ${ALIYUN_SMS_REGION_ID:?ALIYUN_SMS_REGION_ID is required}
       NODE_ENV: production
       S3_ENDPOINT: http://minio:9000
-      S3_PUBLIC_ORIGIN: https://files.orgspace.tashan.chat
+      S3_PUBLIC_ORIGIN: https://orgspace-files.tashan.chat
       S3_REGION: us-east-1
       S3_BUCKET: orgspace-files
       S3_ACCESS_KEY_ID: ${S3_ACCESS_KEY_ID:?S3_ACCESS_KEY_ID is required}

@@ -191,7 +191,7 @@ export function checkFileStorageContract(input) {
   ) {
     throw new Error("MinIO bucket must remain private");
   }
-  if (!/server_name\s+files\.orgspace\.tashan\.chat;/.test(input.gatewaySource)) {
+  if (!/server_name\s+orgspace-files\.tashan\.chat;/.test(input.gatewaySource)) {
     throw new Error("file gateway hostname is missing");
   }
   if (

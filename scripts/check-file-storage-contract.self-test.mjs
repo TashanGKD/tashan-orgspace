@@ -69,7 +69,7 @@ const valid = {
   bootstrapSource:
     "mc mb --ignore-existing local/orgspace-files\nmc anonymous set none local/orgspace-files",
   gatewaySource:
-    "server_name files.orgspace.tashan.chat; proxy_set_header Host $host; proxy_pass http://minio:9000;",
+    "server_name orgspace-files.tashan.chat; proxy_set_header Host $host; proxy_pass http://minio:9000;",
 };
 
 const clone = (value) => JSON.parse(JSON.stringify(value));

@@ -295,8 +295,8 @@ const publicHost = new URL(productionContract.publicOrigin).hostname;
 if (!ecsIngress.includes(`server_name ${publicHost};`)) {
   fail("ECS ingress host must match production publicOrigin");
 }
-if (!ecsIngress.includes("server_name files.orgspace.tashan.chat;")) {
-  fail("ECS ingress file host must be files.orgspace.tashan.chat");
+if (!ecsIngress.includes("server_name orgspace-files.tashan.chat;")) {
+  fail("ECS ingress file host must be orgspace-files.tashan.chat");
 }
 if (!ecsIngress.includes("listen 443 ssl http2;")) fail("ECS ingress must require HTTPS");
 if (!ecsIngress.includes(`ssl_certificate ${productionContract.ecsCertificate};`)) {

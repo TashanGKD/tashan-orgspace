@@ -99,12 +99,12 @@ describe("production-shaped control plane", () => {
 
   test("routes the private file host without anonymous bucket access", async () => {
     const health = await requestVirtualHost("/minio/health/live", {
-      headers: { host: "files.orgspace.tashan.chat" },
+      headers: { host: "orgspace-files.tashan.chat" },
     });
     expect(health.status).toBe(200);
 
     const anonymous = await requestVirtualHost("/orgspace-files/private-object", {
-      headers: { host: "files.orgspace.tashan.chat" },
+      headers: { host: "orgspace-files.tashan.chat" },
     });
     expect([401, 403, 404]).toContain(anonymous.status);
     expect(anonymous.headers["access-control-allow-origin"]).not.toBe("*");
@@ -113,7 +113,7 @@ describe("production-shaped control plane", () => {
     const preflight = await requestVirtualHost("/orgspace-files/test-object", {
       method: "OPTIONS",
       headers: {
-        host: "files.orgspace.tashan.chat",
+        host: "orgspace-files.tashan.chat",
         origin: "https://orgspace.tashan.chat",
         "access-control-request-method": "PUT",
       },

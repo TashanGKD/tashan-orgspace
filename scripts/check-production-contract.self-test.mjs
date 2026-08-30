@@ -144,7 +144,7 @@ const validEcsIngress = `server {
 }
 server {
   listen 443 ssl http2;
-  server_name files.orgspace.tashan.chat;
+  server_name orgspace-files.tashan.chat;
   ssl_certificate /etc/ssl/wildcard-tashan/fullchain.cer;
   ssl_certificate_key /etc/ssl/wildcard-tashan/tashan.chat.key;
   location / {
