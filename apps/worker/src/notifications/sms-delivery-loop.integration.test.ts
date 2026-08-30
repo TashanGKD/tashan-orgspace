@@ -43,7 +43,7 @@ describe("SMS delivery loop", () => {
     const store = new PostgresSmsDeliveryStore({
       sql,
       templateCode: "SMS_NOTICE",
-      templateParamKey: "content",
+      templateParamKey: null,
       clock: () => now,
     });
     const loop = new SmsDeliveryLoop({
@@ -56,7 +56,7 @@ describe("SMS delivery loop", () => {
     expect(provider.send).toHaveBeenCalledWith(
       expect.objectContaining({
         phone: "+8613800138521",
-        templateParams: { content: "请立即处理" },
+        templateParams: {},
       }),
     );
     const [row] = await sql<

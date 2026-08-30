@@ -6,7 +6,7 @@ export class PostgresSmsDeliveryStore implements SmsDeliveryStore {
     private readonly options: {
       sql: DatabaseClient;
       templateCode: string;
-      templateParamKey: string;
+      templateParamKey: string | null;
       clock?: () => Date;
     },
   ) {}
@@ -43,7 +43,10 @@ export class PostgresSmsDeliveryStore implements SmsDeliveryStore {
       phone: row.phone_e164,
       idempotencyKey: row.idempotency_key,
       templateCode: this.options.templateCode,
-      templateParams: { [this.options.templateParamKey]: row.content },
+      templateParams:
+        this.options.templateParamKey === null
+          ? {}
+          : { [this.options.templateParamKey]: row.content },
     };
   }
   public async updateAttempt(input: {

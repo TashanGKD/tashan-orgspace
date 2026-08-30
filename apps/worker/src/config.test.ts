@@ -43,5 +43,19 @@ describe("worker configuration", () => {
         ALIYUN_SMS_REGION_ID: "cn-hangzhou",
       }).sms,
     ).toMatchObject({ templateCode: "SMS_NOTICE", templateParamKey: "content" });
+
+    expect(
+      loadWorkerConfig({
+        ...valid,
+        SMS_DELIVERY_ENABLED: "true",
+        ALIYUN_SMS_ACCESS_KEY_ID: "key",
+        ALIYUN_SMS_ACCESS_KEY_SECRET: "secret",
+        ALIYUN_SMS_SIGN_NAME: "他山青年",
+        ALIYUN_SMS_NOTIFICATION_TEMPLATE_CODE: "SMS_FIXED_NOTICE",
+        ALIYUN_SMS_NOTIFICATION_TEMPLATE_PARAM_KEY: "none",
+        ALIYUN_SMS_ENDPOINT: "dysmsapi.aliyuncs.com",
+        ALIYUN_SMS_REGION_ID: "cn-hangzhou",
+      }).sms,
+    ).toMatchObject({ templateCode: "SMS_FIXED_NOTICE", templateParamKey: null });
   });
 });

@@ -113,4 +113,30 @@ describe("Alibaba SMS delivery", () => {
       }),
     ).rejects.toBeInstanceOf(SmsProviderTimeoutError);
   });
+
+  test("omits TemplateParam for an approved fixed-content template", async () => {
+    const client = {
+      querySendDetails: vi.fn().mockResolvedValue({ body: {} }),
+      sendSms: vi.fn().mockResolvedValue({
+        body: { code: "OK", requestId: "req-fixed", bizId: "biz-fixed" },
+      }),
+    };
+    const provider = new AliyunSmsProvider(
+      {
+        accessKeyId: "key",
+        accessKeySecret: "secret",
+        signName: "他山青年",
+        endpoint: "dysmsapi.aliyuncs.com",
+        regionId: "cn-hangzhou",
+      },
+      client,
+    );
+    await provider.send({
+      phone: "+8613812345678",
+      idempotencyKey: "sms:fixed",
+      templateCode: "SMS_FIXED_NOTICE",
+      templateParams: {},
+    });
+    expect(client.sendSms.mock.calls[0]?.[0]).not.toHaveProperty("templateParam");
+  });
 });

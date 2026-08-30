@@ -72,7 +72,9 @@ export class AliyunSmsProvider implements SmsProvider {
           phoneNumbers: phone(input.phone),
           signName: this.options.signName,
           templateCode: input.templateCode,
-          templateParam: JSON.stringify(input.templateParams),
+          ...(Object.keys(input.templateParams).length > 0
+            ? { templateParam: JSON.stringify(input.templateParams) }
+            : {}),
           outId: input.idempotencyKey,
         }),
       );

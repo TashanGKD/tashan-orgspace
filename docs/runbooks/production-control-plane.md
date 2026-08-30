@@ -23,6 +23,8 @@ scripts/configure-orgspace-ingress.sh --preflight
 
 文件必须属于 `aup` 且权限为 `0600`。字段名以 `deploy/env.production.example` 为准；不得 `source` 该文件，不得打印内容，不得提交 Git。
 
+通知短信使用固定内容的已审核模板时，将 `ALIYUN_SMS_NOTIFICATION_TEMPLATE_PARAM_KEY` 设为 `none`；Worker 会完全省略 `TemplateParam`，避免把任务标题或组织信息带入短信。只有模板本身声明了变量时，才把该字段设为真实变量名（例如 `content`）。
+
 确认完整验证通过且 worktree 干净后执行：
 
 ```bash

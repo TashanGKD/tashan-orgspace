@@ -46,15 +46,27 @@ export function loadWorkerConfig(environment: NodeJS.ProcessEnv = process.env) {
       : undefined,
     smsDeliveryEnabled,
     sms: smsDeliveryEnabled
-      ? {
-          accessKeyId: required(environment, "ALIYUN_SMS_ACCESS_KEY_ID"),
-          accessKeySecret: required(environment, "ALIYUN_SMS_ACCESS_KEY_SECRET"),
-          signName: required(environment, "ALIYUN_SMS_SIGN_NAME"),
-          templateCode: required(environment, "ALIYUN_SMS_NOTIFICATION_TEMPLATE_CODE"),
-          templateParamKey: required(environment, "ALIYUN_SMS_NOTIFICATION_TEMPLATE_PARAM_KEY"),
-          endpoint: required(environment, "ALIYUN_SMS_ENDPOINT"),
-          regionId: required(environment, "ALIYUN_SMS_REGION_ID"),
-        }
+      ? (() => {
+          const accessKeyId = required(environment, "ALIYUN_SMS_ACCESS_KEY_ID");
+          const accessKeySecret = required(environment, "ALIYUN_SMS_ACCESS_KEY_SECRET");
+          const signName = required(environment, "ALIYUN_SMS_SIGN_NAME");
+          const templateCode = required(environment, "ALIYUN_SMS_NOTIFICATION_TEMPLATE_CODE");
+          const templateParamKey = required(
+            environment,
+            "ALIYUN_SMS_NOTIFICATION_TEMPLATE_PARAM_KEY",
+          );
+          const endpoint = required(environment, "ALIYUN_SMS_ENDPOINT");
+          const regionId = required(environment, "ALIYUN_SMS_REGION_ID");
+          return {
+            accessKeyId,
+            accessKeySecret,
+            signName,
+            templateCode,
+            templateParamKey: templateParamKey === "none" ? null : templateParamKey,
+            endpoint,
+            regionId,
+          };
+        })()
       : undefined,
     workerId: environment.WORKER_ID?.trim() || `${hostname()}-${process.pid}-${randomUUID()}`,
     leaseMilliseconds: z.coerce
