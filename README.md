@@ -32,7 +32,7 @@ Phase 2D 已实现合作方联系人、私有负责人范围、管理员 oversig
 
 官方安装器会从他山 HTTPS 主源下载固定版本 Skill，验证 SHA256 和归档布局后原子安装到 Codex Skill 目录；新 Skill 从下一轮对话开始生效。随后只需说“使用 `$tashan-orgspace` 查看我的组织”，Skill 就会在用户目录中安装或检查带校验和的独立 `torg` CLI，不使用 `sudo`，也不要求本机预装 Node.js。CLI 主源传输失败时才会完整切换到 GitHub Release；校验和或归档异常会直接失败，不会用备用源掩盖。
 
-GitHub 备用入口是固定 tag `v1.0.1` 下的 `skill/tashan-orgspace`，可由 Codex 内置 `skill-installer` 安装。macOS arm64/x64 与 Linux x64 受支持；Windows 暂不支持。
+GitHub 备用入口是固定 tag `v1.0.2` 下的 `skill/tashan-orgspace`，可由 Codex 内置 `skill-installer` 安装。macOS arm64/x64 与 Linux x64 受支持；Windows 暂不支持。
 
 ## 本地验证
 
@@ -100,4 +100,4 @@ docs/       架构、运行手册、产品设计与实施计划
 
 ## 部署状态
 
-当前公开版本仍以 GitHub Release 与 `https://orgspace.tashan.chat/v1/health` 的实时结果为准。`v1.0.1` 修复北京时间跨午夜时的短信送达状态查询，并继续使用相同的 109 项能力契约。现有 `org.tashan.chat` 属于其他项目，不在本仓库的部署范围内。
+当前公开版本仍以 GitHub Release 与 `https://orgspace.tashan.chat/v1/health` 的实时结果为准。`v1.0.2` 修复北京时间跨午夜时的短信送达状态查询，并把文件入口迁移到通配符证书可覆盖的 `orgspace-files.tashan.chat`；继续使用相同的 109 项能力契约。现有 `org.tashan.chat` 属于其他项目，不在本仓库的部署范围内。
