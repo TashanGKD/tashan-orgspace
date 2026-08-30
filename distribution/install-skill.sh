@@ -1,7 +1,7 @@
 #!/bin/sh
 set -eu
 
-pinned_version="1.0.0"
+pinned_version="1.0.1"
 official_distribution_base="https://orgspace.tashan.chat/downloads/orgspace"
 github_repository="TashanGKD/tashan-orgspace"
 asset="tashan-orgspace-skill-v$pinned_version.tar.gz"
