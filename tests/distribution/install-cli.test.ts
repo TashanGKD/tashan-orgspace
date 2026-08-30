@@ -25,6 +25,11 @@ const releaseVersion = (
     version: string;
   }
 ).version;
+const nextPatchVersion = (() => {
+  const match = /^(\d+)\.(\d+)\.(\d+)$/.exec(releaseVersion);
+  if (match === null) throw new Error("installer upgrade tests require a stable release version");
+  return `${match[1]}.${match[2]}.${Number(match[3]) + 1}`;
+})();
 const temporaryDirectories: string[] = [];
 
 function temporaryDirectory(label: string) {
@@ -284,12 +289,12 @@ describe("Skill CLI installer", () => {
     expect(runInstaller(["--install"], context.environment).status).toBe(0);
     const target = join(context.bin, "torg");
 
-    const badUpgrade = createReleaseFixture({ version: "1.0.1", badChecksum: true });
+    const badUpgrade = createReleaseFixture({ version: nextPatchVersion, badChecksum: true });
     const upgradeEnvironment = {
       ...context.environment,
       TORG_PRIMARY_RELEASE_BASE_URL: `file://${badUpgrade.releaseDirectory}`,
     };
-    const result = runInstaller(["--install", "--version", "1.0.1"], upgradeEnvironment);
+    const result = runInstaller(["--install", "--version", nextPatchVersion], upgradeEnvironment);
     expect(result.status).not.toBe(0);
     expect(execFileSync(target, ["--version"], { encoding: "utf8" })).toBe(`${releaseVersion}\n`);
     expect(readdirSync(context.temp)).toEqual([]);
@@ -301,12 +306,12 @@ describe("Skill CLI installer", () => {
     expect(runInstaller(["--install"], context.environment).status).toBe(0);
     const target = join(context.bin, "torg");
 
-    const upgrade = createReleaseFixture({ version: "1.0.1" });
-    const result = runInstaller(["--install", "--version", "1.0.1"], {
+    const upgrade = createReleaseFixture({ version: nextPatchVersion });
+    const result = runInstaller(["--install", "--version", nextPatchVersion], {
       ...context.environment,
       TORG_PRIMARY_RELEASE_BASE_URL: `file://${upgrade.releaseDirectory}`,
     });
     expect(result).toMatchObject({ status: 0, stderr: "" });
-    expect(execFileSync(target, ["--version"], { encoding: "utf8" })).toBe("1.0.1\n");
+    expect(execFileSync(target, ["--version"], { encoding: "utf8" })).toBe(`${nextPatchVersion}\n`);
   });
 });
