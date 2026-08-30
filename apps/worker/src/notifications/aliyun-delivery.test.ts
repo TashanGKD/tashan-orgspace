@@ -139,4 +139,76 @@ describe("Alibaba SMS delivery", () => {
     });
     expect(client.sendSms.mock.calls[0]?.[0]).not.toHaveProperty("templateParam");
   });
+
+  test("queries the Beijing send date and matches the provider OutId", async () => {
+    const client = {
+      sendSms: vi.fn(),
+      querySendDetails: vi.fn().mockResolvedValue({
+        body: {
+          requestId: "query-request",
+          smsSendDetailDTOs: {
+            smsSendDetailDTO: [{ outId: "sms:midnight", sendStatus: 3 }],
+          },
+        },
+      }),
+    };
+    const provider = new AliyunSmsProvider(
+      {
+        accessKeyId: "key",
+        accessKeySecret: "secret",
+        signName: "他山青年",
+        endpoint: "dysmsapi.aliyuncs.com",
+        regionId: "cn-hangzhou",
+        clock: () => new Date("2026-08-30T16:16:44.000Z"),
+      },
+      client,
+    );
+    await expect(
+      provider.lookup({
+        phone: "+8618911597794",
+        idempotencyKey: "sms:midnight",
+        bizId: "866920288106604764^0",
+      }),
+    ).resolves.toMatchObject({ status: "delivered", bizId: "866920288106604764^0" });
+    expect(client.querySendDetails.mock.calls[0]?.[0]).toMatchObject({
+      bizId: "866920288106604764^0",
+      sendDate: "20260831",
+    });
+  });
+
+  test("falls back to OutId lookup when BizId filtering returns no DTO", async () => {
+    const client = {
+      sendSms: vi.fn(),
+      querySendDetails: vi
+        .fn()
+        .mockResolvedValueOnce({ body: { smsSendDetailDTOs: { smsSendDetailDTO: [] } } })
+        .mockResolvedValueOnce({
+          body: {
+            smsSendDetailDTOs: {
+              smsSendDetailDTO: [{ outId: "sms:fallback", sendStatus: 2 }],
+            },
+          },
+        }),
+    };
+    const provider = new AliyunSmsProvider(
+      {
+        accessKeyId: "key",
+        accessKeySecret: "secret",
+        signName: "他山青年",
+        endpoint: "dysmsapi.aliyuncs.com",
+        regionId: "cn-hangzhou",
+        clock: () => new Date("2026-08-30T16:16:44.000Z"),
+      },
+      client,
+    );
+    await expect(
+      provider.lookup({
+        phone: "+8618911597794",
+        idempotencyKey: "sms:fallback",
+        bizId: "biz-without-dto",
+      }),
+    ).resolves.toMatchObject({ status: "failed", bizId: "biz-without-dto" });
+    expect(client.querySendDetails).toHaveBeenCalledTimes(2);
+    expect(client.querySendDetails.mock.calls[1]?.[0]).not.toHaveProperty("bizId");
+  });
 });

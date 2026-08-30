@@ -10,7 +10,7 @@ interface Client {
     body?: {
       requestId?: string;
       smsSendDetailDTOs?: {
-        smsSendDetailDTO?: Array<{ bizId?: string; outId?: string; sendStatus?: number }>;
+        smsSendDetailDTO?: Array<{ outId?: string; sendStatus?: number }>;
       };
     };
   }>;
@@ -45,6 +45,7 @@ export class AliyunSmsProvider implements SmsProvider {
       signName: string;
       endpoint: string;
       regionId: string;
+      clock?: () => Date;
     },
     client?: Client,
   ) {
@@ -87,26 +88,42 @@ export class AliyunSmsProvider implements SmsProvider {
     return { requestId: response.body.requestId, bizId: response.body.bizId };
   }
   public async lookup(input: { phone: string; idempotencyKey: string; bizId: string | null }) {
-    const date = new Date().toISOString().slice(0, 10).replaceAll("-", "");
-    const response = await this.client.querySendDetails(
-      new Dysmsapi.QuerySendDetailsRequest({
-        phoneNumber: phone(input.phone),
-        sendDate: date,
-        pageSize: 50,
-        currentPage: 1,
-        ...(input.bizId ? { bizId: input.bizId } : {}),
-      }),
+    const parts = new Intl.DateTimeFormat("en-US", {
+      timeZone: "Asia/Shanghai",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    }).formatToParts(this.options.clock?.() ?? new Date());
+    const part = (type: Intl.DateTimeFormatPartTypes) =>
+      parts.find((value) => value.type === type)?.value ?? "";
+    const sendDate = `${part("year")}${part("month")}${part("day")}`;
+    const query = (bizId?: string) =>
+      this.client.querySendDetails(
+        new Dysmsapi.QuerySendDetailsRequest({
+          phoneNumber: phone(input.phone),
+          sendDate,
+          pageSize: 50,
+          currentPage: 1,
+          ...(bizId ? { bizId } : {}),
+        }),
+      );
+    let response = await query(input.bizId ?? undefined);
+    let detail = response.body?.smsSendDetailDTOs?.smsSendDetailDTO?.find(
+      (item) => item.outId === input.idempotencyKey,
     );
-    const detail = response.body?.smsSendDetailDTOs?.smsSendDetailDTO?.find((item) =>
-      input.bizId ? item.bizId === input.bizId : item.outId === input.idempotencyKey,
-    );
+    if (!detail && input.bizId !== null) {
+      response = await query();
+      detail = response.body?.smsSendDetailDTOs?.smsSendDetailDTO?.find(
+        (item) => item.outId === input.idempotencyKey,
+      );
+    }
     if (!detail) return { status: "not_found" as const };
     const status: "delivered" | "failed" | "pending" =
       detail.sendStatus === 3 ? "delivered" : detail.sendStatus === 2 ? "failed" : "pending";
     return {
       status,
       ...(response.body?.requestId ? { requestId: response.body.requestId } : {}),
-      ...(detail.bizId ? { bizId: detail.bizId } : {}),
+      ...(input.bizId ? { bizId: input.bizId } : {}),
     };
   }
 }
