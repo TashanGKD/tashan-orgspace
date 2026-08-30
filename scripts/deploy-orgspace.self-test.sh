@@ -3,6 +3,8 @@ set -euo pipefail
 
 repository_root="$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)"
 deployer="$repository_root/scripts/deploy-orgspace.sh"
+release_version="$(node -p "JSON.parse(require('node:fs').readFileSync(process.argv[1], 'utf8')).version" "$repository_root/release/cli-release.json")"
+export ORGSPACE_TEST_RELEASE_VERSION="$release_version"
 temporary_root="$(mktemp -d "${TMPDIR:-/tmp}/orgspace-deployer-test.XXXXXX")"
 fake_bin="$temporary_root/bin"
 transport_log="$temporary_root/transport.log"
@@ -28,7 +30,7 @@ printf 'ssh %s\n' "$*" >> "${ORGSPACE_TEST_TRANSPORT_LOG:?}"
 case "$*" in
   *"stat -c %a"*) printf '%s\n' "${FAKE_SECRET_MODE:-600}" ;;
   *"orgspace_required_key"*) printf '%s\n' "${FAKE_ENV_ISSUES:-}" ;;
-  *"SERVICE_VERSION="*) printf '%s\n' "${FAKE_SERVICE_VERSION:-1.0.0}" ;;
+  *"SERVICE_VERSION="*) printf '%s\n' "${FAKE_SERVICE_VERSION:-${ORGSPACE_TEST_RELEASE_VERSION:?}}" ;;
   *"curl -fsS"*) printf '%s\n' '{"status":"ok","version":"0.1.0-alpha.2"}' ;;
 esac
 EOF
