@@ -19,4 +19,4 @@ OrgSpace v1 是独立后端、Web、CLI、Skill 和 Realtime 服务，包含：
 
 ## 发布状态
 
-本地与隔离生产形态已完成 Phase 1–5 验证。AUP 精确 SHA 部署、真实短信运营商送达、生产登录浏览器验收和 `v1.0.0` GitHub/官方镜像发布仍需外部执行与证据；这些步骤完成前不称为已发布 v1。
+Phase 1–5 已完成本地、隔离生产形态和真实生产验收。AUP 部署提交为 `968ce996c30bdc7cce3675cb34df150391668c86`，公开版本为 `v1.0.2`；真实短信运营商送达、生产浏览器、隧道恢复、文件 TLS、GitHub Release、官方镜像和全新用户 Skill/CLI 安装证据见 `docs/verification/v1-full-product-acceptance.md`。

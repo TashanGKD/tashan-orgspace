@@ -29,7 +29,7 @@
 ### Task 3: Component restart and reconciliation matrix
 **Files:** Extend production-stack tests and recovery verification doc.
 - [x] Write RED tests for API/Worker/Realtime/Postgres/Redis/MinIO restart at active operations.
-- [ ] After deployment approval, restart the real AUP tunnel during an active public check and verify recovery.
+- [x] After deployment approval, restart the real AUP tunnel during an active public check and verify recovery.
 - [x] Run tests; observe unsupported recovery cases.
 - [x] Add only required reconciliation/health behavior to prior phase owners.
 - [x] Run matrix proving no lost/duplicate side effects.
@@ -41,15 +41,15 @@
 - [x] Run journey; record actual page/command blockers.
 - [x] For every observed blocker, add a failing regression test in its owning Phase 1–4 module, implement the minimum fix there, and keep the Phase 5 change limited to verification wiring.
 - [x] Rerun automated desktop/mobile Web checks, CLI JSON journeys and local fresh Skill install.
-- [ ] After deployment approval, rerun the production-login desktop/mobile browser checklist.
+- [x] After deployment approval, rerun the production-login desktop/mobile browser checklist.
 - [x] Commit: `git commit -m "test(v1): add complete user journey"`.
 
 ### Task 5: Production release and evidence
 **Files:** Update release manifests, README, architecture status and `docs/verification/v1-full-product-acceptance.md`.
 - [x] Run format/lint/type/unit/integration/distribution/production/E2E/full gates on a clean commit.
-- [ ] Deploy exact SHA using existing safe AUP workflow; verify deployed-commit and public HTTPS.
-- [ ] Run approved real SMS smoke and public Skill/CLI fresh install.
-- [ ] Record counts, SHA, migrations, images, recovery, browser and rollback target.
-- [ ] Commit: `git commit -m "docs(release): record OrgSpace v1 acceptance"`.
+- [x] Deploy exact SHA using existing safe AUP workflow; verify deployed-commit and public HTTPS.
+- [x] Run approved real SMS smoke and public Skill/CLI fresh install.
+- [x] Record counts, SHA, migrations, images, recovery, browser and rollback target.
+- [x] Commit: `git commit -m "docs(release): record OrgSpace v1 acceptance"`.
 
-Local candidate evidence is recorded in `docs/verification/v1-full-product-acceptance.md` at commit `b3266e713279de4b3d8c95521dacca25be59ceeb`. Production-only items remain unchecked until separately approved and observed.
+Final production evidence is recorded in `docs/verification/v1-full-product-acceptance.md` for release commit `968ce996c30bdc7cce3675cb34df150391668c86` and GitHub run `33325295076`.

@@ -46,6 +46,6 @@
 **Files:** Create `tests/e2e/notifications.test.ts` and `docs/verification/phase3-notifications.md`.
 - [x] Add simulated journeys for approval, urgent, optional task, DDL, meeting, daily summary and Partner follow-up.
 - [x] Run E2E; verify idempotency and restart recovery.
-- [ ] Run one separately approved real SMS smoke and query final carrier result.
+- [x] Run one separately approved real SMS smoke and query final carrier result.
 - [x] Run full verifier and record accepted vs delivered evidence separately.
 - [x] Commit simulated acceptance evidence: `2365f48 docs(verification): record Phase 3 simulated acceptance`.
